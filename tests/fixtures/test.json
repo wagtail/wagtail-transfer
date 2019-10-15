@@ -23,22 +23,83 @@
     "model": "wagtailcore.page",
     "fields": {
         "title": "Home",
-        "numchild": 0,
+        "numchild": 2,
         "show_in_menus": false,
         "live": true,
         "depth": 2,
-        "content_type": ["wagtailcore", "page"],
+        "content_type": ["tests", "simplepage"],
         "path": "00010001",
         "url_path": "/home/",
         "slug": "home"
     }
 },
-
 {
     "pk": 2,
     "model": "tests.simplepage",
     "fields": {
         "intro": "This is the homepage"
+    }
+},
+{
+    "pk": "22222222",
+    "model": "wagtail_transfer.idmapping",
+    "fields": {
+        "content_type": ["tests", "simplepage"],
+        "local_id": 2
+    }
+},
+
+{
+    "pk": 3,
+    "model": "wagtailcore.page",
+    "fields": {
+        "title": "Existing child page",
+        "numchild": 0,
+        "show_in_menus": false,
+        "live": true,
+        "depth": 3,
+        "content_type": ["tests", "simplepage"],
+        "path": "000100010001",
+        "url_path": "/home/existing-child-page/",
+        "slug": "existing-child-page"
+    }
+},
+{
+    "pk": 3,
+    "model": "tests.simplepage",
+    "fields": {
+        "intro": "This page exists at the destination"
+    }
+},
+{
+    "pk": "33333333",
+    "model": "wagtail_transfer.idmapping",
+    "fields": {
+        "content_type": ["tests", "simplepage"],
+        "local_id": 3
+    }
+},
+
+{
+    "pk": 4,
+    "model": "wagtailcore.page",
+    "fields": {
+        "title": "Nonexisting child page",
+        "numchild": 0,
+        "show_in_menus": false,
+        "live": true,
+        "depth": 3,
+        "content_type": ["tests", "simplepage"],
+        "path": "000100010002",
+        "url_path": "/home/nonexisting-child-page/",
+        "slug": "nonexisting-child-page"
+    }
+},
+{
+    "pk": 4,
+    "model": "tests.simplepage",
+    "fields": {
+        "intro": "This page does not exist at the destination"
     }
 },
 
