@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='IDMapping',
             fields=[
-                ('uid', models.CharField(max_length=255, primary_key=True, serialize=False)),
+                ('uid', models.UUIDField(primary_key=True, serialize=False)),
                 ('local_id', models.CharField(max_length=255)),
                 ('content_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.ContentType')),
             ],
