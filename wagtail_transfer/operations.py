@@ -1,12 +1,22 @@
 import json
 
 from django.contrib.contenttypes.models import ContentType
-from django.db import transaction
+from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.functional import cached_property
 from wagtail.core.models import Page
 
 from .models import IDMapping
+
+
+def get_base_model(model):
+    """
+    For the given model, return the highest concrete model in the inheritance tree -
+    e.g. for BlogPage, return Page
+    """
+    if model._meta.parents:
+        model = model._meta.get_parent_list()[0]
+    return model
 
 
 class ImportPlanner:
@@ -78,13 +88,7 @@ class ImportPlanner:
         Given an 'app_name.model_name' string, return the Model class for the base model
         (e.g. for 'blog.blog_page', return Page)
         """
-        model = self._model_for_path(model_path)
-
-        # ensure we're using the base model (i.e. Page rather than BlogPage)
-        if model._meta.parents:
-            model = model._meta.get_parent_list()[0]
-
-        return model
+        return get_base_model(self._model_for_path(model_path))
 
     def add_json(self, json_data):
         """
@@ -152,7 +156,7 @@ class ImportPlanner:
             mapping = None
 
         if mapping:
-            self.destination_ids_by_source[(model, source_id)] = mapping.local_id
+            self.destination_ids_by_source[(model, source_id)] = mapping.content_object.pk
 
         if objective_type == 'located':
             # for this objective, we are only required to find the corresponding destination ID
@@ -213,17 +217,26 @@ class ImportPlanner:
         # retrieve the specific model for this object
         specific_model = self._model_for_path(object_data['model'])
 
-        if action == 'create':
-            if source_id == self.root_page_source_pk:
-                # this is the root page of the import; ignore the parent ID in the source
-                # record and import at the requested destination instead
-                operation = CreatePage(specific_model, object_data, self.destination_parent_id)
-            else:
-                operation = CreatePage(specific_model, object_data)
-        else:  # action == 'update'
-            destination_id = self.destination_ids_by_source[(model, source_id)]
-            obj = specific_model.objects.get(pk=destination_id)
-            operation = UpdatePage(obj, object_data)
+        if issubclass(specific_model, Page):
+            if action == 'create':
+                if source_id == self.root_page_source_pk:
+                    # this is the root page of the import; ignore the parent ID in the source
+                    # record and import at the requested destination instead
+                    operation = CreatePage(specific_model, object_data, self.destination_parent_id)
+                else:
+                    operation = CreatePage(specific_model, object_data)
+            else:  # action == 'update'
+                destination_id = self.destination_ids_by_source[(model, source_id)]
+                obj = specific_model.objects.get(pk=destination_id)
+                operation = UpdatePage(obj, object_data)
+        else:
+            # non-page model
+            if action == 'create':
+                operation = CreateModel(specific_model, object_data)
+            else:  # action == 'update'
+                destination_id = self.destination_ids_by_source[(model, source_id)]
+                obj = specific_model.objects.get(pk=destination_id)
+                operation = UpdateModel(obj, object_data)
 
         self.resolutions[objective] = operation
 
@@ -303,32 +316,77 @@ class Operation:
     necessary to retrieve more data), finding a valid sequence to run them in, and running them all
     within a transaction.
     """
+    def __init__(self, model, object_data):
+        self.model = model
+        self.base_model = get_base_model(model)
+        self.object_data = object_data
+
     def run(self, context):
         raise NotImplemented
+
+    def _populate_fields(self, context):
+        for field_name, value in self.object_data['fields'].items():
+            field = self.model._meta.get_field(field_name)
+
+            if isinstance(field, models.ForeignKey):
+                target_model = get_base_model(field.related_model)
+                value = context.destination_ids_by_source[(target_model, value)]
+
+            setattr(self.instance, field.get_attname(), value)
+
+    def _save(self, context):
+        self.instance.save()
 
     @cached_property
     def dependencies(self):
         # A list of objectives that must be satisfied before we can import this page
-        return []
+        deps = []
+
+        for field in self.model._meta.get_fields():
+            if isinstance(field, models.ForeignKey):
+                val = self.object_data['fields'].get(field.name)
+                if val is not None:
+                    # TODO: consult config to decide whether objective type should be 'exists' or 'updated'
+                    deps.append(
+                        (get_base_model(field.related_model), val, 'updated')
+                    )
+
+        return deps
 
 
-class CreatePage(Operation):
+class CreateModel(Operation):
+    def run(self, context):
+        # Create object and populate its attributes from field_data
+        self.instance = self.model()
+        self._populate_fields(context)
+        self._save(context)
+
+        # Add an IDMapping entry for the newly created page
+        uid = context.uids_by_source[(self.base_model, self.object_data['pk'])]
+        IDMapping.objects.create(uid=uid, content_object=self.instance)
+
+        # Also add it to destination_ids_by_source mapping
+        source_pk = self.object_data['pk']
+        context.destination_ids_by_source[(self.base_model, source_pk)] = self.instance.pk
+
+
+class CreatePage(CreateModel):
     def __init__(self, model, object_data, destination_parent_id=None):
-        self.model = model
-        self.object_data = object_data
+        super().__init__(model, object_data)
         self.destination_parent_id = destination_parent_id
 
     @cached_property
     def dependencies(self):
+        deps = super().dependencies
         if self.destination_parent_id is None:
             # need to ensure parent page is imported before this one
-            return [
+            deps.append(
                 (Page, self.object_data['parent_id'], 'exists'),
-            ]
-        else:
-            return []
+            )
 
-    def run(self, context):
+        return deps
+
+    def _save(self, context):
         if self.destination_parent_id is None:
             # The destination parent ID was not known at the time this operation was built,
             # but should now exist in the page ID mapping
@@ -337,31 +395,19 @@ class CreatePage(Operation):
 
         parent_page = Page.objects.get(id=self.destination_parent_id)
 
-        # Create a page object and populate its attributes from field_data
-        self.page = self.model()
-        for k, v in self.object_data['fields'].items():
-            setattr(self.page, k, v)
-
         # Add the page to the database as a child of parent_page
-        parent_page.add_child(instance=self.page)
-
-        # Add an IDMapping entry for the newly created page
-        uid = context.uids_by_source[(Page, self.object_data['pk'])]
-        IDMapping.objects.create(uid=uid, content_object=self.page)
-
-        # Also add it to destination_ids_by_source mapping
-        source_pk = self.object_data['pk']
-        context.destination_ids_by_source[(Page, source_pk)] = self.page.pk
+        parent_page.add_child(instance=self.instance)
 
 
-class UpdatePage(Operation):
-    def __init__(self, page, object_data):
-        self.page = page
-        self.object_data = object_data
+class UpdateModel(Operation):
+    def __init__(self, instance, object_data):
+        self.instance = instance
+        super().__init__(type(instance), object_data)
 
     def run(self, context):
-        # populate page attributes from field_data
-        for k, v in self.object_data['fields'].items():
-            setattr(self.page, k, v)
+        self._populate_fields(context)
+        self._save(context)
 
-        self.page.save()
+
+class UpdatePage(UpdateModel):
+    pass

@@ -23,7 +23,7 @@
     "model": "wagtailcore.page",
     "fields": {
         "title": "Home",
-        "numchild": 2,
+        "numchild": 3,
         "show_in_menus": false,
         "live": true,
         "depth": 2,
@@ -100,6 +100,54 @@
     "model": "tests.simplepage",
     "fields": {
         "intro": "This page does not exist at the source"
+    }
+},
+
+{
+    "pk": 5,
+    "model": "wagtailcore.page",
+    "fields": {
+        "title": "oil is great",
+        "numchild": 0,
+        "show_in_menus": false,
+        "live": true,
+        "depth": 3,
+        "content_type": ["tests", "sponsoredpage"],
+        "path": "000100010003",
+        "url_path": "/home/oil-is-great/",
+        "slug": "oil-is-great"
+    }
+},
+{
+    "pk": 5,
+    "model": "tests.sponsoredpage",
+    "fields": {
+        "advert": 1,
+        "intro": "yay fossil fuels etc"
+    }
+},
+{
+    "pk": "00017017-5555-5555-5555-555555555555",
+    "model": "wagtail_transfer.idmapping",
+    "fields": {
+        "content_type": ["tests", "sponsoredpage"],
+        "local_id": 5
+    }
+},
+
+{
+    "pk": 1,
+    "model": "tests.advert",
+    "fields": {
+        "slogan": "put a tiger in your tank"
+    }
+},
+{
+    "pk": "adadadad-1111-1111-1111-111111111111",
+    "model": "wagtail_transfer.idmapping",
+    "fields": {
+        "content_type": ["tests", "advert"],
+        "local_id": 1
     }
 },
 
