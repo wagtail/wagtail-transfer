@@ -239,6 +239,7 @@ class ImportPlanner:
                 operation = UpdateModel(obj, object_data)
 
         self.resolutions[objective] = operation
+        self.task_resolutions[task] = operation
 
         for objective in operation.dependencies:
             if objective not in self.objectives:
