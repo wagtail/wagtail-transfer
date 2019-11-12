@@ -11,3 +11,13 @@ class IDMapping(models.Model):
 
     class Meta:
         unique_together = ['content_type', 'local_id']
+
+
+def get_base_model(model):
+    """
+    For the given model, return the highest concrete model in the inheritance tree -
+    e.g. for BlogPage, return Page
+    """
+    if model._meta.parents:
+        model = model._meta.get_parent_list()[0]
+    return model

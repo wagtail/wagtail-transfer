@@ -1,22 +1,70 @@
-from django.utils.encoding import is_protected_type
+from functools import lru_cache
 
-# FIXME: work out how to filter out all OneToOneFields with parent_link=True, rather than special-casing page_ptr
-IGNORED_PAGE_ATTRS = ['id', 'path', 'depth', 'numchild', 'url_path', 'content_type', 'page_ptr']
+from django.db import models
+from wagtail.core.models import Page
+
+from .field_adapters import get_field_adapter
 
 
-def serialize_page_fields(page):
-    field_data = {}
-    for field in page._meta.get_fields():
-        if not hasattr(field, 'attname'):
-            continue
+class ModelSerializer:
+    ignored_fields = []
 
-        if field.name in IGNORED_PAGE_ATTRS:
-            continue
+    def __init__(self, model):
+        self.model = model
 
-        value = field.value_from_object(page)
-        if not is_protected_type(value):
-            value = field.value_to_string(page)
+        self.field_adapters = []
+        for field in self.model._meta.get_fields():
+            try:
+                # ignore primary keys (including MTI parent pointers)
+                if field.primary_key:
+                    continue
+            except AttributeError:
+                # ignore 'fake' fields such as reverse relations, that don't have
+                # standard attributes such as primary_key
+                continue
 
-        field_data[field.name] = value
+            if field.name in self.ignored_fields:
+                continue
 
-    return field_data
+            self.field_adapters.append(get_field_adapter(field))
+
+    def serialize_fields(self, instance):
+        return {
+            field_adapter.name: field_adapter.serialize(instance)
+            for field_adapter in self.field_adapters
+        }
+
+    def serialize(self, instance):
+        return {
+            'model': self.model._meta.label_lower,
+            'pk': instance.pk,
+            'fields': self.serialize_fields(instance)
+        }
+
+
+class PageSerializer(ModelSerializer):
+    ignored_fields = [
+        'path', 'depth', 'numchild', 'url_path', 'content_type', 'draft_title', 'has_unpublished_changes', 'owner',
+        'go_live_at', 'expire_at', 'expired', 'locked', 'first_published_at', 'last_published_at',
+        'latest_revision_created_at', 'live_revision',
+    ]
+
+    def serialize(self, instance):
+        result = super().serialize(instance)
+        result['parent_id'] = instance.get_parent().pk
+        return result
+
+
+SERIALIZERS_BY_MODEL_CLASS = {
+    models.Model: ModelSerializer,
+    Page: PageSerializer,
+}
+
+
+@lru_cache(maxsize=None)
+def get_model_serializer(model):
+    # find the serializer class for the most specific class in the model's inheritance tree
+    for cls in model.__mro__:
+        if cls in SERIALIZERS_BY_MODEL_CLASS:
+            serializer_class = SERIALIZERS_BY_MODEL_CLASS[cls]
+            return serializer_class(model)
