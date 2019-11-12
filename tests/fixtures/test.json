@@ -44,7 +44,7 @@
     "pk": "22222222-2222-2222-2222-222222222222",
     "model": "wagtail_transfer.idmapping",
     "fields": {
-        "content_type": ["tests", "simplepage"],
+        "content_type": ["wagtailcore", "page"],
         "local_id": 2
     }
 },
@@ -75,7 +75,7 @@
     "pk": "33333333-3333-3333-3333-333333333333",
     "model": "wagtail_transfer.idmapping",
     "fields": {
-        "content_type": ["tests", "simplepage"],
+        "content_type": ["wagtailcore", "page"],
         "local_id": 3
     }
 },
@@ -130,7 +130,7 @@
     "pk": "00017017-5555-5555-5555-555555555555",
     "model": "wagtail_transfer.idmapping",
     "fields": {
-        "content_type": ["tests", "sponsoredpage"],
+        "content_type": ["wagtailcore", "page"],
         "local_id": 5
     }
 },
