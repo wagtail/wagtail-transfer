@@ -13,8 +13,6 @@ from .serializers import get_model_serializer
 def pages_for_export(request, root_page_id):
     root_page = get_object_or_404(Page, id=root_page_id)
 
-    page_content_type = ContentType.objects.get_for_model(Page)
-
     pages = root_page.get_descendants(inclusive=True).specific()
 
     ids_for_import = [
@@ -22,19 +20,24 @@ def pages_for_export(request, root_page_id):
     ]
 
     objects = []
-    mappings = []
+    object_references = set()
 
-    for (i, page) in enumerate(pages):
+    for page in pages:
+        object_references.add((Page, page.pk))
+        serializer = get_model_serializer(type(page))
+        objects.append(serializer.serialize(page))
+        object_references.update(serializer.get_object_references(page))
+
+    mappings = []
+    for i, (model, pk) in enumerate(object_references):
         id_mapping, created = IDMapping.objects.get_or_create(
-            content_type=page_content_type, local_id=page.pk,
+            content_type=ContentType.objects.get_for_model(model),
+            local_id=pk,
             defaults={'uid': uuid.uuid1(clock_seq=i)}
         )
         mappings.append(
-            ['wagtailcore.page', page.pk, id_mapping.uid]
+            [model._meta.label_lower, pk, id_mapping.uid]
         )
-
-        serializer = get_model_serializer(type(page))
-        objects.append(serializer.serialize(page))
 
     return JsonResponse({
         'ids_for_import': ids_for_import,
