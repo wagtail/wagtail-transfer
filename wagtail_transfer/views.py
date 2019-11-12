@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from wagtail.core.models import Page
 
 from .models import IDMapping
-from .serializers import serialize_page_fields
+from .serializers import get_model_serializer
 
 
 def pages_for_export(request, root_page_id):
@@ -33,13 +33,8 @@ def pages_for_export(request, root_page_id):
             ['wagtailcore.page', page.pk, id_mapping.uid]
         )
 
-        object_data = {
-            'model': page._meta.label_lower,
-            'pk': page.pk,
-            'parent_id': page.get_parent().pk,
-            'fields': serialize_page_fields(page)
-        }
-        objects.append(object_data)
+        serializer = get_model_serializer(type(page))
+        objects.append(serializer.serialize(page))
 
     return JsonResponse({
         'ids_for_import': ids_for_import,

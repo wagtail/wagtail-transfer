@@ -6,17 +6,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.functional import cached_property
 from wagtail.core.models import Page
 
-from .models import IDMapping
-
-
-def get_base_model(model):
-    """
-    For the given model, return the highest concrete model in the inheritance tree -
-    e.g. for BlogPage, return Page
-    """
-    if model._meta.parents:
-        model = model._meta.get_parent_list()[0]
-    return model
+from .models import get_base_model, IDMapping
 
 
 class ImportPlanner:
