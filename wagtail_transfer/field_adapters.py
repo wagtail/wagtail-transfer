@@ -22,9 +22,9 @@ class FieldAdapter:
 
     def get_object_references(self, instance):
         """
-        Return a list of (model_class, id) pairs for all objects referenced in this field
+        Return a set of (model_class, id) pairs for all objects referenced in this field
         """
-        return []
+        return set()
 
 
 class ForeignKeyAdapter(FieldAdapter):
@@ -35,9 +35,9 @@ class ForeignKeyAdapter(FieldAdapter):
     def get_object_references(self, instance):
         pk = self.field.value_from_object(instance)
         if pk is None:
-            return []
+            return set()
         else:
-            return [(self.related_base_model, pk)]
+            return {(self.related_base_model, pk)}
 
 
 ADAPTERS_BY_FIELD_CLASS = {

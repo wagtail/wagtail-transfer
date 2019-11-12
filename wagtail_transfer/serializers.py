@@ -41,6 +41,12 @@ class ModelSerializer:
             'fields': self.serialize_fields(instance)
         }
 
+    def get_object_references(self, instance):
+        refs = set()
+        for f in self.field_adapters:
+            refs.update(f.get_object_references(instance))
+        return refs
+
 
 class PageSerializer(ModelSerializer):
     ignored_fields = [
