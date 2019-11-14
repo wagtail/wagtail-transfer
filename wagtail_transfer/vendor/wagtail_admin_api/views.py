@@ -26,6 +26,7 @@ class PagesAdminAPIViewSet(PagesAPIViewSet):
         'children',
         'descendants',
         'parent',
+        'ancestors',
     ]
 
     body_fields = PagesAPIViewSet.body_fields + [

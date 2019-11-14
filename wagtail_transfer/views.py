@@ -6,6 +6,7 @@ from django.shortcuts import get_object_or_404
 
 from wagtail.core.models import Page
 
+from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
 from .models import IDMapping
 from .serializers import get_model_serializer
 
@@ -43,3 +44,7 @@ def pages_for_export(request, root_page_id):
         'mappings': mappings,
         'objects': objects,
     }, json_dumps_params={'indent': 2})
+
+
+class PageChooserAPIViewSet(PagesAdminAPIViewSet):
+    pass
