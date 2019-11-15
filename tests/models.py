@@ -1,6 +1,6 @@
 from django.db import models
-
-from wagtail.core.models import Page
+from modelcluster.fields import ParentalKey
+from wagtail.core.models import Orderable, Page
 
 
 class SimplePage(Page):
@@ -14,3 +14,13 @@ class Advert(models.Model):
 class SponsoredPage(Page):
     advert = models.ForeignKey(Advert, blank=True, null=True, on_delete=models.SET_NULL)
     intro = models.TextField()
+
+
+class SectionedPage(Page):
+    intro = models.TextField()
+
+
+class SectionedPageSection(Orderable):
+    page = ParentalKey(SectionedPage, related_name='sections')
+    title = models.CharField(max_length=255)
+    body = models.TextField()

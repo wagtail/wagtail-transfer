@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models.fields.reverse_related import ManyToOneRel
 from django.utils.encoding import is_protected_type
 
 from .models import get_base_model
@@ -40,9 +41,35 @@ class ForeignKeyAdapter(FieldAdapter):
             return {(self.related_base_model, pk)}
 
 
+class ManyToOneRelAdapter(FieldAdapter):
+    def __init__(self, field):
+        super().__init__(field)
+        self.related_field = field.field
+        self.related_model = field.related_model
+
+        from .serializers import get_model_serializer
+        self.related_model_serializer = get_model_serializer(self.related_model)
+
+    def _get_related_objects(self, instance):
+        return getattr(instance, self.name).all()
+
+    def serialize(self, instance):
+        return [
+            self.related_model_serializer.serialize(obj)
+            for obj in self._get_related_objects(instance)
+        ]
+
+    def get_object_references(self, instance):
+        refs = set()
+        for obj in self._get_related_objects(instance):
+            refs.update(self.related_model_serializer.get_object_references(obj))
+        return refs
+
+
 ADAPTERS_BY_FIELD_CLASS = {
     models.Field: FieldAdapter,
-    models.ForeignKey: ForeignKeyAdapter
+    models.ForeignKey: ForeignKeyAdapter,
+    ManyToOneRel: ManyToOneRelAdapter,
 }
 
 
@@ -52,3 +79,5 @@ def get_field_adapter(field):
         if field_class in ADAPTERS_BY_FIELD_CLASS:
             adapter_class = ADAPTERS_BY_FIELD_CLASS[field_class]
             return adapter_class(field)
+
+    raise ValueError("No adapter found for field: %r" % field)

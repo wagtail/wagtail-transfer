@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 from django.db import models
+from modelcluster.fields import ParentalKey
 from wagtail.core.models import Page
 
 from .field_adapters import get_field_adapter
@@ -14,17 +15,26 @@ class ModelSerializer:
 
         self.field_adapters = []
         for field in self.model._meta.get_fields():
-            try:
+            if field.name in self.ignored_fields:
+                continue
+
+            if isinstance(field, models.Field):
+                # this is a genuine field rather than a reverse relation
+
                 # ignore primary keys (including MTI parent pointers)
                 if field.primary_key:
                     continue
-            except AttributeError:
-                # ignore 'fake' fields such as reverse relations, that don't have
-                # standard attributes such as primary_key
-                continue
+            else:
+                # this is probably a reverse relation, so fetch its related field
+                try:
+                    related_field = field.field
+                except AttributeError:
+                    # we don't know what sort of pseudo-field this is, so skip it
+                    continue
 
-            if field.name in self.ignored_fields:
-                continue
+                # ignore relations other than ParentalKey
+                if not isinstance(related_field, ParentalKey):
+                    continue
 
             self.field_adapters.append(get_field_adapter(field))
 
