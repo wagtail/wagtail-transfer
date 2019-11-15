@@ -67,3 +67,11 @@ class TestPagesApi(TestCase):
         self.assertEqual(len(page_data['fields']['sections']), 2)
         self.assertEqual(page_data['fields']['sections'][0]['model'], 'tests.sectionedpagesection')
         self.assertEqual(page_data['fields']['sections'][0]['fields']['title'], "Create the universe")
+        section_id = page_data['fields']['sections'][0]['pk']
+
+        # there should also be a uid mapping for the section
+        matching_uids = [
+            uid for model_name, pk, uid in data['mappings']
+            if model_name == 'tests.sectionedpagesection' and pk == section_id
+        ]
+        self.assertEqual(len(matching_uids), 1)
