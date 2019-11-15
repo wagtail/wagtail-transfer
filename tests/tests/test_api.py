@@ -1,6 +1,9 @@
 import json
 
 from django.test import TestCase
+from wagtail.core.models import Page
+
+from tests.models import SectionedPage
 
 
 class TestPagesApi(TestCase):
@@ -42,3 +45,25 @@ class TestPagesApi(TestCase):
 
         self.assertTrue(root_page)
         self.assertEqual(root_page['parent_id'], None)
+
+    def test_parental_keys(self):
+        page = SectionedPage(title='How to make a cake', intro="Here is how to make a cake.")
+        page.sections.create(title="Create the universe", body="First, create the universe")
+        page.sections.create(title="Find some eggs", body="Next, find some eggs")
+
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        response = self.client.get('/wagtail-transfer/api/pages/%d/' % parent_page.id)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        page_data = None
+        for obj in data['objects']:
+            if obj['model'] == 'tests.sectionedpage' and obj['pk'] == page.pk:
+                page_data = obj
+                break
+
+        self.assertEqual(len(page_data['fields']['sections']), 2)
+        self.assertEqual(page_data['fields']['sections'][0]['model'], 'tests.sectionedpagesection')
+        self.assertEqual(page_data['fields']['sections'][0]['fields']['title'], "Create the universe")
