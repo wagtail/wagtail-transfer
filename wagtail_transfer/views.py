@@ -23,7 +23,6 @@ def pages_for_export(request, root_page_id):
     object_references = set()
 
     for page in pages:
-        object_references.add((Page, page.pk))
         serializer = get_model_serializer(type(page))
         objects.append(serializer.serialize(page))
         object_references.update(serializer.get_object_references(page))

@@ -5,6 +5,7 @@ from modelcluster.fields import ParentalKey
 from wagtail.core.models import Page
 
 from .field_adapters import get_field_adapter
+from .models import get_base_model
 
 
 class ModelSerializer:
@@ -12,6 +13,7 @@ class ModelSerializer:
 
     def __init__(self, model):
         self.model = model
+        self.base_model = get_base_model(model)
 
         self.field_adapters = []
         for field in self.model._meta.get_fields():
@@ -52,7 +54,10 @@ class ModelSerializer:
         }
 
     def get_object_references(self, instance):
-        refs = set()
+        refs = {
+            # always include the primary key as an object reference
+            (self.base_model, instance.pk)
+        }
         for f in self.field_adapters:
             refs.update(f.get_object_references(instance))
         return refs
