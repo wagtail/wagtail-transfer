@@ -57,7 +57,10 @@ class PageSerializer(ModelSerializer):
 
     def serialize(self, instance):
         result = super().serialize(instance)
-        result['parent_id'] = instance.get_parent().pk
+        if instance.is_root():
+            result['parent_id'] = None
+        else:
+            result['parent_id'] = instance.get_parent().pk
         return result
 
 
