@@ -1,4 +1,5 @@
 const defaultState = {
+  api: null,
   isFetching: false,
   error: null,
   parent: null,
@@ -14,6 +15,11 @@ const defaultState = {
 
 export default function pageChooser(state = defaultState, { type, payload }) {
   switch (type) {
+  case 'SET_API':
+    return Object.assign({}, state, {
+      api: payload.api,
+    });
+
   case 'SET_VIEW':
     return Object.assign({}, state, {
       viewName: payload.viewName,

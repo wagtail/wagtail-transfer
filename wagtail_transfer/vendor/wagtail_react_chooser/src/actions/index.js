@@ -35,6 +35,8 @@ function get(url) {
 }
 
 
+export const setApi = createAction('SET_API', api => ({api}));
+
 export const setView = createAction('SET_VIEW', (viewName, viewOptions) => ({ viewName, viewOptions }));
 
 export const fetchPagesStart = createAction('FETCH_START');
@@ -47,10 +49,10 @@ export function browse(parentPageID, pageNumber) {
   // eslint-disable-next-line no-param-reassign
   if (parentPageID === 1) { parentPageID = 'root'; }
 
-  return (dispatch) => {
+  return (dispatch, getState) => {
     dispatch(fetchPagesStart());
 
-    const api = new PagesAPI('/wagtail-transfer/api/chooser/pages/');
+    const {api} = getState();
     const query = api.query({
       child_of: parentPageID,
       fields: 'parent,children',
@@ -78,10 +80,10 @@ export function browse(parentPageID, pageNumber) {
 
 
 export function search(queryString, restrictPageTypes, pageNumber) {
-  return (dispatch) => {
+  return (dispatch, getState) => {
     dispatch(fetchPagesStart());
 
-    const api = new PagesAPI('/wagtail-transfer/api/chooser/pages/');
+    const {api} = getState();
 
     let queryParams = {
       fields: 'parent',

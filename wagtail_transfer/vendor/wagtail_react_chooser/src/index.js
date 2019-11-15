@@ -6,8 +6,10 @@ import thunkMiddleware from 'redux-thunk';
 
 import PageChooser from './PageChooser';
 import pageChooser from './reducers';
+import { PagesAPI } from './lib/api/admin';
+import { setApi } from './actions';
 
-export function createReactPageChooser(restrictPageTypes, initialParentPageId, onPageChosen) {
+export function createReactPageChooser(apiBaseUrl, restrictPageTypes, initialParentPageId, onPageChosen) {
   // A few hacks to get restrictPageTypes into the correct format
   // eslint-disable-next-line no-param-reassign
   restrictPageTypes = restrictPageTypes
@@ -31,6 +33,8 @@ export function createReactPageChooser(restrictPageTypes, initialParentPageId, o
     // Expose store to Redux DevTools extension.
     window.devToolsExtension ? window.devToolsExtension() : f => f
   ));
+
+  store.dispatch(setApi(new PagesAPI(apiBaseUrl)));
 
   const onModalClose = () => {
     ReactDOM.render(<div />, modalPlacement);
