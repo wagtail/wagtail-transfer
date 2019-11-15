@@ -3,7 +3,8 @@ import uuid
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse, JsonResponse, Http404
-from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.shortcuts import get_object_or_404, render
 import requests
 
 from wagtail.core.models import Page
@@ -64,3 +65,14 @@ def chooser_api_proxy(request, source_name, path):
     }, timeout=5)
 
     return HttpResponse(response.content, status=response.status_code)
+
+
+def choose_page(request, source_name):
+    source_config = getattr(settings, 'WAGTAILTRANSFER_SOURCES', {}).get(source_name)
+
+    if source_config is None:
+        raise Http404("Source does not exist")
+
+    return render(request, 'wagtail_transfer/choose_page.html', {
+        'api_base_url': reverse('wagtail_transfer_admin:chooser_api_proxy', args=[source_name, ''])
+    })

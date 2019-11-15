@@ -8,6 +8,8 @@ import PageChooser from './PageChooser';
 import pageChooser from './reducers';
 import { PagesAPI } from './lib/api/admin';
 import { setApi } from './actions';
+import PageChooserWidget from './PageChooserWidget';
+
 
 export function createReactPageChooser(apiBaseUrl, restrictPageTypes, initialParentPageId, onPageChosen) {
   // A few hacks to get restrictPageTypes into the correct format
@@ -56,3 +58,19 @@ export function createReactPageChooser(apiBaseUrl, restrictPageTypes, initialPar
 }
 
 window.createReactPageChooser = createReactPageChooser;
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('[data-wagtail-component="page-chooser"]').forEach(element => {
+    const apiBaseUrl = element.dataset.apiBaseUrl;
+
+    const onChoose = setPageData => {
+      createReactPageChooser(apiBaseUrl, [], 'root', setPageData);
+    };
+
+    ReactDOM.render(
+      <PageChooserWidget onChoose={onChoose} />,
+      element
+    );
+  });
+});
