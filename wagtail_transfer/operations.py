@@ -55,13 +55,17 @@ class ImportPlanner:
         # objects we need to fetch to satisfy postponed_tasks, expressed as (model_class, source_id)
         self.missing_object_data = set()
 
+        # set of operations to be performed in this import.
+        # An operation is an object with a `run` method which accomplishes the task.
+        # It also has a list of dependencies - objectives that must be completed before the `run`
+        # method can be called.
+        self.operations = set()
+
         # Mapping from objectives to operations that satisfy that objective. If the objective
         # does not require any action (e.g. it's an 'ensure exists' on an object that already
         # exists), the value is None.
         # A task can be converted into an operation once all the object data relating to it has
-        # been fetched. An operation is an object with a `run` method which accomplishes the task.
-        # It also has a list of dependencies - objectives that must be completed before the `run`
-        # method can be called.
+        # been fetched.
         self.resolutions = {}
 
         # Mapping from tasks to operations that perform the task
@@ -241,14 +245,33 @@ class ImportPlanner:
             # and add objectives to ensure that they're all updated to their newest versions
             for rel in get_all_child_relations(specific_model):
                 related_base_model = get_base_model(rel.related_model)
+                child_uids = set()
+
                 for child_obj_data in object_data['fields'][rel.name]:
                     # Add child object data to the object_data_by_source lookup
                     self._add_object_data_to_lookup(child_obj_data)
+
                     # Add an objective for handling the child object. Regardless of whether
                     # this is a 'create' or 'update' task, we want the child objects to be at
                     # their most up-to-date versions, so set the objective type to 'updated'
                     self._add_objective((related_base_model, child_obj_data['pk'], 'updated'))
 
+                    # look up the child object's UID
+                    uid = self.uids_by_source[(related_base_model, child_obj_data['pk'])]
+                    child_uids.add(uid)
+
+                if action == 'update':
+                    # delete any child objects on the existing object if they can't be mapped back
+                    # to one of the uids in the new set
+                    matched_destination_ids = IDMapping.objects.filter(
+                        uid__in=child_uids,
+                        content_type=ContentType.objects.get_for_model(related_base_model)
+                    ).values_list('local_id', flat=True)
+                    for child in getattr(obj, rel.name).all():
+                        if str(child.pk) not in matched_destination_ids:
+                            self.operations.add(DeleteModel(child))
+
+        self.operations.add(operation)
         self.resolutions[objective] = operation
         self.task_resolutions[task] = operation
 
@@ -279,7 +302,7 @@ class ImportPlanner:
 
         # arrange operations into an order that satisfies dependencies
         operation_order = []
-        for operation in self.resolutions.values():
+        for operation in self.operations:
             if operation:
                 self._add_to_operation_order(operation, operation_order)
 
@@ -326,13 +349,29 @@ class Operation:
     necessary to retrieve more data), finding a valid sequence to run them in, and running them all
     within a transaction.
     """
-    def __init__(self, model, object_data):
-        self.model = model
-        self.base_model = get_base_model(model)
-        self.object_data = object_data
-
     def run(self, context):
         raise NotImplemented
+
+    @property
+    def dependencies(self):
+        """A list of objectives that must be satisfied before we can import this page."""
+        return []
+
+
+class SaveOperationMixin:
+    """
+    Mixin class to handle the common logic of CreateModel and UpdateModel operations, namely:
+    * Writing the field data stored in `self.object_data` to the model instance `self.instance` -
+      which may be an existing instance (in the case of an update) or a new unsaved one (in the
+      case of a creation)
+    * Remapping any IDs of related ids that appear in this field data
+    * Declaring these related objects as dependencies
+
+    Requires subclasses to define `self.model`, `self.instance` and `self.object_data`.
+    """
+    @cached_property
+    def base_model(self):
+        return get_base_model(self.model)
 
     def _populate_fields(self, context):
         for field in self.model._meta.get_fields():
@@ -358,7 +397,7 @@ class Operation:
     @cached_property
     def dependencies(self):
         # A list of objectives that must be satisfied before we can import this page
-        deps = []
+        deps = super().dependencies
 
         for field in self.model._meta.get_fields():
             if isinstance(field, models.ForeignKey):
@@ -372,7 +411,11 @@ class Operation:
         return deps
 
 
-class CreateModel(Operation):
+class CreateModel(SaveOperationMixin, Operation):
+    def __init__(self, model, object_data):
+        self.model = model
+        self.object_data = object_data
+
     def run(self, context):
         # Create object and populate its attributes from field_data
         self.instance = self.model()
@@ -417,10 +460,11 @@ class CreatePage(CreateModel):
         parent_page.add_child(instance=self.instance)
 
 
-class UpdateModel(Operation):
+class UpdateModel(SaveOperationMixin, Operation):
     def __init__(self, instance, object_data):
         self.instance = instance
-        super().__init__(type(instance), object_data)
+        self.model = type(instance)
+        self.object_data = object_data
 
     def run(self, context):
         self._populate_fields(context)
@@ -429,3 +473,14 @@ class UpdateModel(Operation):
 
 class UpdatePage(UpdateModel):
     pass
+
+
+class DeleteModel(Operation):
+    def __init__(self, instance):
+        self.instance = instance
+
+    def run(self, context):
+        self.instance.delete()
+
+    # TODO: work out whether we need to check for incoming FK relations with on_delete=CASCADE
+    # and declare those as 'must delete this first' dependencies
