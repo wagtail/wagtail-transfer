@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.functional import cached_property
+from modelcluster.models import ClusterableModel, get_all_child_relations
 from wagtail.core.models import Page
 
 from .models import get_base_model, IDMapping
@@ -106,9 +107,7 @@ class ImportPlanner:
 
         # add object data to the object_data_by_source dict
         for obj_data in data['objects']:
-            model = self._base_model_for_path(obj_data['model'])
-            source_id = obj_data['pk']
-            self.object_data_by_source[(model, source_id)] = obj_data
+            self._add_object_data_to_lookup(obj_data)
 
         # retry tasks that were previously postponed due to missing object data
         self._retry_tasks()
@@ -119,17 +118,26 @@ class ImportPlanner:
             model = self._base_model_for_path(model_path)
             objective = (model, source_id, 'updated')
 
-            # add to the set of objectives that need handling, unless it's one we've already seen
-            # (in which case it's either in the queue to be handled, or has been handled already)
-            if objective not in self.objectives:
-                self.objectives.add(objective)
-                self.unhandled_objectives.add(objective)
+            # add to the set of objectives that need handling
+            self._add_objective(objective)
 
         # Process all unhandled objectives - which may trigger new objectives as dependencies of
         # the resulting operations - until no unhandled objectives remain
         while self.unhandled_objectives:
             objective = self.unhandled_objectives.pop()
             self._handle_objective(objective)
+
+    def _add_object_data_to_lookup(self, obj_data):
+        model = self._base_model_for_path(obj_data['model'])
+        source_id = obj_data['pk']
+        self.object_data_by_source[(model, source_id)] = obj_data
+
+    def _add_objective(self, objective):
+        # add to the set of objectives that need handling, unless it's one we've already seen
+        # (in which case it's either in the queue to be handled, or has been handled already)
+        if objective not in self.objectives:
+            self.objectives.add(objective)
+            self.unhandled_objectives.add(objective)
 
     def _handle_objective(self, objective):
         model, source_id, objective_type = objective
@@ -228,13 +236,24 @@ class ImportPlanner:
                 obj = specific_model.objects.get(pk=destination_id)
                 operation = UpdateModel(obj, object_data)
 
+        if issubclass(specific_model, ClusterableModel):
+            # Process child object relations for this item
+            # and add objectives to ensure that they're all updated to their newest versions
+            for rel in get_all_child_relations(specific_model):
+                related_base_model = get_base_model(rel.related_model)
+                for child_obj_data in object_data['fields'][rel.name]:
+                    # Add child object data to the object_data_by_source lookup
+                    self._add_object_data_to_lookup(child_obj_data)
+                    # Add an objective for handling the child object. Regardless of whether
+                    # this is a 'create' or 'update' task, we want the child objects to be at
+                    # their most up-to-date versions, so set the objective type to 'updated'
+                    self._add_objective((related_base_model, child_obj_data['pk'], 'updated'))
+
         self.resolutions[objective] = operation
         self.task_resolutions[task] = operation
 
         for objective in operation.dependencies:
-            if objective not in self.objectives:
-                self.objectives.add(objective)
-                self.unhandled_objectives.add(objective)
+            self._add_objective(objective)
 
     def _retry_tasks(self):
         """

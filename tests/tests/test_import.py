@@ -189,5 +189,6 @@ class TestImport(TestCase):
         importer.add_json(data)
         importer.run()
 
-        # page = SectionedPage.objects.get(url_path='/home/how-to-boil-an-egg/')
-        # self.assertEqual(page.sections.count(), 2)
+        page = SectionedPage.objects.get(url_path='/home/how-to-boil-an-egg/')
+        self.assertEqual(page.sections.count(), 2)
+        self.assertEqual(page.sections.first().title, "Boil the outside of the egg")
