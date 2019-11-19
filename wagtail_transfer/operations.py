@@ -316,9 +316,17 @@ class Operation:
         raise NotImplemented
 
     def _populate_fields(self, context):
-        for field_name, value in self.object_data['fields'].items():
-            field = self.model._meta.get_field(field_name)
+        for field in self.model._meta.get_fields():
+            if not isinstance(field, models.Field):
+                # populate data for actual fields only; ignore reverse relations
+                continue
 
+            try:
+                value = self.object_data['fields'][field.name]
+            except KeyError:
+                continue
+
+            # translate foreignkey references to their new IDs
             if isinstance(field, models.ForeignKey):
                 target_model = get_base_model(field.related_model)
                 value = context.destination_ids_by_source[(target_model, value)]

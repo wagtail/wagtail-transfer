@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from wagtail_transfer.operations import ImportPlanner
-from tests.models import SimplePage, SponsoredPage
+from tests.models import SectionedPage, SimplePage, SponsoredPage
 
 
 class TestImport(TestCase):
@@ -136,3 +136,58 @@ class TestImport(TestCase):
         created_page = SponsoredPage.objects.get(url_path='/home/eggs-are-great-too/')
         self.assertEqual(created_page.intro, "you can make cakes with them")
         self.assertEqual(created_page.advert.slogan, "go to work on an egg")
+
+    def test_import_page_with_child_models(self):
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 100]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 100, "10000000-1000-1000-1000-100000000000"],
+                ["tests.sectionedpagesection", 101, "10100000-1010-1010-1010-101000000000"],
+                ["tests.sectionedpagesection", 102, "10200000-1020-1020-1020-102000000000"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.sectionedpage",
+                    "pk": 100,
+                    "parent_id": 1,
+                    "fields": {
+                        "title": "How to boil an egg",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "how-to-boil-an-egg",
+                        "intro": "This is how to boil an egg",
+                        "sections": [
+                            {
+                                "model": "tests.sectionedpagesection",
+                                "pk": 101,
+                                "fields": {
+                                    "sort_order": 0,
+                                    "title": "Boil the outside of the egg",
+                                    "body": "...",
+                                    "page": 100
+                                }
+                            },
+                            {
+                                "model": "tests.sectionedpagesection",
+                                "pk": 102,
+                                "fields": {
+                                    "sort_order": 1,
+                                    "title": "Boil the rest of the egg",
+                                    "body": "...",
+                                    "page": 100
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(100, 2)
+        importer.add_json(data)
+        importer.run()
+
+        # page = SectionedPage.objects.get(url_path='/home/how-to-boil-an-egg/')
+        # self.assertEqual(page.sections.count(), 2)
