@@ -6,14 +6,14 @@ const postcssCustomProperties = require('postcss-custom-properties');
 const sass = require('sass');
 
 const options = {
-    entry: './src/index.js',
+    entry: './wagtail_transfer/static_src/index.js',
     output: {
-        path: path.resolve('../../static/wagtail_react_chooser'),
-        filename: 'js/react-page-chooser.js',
+        path: path.resolve('./wagtail_transfer/static/wagtail_transfer'),
+        filename: 'js/wagtail_transfer.js',
     },
     plugins: [
         new MiniCssExtractPlugin({
-            filename: 'css/react-page-chooser.css',
+            filename: 'css/wagtail_transfer.css',
         }),
     ],
     module: {

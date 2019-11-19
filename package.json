@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack --mode=production",
     "start": "webpack --mode=development --watch",
-    "format": "prettier --write src/**/*.{js,ts,tsx,scss}"
+    "format": "prettier --write wagtail_transfer/static_src/**/*.{js,ts,tsx,scss}"
   },
   "author": "",
   "license": "ISC",
