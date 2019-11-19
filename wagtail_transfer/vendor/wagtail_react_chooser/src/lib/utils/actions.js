@@ -3,12 +3,13 @@ const identity = func => func;
 // Stolen from the following project (had a 18kb footprint at the time).
 // https://github.com/acdlite/redux-actions/blob/79c68635fb1524c1b1cf8e2398d4b099b53ca8de/src/createAction.js
 export function createAction(type, actionCreator, metaCreator) {
-  const finalActionCreator = typeof actionCreator === 'function' ? actionCreator : identity;
+  const finalActionCreator =
+    typeof actionCreator === 'function' ? actionCreator : identity;
 
   return (...args) => {
     const action = {
       type,
-      payload: finalActionCreator(...args),
+      payload: finalActionCreator(...args)
     };
 
     if (action.payload instanceof Error) {

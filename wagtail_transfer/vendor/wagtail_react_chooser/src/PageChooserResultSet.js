@@ -14,7 +14,7 @@ const propTypes = {
   parentPage: PropTypes.any,
   pageNumber: PropTypes.number.isRequired,
   totalPages: PropTypes.number.isRequired,
-  onChangePage: PropTypes.func.isRequired,
+  onChangePage: PropTypes.func.isRequired
 };
 
 const defaultProps = {
@@ -22,7 +22,7 @@ const defaultProps = {
   restrictPageTypes: [],
   items: [],
   pageTypes: {},
-  parentPage: null,
+  parentPage: null
 };
 
 class PageChooserResultSet extends React.Component {
@@ -34,7 +34,10 @@ class PageChooserResultSet extends React.Component {
 
   pageIsChoosable(page) {
     const { restrictPageTypes } = this.props;
-    if (restrictPageTypes != null && restrictPageTypes.indexOf(page.meta.type.toLowerCase()) === -1) {
+    if (
+      restrictPageTypes != null &&
+      restrictPageTypes.indexOf(page.meta.type.toLowerCase()) === -1
+    ) {
       return false;
     }
 
@@ -42,22 +45,24 @@ class PageChooserResultSet extends React.Component {
   }
 
   render() {
-    const { items,
+    const {
+      items,
       onPageChosen,
       onNavigate,
       pageTypes,
       parentPage,
       pageNumber,
       totalPages,
-      onChangePage } = this.props;
+      onChangePage
+    } = this.props;
 
     const results = items.map((page, i) => {
-      const onChoose = (e) => {
+      const onChoose = e => {
         onPageChosen(page);
         e.preventDefault();
       };
 
-      const handleNavigate = (e) => {
+      const handleNavigate = e => {
         onNavigate(page);
         e.preventDefault();
       };
@@ -79,12 +84,12 @@ class PageChooserResultSet extends React.Component {
     let parent = null;
 
     if (parentPage) {
-      const onChoose = (e) => {
+      const onChoose = e => {
         onPageChosen(parentPage);
         e.preventDefault();
       };
 
-      const handleNavigate = (e) => {
+      const handleNavigate = e => {
         onNavigate(parentPage);
         e.preventDefault();
       };
@@ -122,9 +127,7 @@ class PageChooserResultSet extends React.Component {
             </tr>
             {parent}
           </thead>
-          <tbody>
-            {results}
-          </tbody>
+          <tbody>{results}</tbody>
         </table>
 
         <PageChooserPagination

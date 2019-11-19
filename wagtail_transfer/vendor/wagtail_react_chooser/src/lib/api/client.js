@@ -3,7 +3,7 @@ const Headers = global.Headers;
 
 const REQUEST_TIMEOUT = 15000;
 
-const checkStatus = (response) =>  {
+const checkStatus = response => {
   if (response.status >= 200 && response.status < 300) {
     return response;
   }
@@ -23,13 +23,16 @@ const timeout = (ms, promise) => {
       reject(new Error('Response timeout'));
     }, ms);
 
-    promise.then((res) => {
-      clearTimeout(timeoutId);
-      resolve(res);
-    }, (err) => {
-      clearTimeout(timeoutId);
-      reject(err);
-    });
+    promise.then(
+      res => {
+        clearTimeout(timeoutId);
+        resolve(res);
+      },
+      err => {
+        clearTimeout(timeoutId);
+        reject(err);
+      }
+    );
   });
 
   return race;
@@ -43,8 +46,8 @@ const request = (method, url) => {
   const options = {
     credentials: 'same-origin',
     headers: new Headers({
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
+      Accept: 'application/json',
+      'Content-Type': 'application/json'
     }),
     method: method
   };

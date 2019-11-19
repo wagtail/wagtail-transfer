@@ -12,11 +12,11 @@ const propTypes = {
   restrictPageTypes: PropTypes.array,
   onPageChosen: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
-  onChangePage: PropTypes.func.isRequired,
+  onChangePage: PropTypes.func.isRequired
 };
 
 const defaultProps = {
-  parentPage: null,
+  parentPage: null
 };
 
 class PageChooserBrowseView extends React.Component {
@@ -27,8 +27,8 @@ class PageChooserBrowseView extends React.Component {
     if (parentPage) {
       const ancestorPages = parentPage.meta.ancestors;
 
-      breadcrumbItems = ancestorPages.map((ancestorPage) => {
-        const onClickNavigate = (e) => {
+      breadcrumbItems = ancestorPages.map(ancestorPage => {
+        const onClickNavigate = e => {
           onNavigate(ancestorPage);
           e.preventDefault();
         };
@@ -49,11 +49,7 @@ class PageChooserBrowseView extends React.Component {
 
         return (
           <li key={ancestorPage.id}>
-            <a
-              href="#"
-              className="navigate-pages"
-              onClick={onClickNavigate}
-            >
+            <a href="#" className="navigate-pages" onClick={onClickNavigate}>
               {ancestorPage.title}
             </a>
           </li>
@@ -61,11 +57,7 @@ class PageChooserBrowseView extends React.Component {
       });
     }
 
-    return (
-      <ul className="breadcrumb">
-        {breadcrumbItems}
-      </ul>
-    );
+    return <ul className="breadcrumb">{breadcrumbItems}</ul>;
   }
   render() {
     const {
@@ -77,7 +69,7 @@ class PageChooserBrowseView extends React.Component {
       restrictPageTypes,
       onPageChosen,
       onNavigate,
-      onChangePage,
+      onChangePage
     } = this.props;
 
     return (

@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 
 const propTypes = {
   onSearch: PropTypes.func.isRequired,
-  searchEnabled: PropTypes.bool.isRequired,
+  searchEnabled: PropTypes.bool.isRequired
 };
 
 const PageChooserHeader = ({ onSearch, searchEnabled }) => (
@@ -11,17 +11,13 @@ const PageChooserHeader = ({ onSearch, searchEnabled }) => (
     <div className="row">
       <div className="left">
         <div className="col">
-          <h1 className="icon icon-doc-empty-inverse">
-            Choose a page
-          </h1>
+          <h1 className="icon icon-doc-empty-inverse">Choose a page</h1>
         </div>
         <form className="col search-form" noValidate={true}>
           <ul className="fields">
             <li className="required">
               <div className="field char_field text_input field-small iconfield">
-                <label htmlFor="id_q">
-                  Search term:
-                </label>
+                <label htmlFor="id_q">Search term:</label>
                 <div className="field-content">
                   <div className="input icon-search ">
                     <input

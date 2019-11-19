@@ -3,18 +3,17 @@ import PropTypes from 'prop-types';
 
 const propTypes = {
   isActive: PropTypes.bool,
-  children: PropTypes.node,
+  children: PropTypes.node
 };
 
 const defaultProps = {
   isActive: false,
-  children: null,
+  children: null
 };
 
-const PageChooserSpinner = ({ isActive, children }) =>
-  <div className={`loading-mask${isActive ? ' loading' : ''}`}>
-    {children}
-  </div>;
+const PageChooserSpinner = ({ isActive, children }) => (
+  <div className={`loading-mask${isActive ? ' loading' : ''}`}>{children}</div>
+);
 
 PageChooserSpinner.propTypes = propTypes;
 PageChooserSpinner.defaultProps = defaultProps;

@@ -12,17 +12,17 @@ const propTypes = {
   restrictPageTypes: PropTypes.array,
   onPageChosen: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
-  onChangePage: PropTypes.func.isRequired,
+  onChangePage: PropTypes.func.isRequired
 };
 
-const renderTitle = (totalItems) => {
+const renderTitle = totalItems => {
   switch (totalItems) {
-  case 0:
-    return "There are no matches";
-  case 1:
-    return "There is one match";
-  default:
-    return `There are ${totalItems} matches`;
+    case 0:
+      return 'There are no matches';
+    case 1:
+      return 'There is one match';
+    default:
+      return `There are ${totalItems} matches`;
   }
 };
 
@@ -36,7 +36,7 @@ function PageChooserSearchView(props) {
     restrictPageTypes,
     onPageChosen,
     onNavigate,
-    onChangePage,
+    onChangePage
   } = props;
 
   return (
