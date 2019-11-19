@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 
-import ModalWindow from './lib/ModalWindow';
+import ModalWindow from '../lib/ModalWindow';
 
 import * as actions from './actions';
 import PageChooserHeader from './PageChooserHeader';

@@ -1,6 +1,4 @@
-import { createAction } from '../lib/utils/actions';
-
-import { PagesAPI } from '../lib/api/admin';
+import { createAction } from '../../lib/utils/actions';
 
 function getHeaders() {
   const headers = new Headers();
