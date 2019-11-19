@@ -1,19 +1,21 @@
 import * as React from 'react';
 
-export default function PageChooserWidget({ onChoose }) {
-  const [pageData, setPageData] = React.useState(null);
+import { createReactPageChooser } from '../../chooser';
 
+export default function PageChooserWidget({ apiBaseUrl, value, onChange }) {
   const onClickChoose = () => {
-    onChoose(setPageData);
+    createReactPageChooser(apiBaseUrl, [], 'root', newValue => {
+      onChange(newValue);
+    });
   };
 
   const classNames = ['chooser', 'page-chooser'];
 
-  if (pageData !== null) {
+  if (value !== null) {
     return (
       <div className={classNames.join(' ')}>
         <div className="chosen">
-          <span className="title">{pageData.title}</span>
+          <span className="title">{value.title}</span>
 
           <ul className="actions">
             <li>
