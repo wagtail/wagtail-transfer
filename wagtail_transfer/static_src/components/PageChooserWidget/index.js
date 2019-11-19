@@ -21,7 +21,7 @@ export default function PageChooserWidget({ apiBaseUrl, value, onChange }) {
             <li>
               <button
                 type="button"
-                class="button action-choose button-small button-secondary"
+                className="button action-choose button-small button-secondary"
                 onClick={onClickChoose}
               >
                 Choose another page
