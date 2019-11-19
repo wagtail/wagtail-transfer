@@ -1,4 +1,5 @@
 import uuid
+import json
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -67,12 +68,14 @@ def chooser_api_proxy(request, source_name, path):
     return HttpResponse(response.content, status=response.status_code)
 
 
-def choose_page(request, source_name):
-    source_config = getattr(settings, 'WAGTAILTRANSFER_SOURCES', {}).get(source_name)
-
-    if source_config is None:
-        raise Http404("Source does not exist")
-
+def choose_page(request):
     return render(request, 'wagtail_transfer/choose_page.html', {
-        'api_base_url': reverse('wagtail_transfer_admin:chooser_api_proxy', args=[source_name, ''])
+        'sources_data': json.dumps([
+            {
+                'value': source_name,
+                'label': source_name,
+                'page_chooser_api': reverse('wagtail_transfer_admin:chooser_api_proxy', args=[source_name, ''])
+            }
+            for source_name in getattr(settings, 'WAGTAILTRANSFER_SOURCES', {}).keys()
+        ]),
     })

@@ -17,5 +17,7 @@
     {% trans "Choose a page" as title_str %}
     {% include "wagtailadmin/shared/header.html" with title=title_str %}
 
-    <div data-wagtail-component="page-chooser" data-api-base-url="{{ api_base_url }}"></div>
+    <div class="nice-padding">
+        <div data-wagtail-component="content-import-form" data-local-api-base-url="{% url 'wagtailadmin_api_v1:pages:listing' %}" data-sources="{{ sources_data }}"></div>
+    </div>
 {% endblock %}
