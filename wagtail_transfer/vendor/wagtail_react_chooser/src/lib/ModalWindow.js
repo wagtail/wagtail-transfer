@@ -2,15 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const propTypes = {
-  onModalClose: PropTypes.func.isRequired,
+  onModalClose: PropTypes.func.isRequired
 };
 
 class ModalWindow extends React.Component {
   // eslint-disable-next-line class-methods-use-this
   renderModalContents() {
-    return (
-      <div>Empty</div>
-    );
+    return <div>Empty</div>;
   }
 
   render() {
@@ -35,9 +33,7 @@ class ModalWindow extends React.Component {
               >
                 &times;
               </button>
-              <div className="modal-body">
-                {this.renderModalContents()}
-              </div>
+              <div className="modal-body">{this.renderModalContents()}</div>
             </div>
           </div>
         </div>

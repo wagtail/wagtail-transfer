@@ -4,13 +4,15 @@ import PageChooserSearchView from './PageChooserSearchView';
 
 describe('PageChooserSearchView', () => {
   it('renders', () => {
-    expect(shallow((
-      <PageChooserSearchView
-        onPageChosen={() => {}}
-        onNavigate={() => {}}
-        pageTypes={{}}
-        totalItems={0}
-      />
-    ))).toMatchSnapshot();
+    expect(
+      shallow(
+        <PageChooserSearchView
+          onPageChosen={() => {}}
+          onNavigate={() => {}}
+          pageTypes={{}}
+          totalItems={0}
+        />
+      )
+    ).toMatchSnapshot();
   });
 });

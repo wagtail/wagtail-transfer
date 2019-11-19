@@ -4,8 +4,8 @@ import PageChooserErrorView from './PageChooserErrorView';
 
 describe('PageChooserErrorView', () => {
   it('renders', () => {
-    expect(shallow((
-      <PageChooserErrorView errorMessage="test" />
-    ))).toMatchSnapshot();
+    expect(
+      shallow(<PageChooserErrorView errorMessage="test" />)
+    ).toMatchSnapshot();
   });
 });

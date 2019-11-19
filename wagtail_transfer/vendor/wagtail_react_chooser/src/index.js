@@ -10,8 +10,12 @@ import { PagesAPI } from './lib/api/admin';
 import { setApi } from './actions';
 import PageChooserWidget from './PageChooserWidget';
 
-
-export function createReactPageChooser(apiBaseUrl, restrictPageTypes, initialParentPageId, onPageChosen) {
+export function createReactPageChooser(
+  apiBaseUrl,
+  restrictPageTypes,
+  initialParentPageId,
+  onPageChosen
+) {
   // A few hacks to get restrictPageTypes into the correct format
   // eslint-disable-next-line no-param-reassign
   restrictPageTypes = restrictPageTypes
@@ -26,15 +30,17 @@ export function createReactPageChooser(apiBaseUrl, restrictPageTypes, initialPar
   const modalPlacement = document.createElement('div');
   document.body.appendChild(modalPlacement);
 
-  const middleware = [
-    thunkMiddleware,
-  ];
+  const middleware = [thunkMiddleware];
 
-  const store = createStore(pageChooser, {}, compose(
-    applyMiddleware(...middleware),
-    // Expose store to Redux DevTools extension.
-    window.devToolsExtension ? window.devToolsExtension() : f => f
-  ));
+  const store = createStore(
+    pageChooser,
+    {},
+    compose(
+      applyMiddleware(...middleware),
+      // Expose store to Redux DevTools extension.
+      window.devToolsExtension ? window.devToolsExtension() : f => f
+    )
+  );
 
   store.dispatch(setApi(new PagesAPI(apiBaseUrl)));
 
@@ -42,35 +48,34 @@ export function createReactPageChooser(apiBaseUrl, restrictPageTypes, initialPar
     ReactDOM.render(<div />, modalPlacement);
   };
 
-  ReactDOM.render((
+  ReactDOM.render(
     <Provider store={store}>
       <PageChooser
         onModalClose={onModalClose}
-        onPageChosen={(page) => {
+        onPageChosen={page => {
           onPageChosen(page);
           onModalClose();
         }}
         initialParentPageId={initialParentPageId}
         restrictPageTypes={restrictPageTypes || null}
       />
-    </Provider>
-  ), modalPlacement);
+    </Provider>,
+    modalPlacement
+  );
 }
 
 window.createReactPageChooser = createReactPageChooser;
 
-
 document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('[data-wagtail-component="page-chooser"]').forEach(element => {
-    const apiBaseUrl = element.dataset.apiBaseUrl;
+  document
+    .querySelectorAll('[data-wagtail-component="page-chooser"]')
+    .forEach(element => {
+      const apiBaseUrl = element.dataset.apiBaseUrl;
 
-    const onChoose = setPageData => {
-      createReactPageChooser(apiBaseUrl, [], 'root', setPageData);
-    };
+      const onChoose = setPageData => {
+        createReactPageChooser(apiBaseUrl, [], 'root', setPageData);
+      };
 
-    ReactDOM.render(
-      <PageChooserWidget onChoose={onChoose} />,
-      element
-    );
-  });
+      ReactDOM.render(<PageChooserWidget onChoose={onChoose} />, element);
+    });
 });

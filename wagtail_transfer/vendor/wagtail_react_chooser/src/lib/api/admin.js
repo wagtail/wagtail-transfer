@@ -14,10 +14,12 @@ class PagesQuery {
   getPage(pageNumber) {
     const queryParams = Object.assign({}, this.query, {
       limit: this.pageSize,
-      offset: pageNumber * this.pageSize,
+      offset: pageNumber * this.pageSize
     });
 
-    const encodedQueryParams = Object.entries(queryParams).map(kv => kv.map(encodeURIComponent).join("=")).join("&");
+    const encodedQueryParams = Object.entries(queryParams)
+      .map(kv => kv.map(encodeURIComponent).join('='))
+      .join('&');
 
     return get(`${this.api.endpointUrl}?${encodedQueryParams}`);
   }
@@ -29,8 +31,10 @@ export class PagesAPI {
     this.extraChildParams = extraChildParams;
   }
 
-  getPage(id, queryParams={}) {
-    const encodedQueryParams = Object.entries(queryParams).map(kv => kv.map(encodeURIComponent).join("=")).join("&");
+  getPage(id, queryParams = {}) {
+    const encodedQueryParams = Object.entries(queryParams)
+      .map(kv => kv.map(encodeURIComponent).join('='))
+      .join('&');
     return get(`${this.endpointUrl}${id}/?${encodedQueryParams}`);
   }
 

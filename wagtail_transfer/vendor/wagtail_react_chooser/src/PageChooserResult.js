@@ -9,13 +9,13 @@ const propTypes = {
   onChoose: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
   page: PropTypes.object.isRequired,
-  pageTypes: PropTypes.object,
+  pageTypes: PropTypes.object
 };
 
 const defaultProps = {
   pageTypes: {},
   isNavigable: false,
-  isParent: false,
+  isParent: false
 };
 
 // Capitalizes first letter without making any other letters lowercase
@@ -49,9 +49,7 @@ class PageChooserResult extends React.Component {
 
     return (
       <td className="title u-vertical-align-top" data-listing-page-title="">
-        <h2>
-          {page.title}
-        </h2>
+        <h2>{page.title}</h2>
       </td>
     );
   }
@@ -64,16 +62,17 @@ class PageChooserResult extends React.Component {
 
       return (
         <td className="updated u-vertical-align-top">
-          <div className="human-readable-date" title={updatedAt.format('D MMM YYYY h:mm a')}>
+          <div
+            className="human-readable-date"
+            title={updatedAt.format('D MMM YYYY h:mm a')}
+          >
             {updatedAt.fromNow()}
           </div>
         </td>
       );
     }
 
-    return (
-      <td className="updated u-vertical-align-top" />
-    );
+    return <td className="updated u-vertical-align-top" />;
   }
 
   renderType() {
@@ -102,7 +101,6 @@ class PageChooserResult extends React.Component {
           rel="noopener noreferrer"
           className="status-tag primary"
         >
-
           {page.meta.status.status}
         </a>
       </td>
@@ -127,9 +125,7 @@ class PageChooserResult extends React.Component {
       );
     }
 
-    return (
-      <td />
-    );
+    return <td />;
   }
 
   render() {

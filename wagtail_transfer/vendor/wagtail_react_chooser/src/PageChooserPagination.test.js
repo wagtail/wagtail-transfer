@@ -4,20 +4,14 @@ import PageChooserPagination from './PageChooserPagination';
 
 describe('PageChooserPagination', () => {
   it('renders', () => {
-    expect(shallow((
-      <PageChooserPagination
-        totalPages={0}
-        onChangePage={() => {}}
-      />
-    ))).toMatchSnapshot();
+    expect(
+      shallow(<PageChooserPagination totalPages={0} onChangePage={() => {}} />)
+    ).toMatchSnapshot();
   });
 
   it('has pages', () => {
-    expect(shallow((
-      <PageChooserPagination
-        totalPages={2}
-        onChangePage={() => {}}
-      />
-    ))).toMatchSnapshot();
+    expect(
+      shallow(<PageChooserPagination totalPages={2} onChangePage={() => {}} />)
+    ).toMatchSnapshot();
   });
 });

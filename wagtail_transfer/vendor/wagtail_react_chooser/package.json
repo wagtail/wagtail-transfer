@@ -5,7 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "build": "webpack --mode=production",
-    "start": "webpack --mode=development --watch"
+    "start": "webpack --mode=development --watch",
+    "format": "prettier --write src/**/*.{js,ts,tsx,scss}"
   },
   "author": "",
   "license": "ISC",
@@ -27,6 +28,7 @@
   "dependencies": {
     "@babel/core": "^7.7.2",
     "moment": "^2.24.0",
+    "prettier": "^1.19.1",
     "prop-types": "^15.7.2",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",

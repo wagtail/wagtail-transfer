@@ -2,19 +2,18 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const propTypes = {
-  errorMessage: PropTypes.node,
+  errorMessage: PropTypes.node
 };
 
 const defaultProps = {
-  errorMessage: null,
+  errorMessage: null
 };
 
-const PageChooserErrorView = ({ errorMessage }) =>
+const PageChooserErrorView = ({ errorMessage }) => (
   <div className="nice-padding">
-    <div className="help-block help-critical">
-      {errorMessage}
-    </div>
-  </div>;
+    <div className="help-block help-critical">{errorMessage}</div>
+  </div>
+);
 
 PageChooserErrorView.propTypes = propTypes;
 PageChooserErrorView.defaultProps = defaultProps;
