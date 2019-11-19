@@ -192,3 +192,72 @@ class TestImport(TestCase):
         page = SectionedPage.objects.get(url_path='/home/how-to-boil-an-egg/')
         self.assertEqual(page.sections.count(), 2)
         self.assertEqual(page.sections.first().title, "Boil the outside of the egg")
+
+        page_id = page.id
+        sections = page.sections.all()
+        section_1_id = sections[0].id
+        section_2_id = sections[1].id
+
+        # now try re-importing to update the existing page; among the child objects there will be
+        # one deletion, one update and one creation
+
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 100]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 100, "10000000-1000-1000-1000-100000000000"],
+                ["tests.sectionedpagesection", 102, "10200000-1020-1020-1020-102000000000"],
+                ["tests.sectionedpagesection", 103, "10300000-1030-1030-1030-103000000000"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.sectionedpage",
+                    "pk": 100,
+                    "parent_id": 1,
+                    "fields": {
+                        "title": "How to boil an egg",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "how-to-boil-an-egg",
+                        "intro": "This is still how to boil an egg",
+                        "sections": [
+                            {
+                                "model": "tests.sectionedpagesection",
+                                "pk": 102,
+                                "fields": {
+                                    "sort_order": 0,
+                                    "title": "Boil the egg",
+                                    "body": "...",
+                                    "page": 100
+                                }
+                            },
+                            {
+                                "model": "tests.sectionedpagesection",
+                                "pk": 103,
+                                "fields": {
+                                    "sort_order": 1,
+                                    "title": "Eat the egg",
+                                    "body": "...",
+                                    "page": 100
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(100, 2)
+        importer.add_json(data)
+        importer.run()
+
+        new_page = SectionedPage.objects.get(id=page_id)
+        self.assertEqual(new_page.intro, "This is still how to boil an egg")
+        self.assertEqual(new_page.sections.count(), 2)
+        new_sections = new_page.sections.all()
+        self.assertEqual(new_sections[0].id, section_2_id)
+        self.assertEqual(new_sections[0].title, "Boil the egg")
+
+        self.assertNotEqual(new_sections[1].id, section_1_id)
+        self.assertEqual(new_sections[1].title, "Eat the egg")
