@@ -1,8 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { createReactPageChooser } from './chooser';
-import PageChooserWidget from './PageChooserWidget';
+import PageChooserWidget from './components/PageChooserWidget';
 
 document.addEventListener('DOMContentLoaded', () => {
   document
@@ -10,10 +9,10 @@ document.addEventListener('DOMContentLoaded', () => {
     .forEach(element => {
       const apiBaseUrl = element.dataset.apiBaseUrl;
 
-      const onChoose = setPageData => {
-        createReactPageChooser(apiBaseUrl, [], 'root', setPageData);
+      const render = page => {
+        ReactDOM.render(<PageChooserWidget apiBaseUrl={apiBaseUrl} value={page} onChange={newPage => render(newPage)} />, element);
       };
 
-      ReactDOM.render(<PageChooserWidget onChoose={onChoose} />, element);
+      render(null);
     });
 });
