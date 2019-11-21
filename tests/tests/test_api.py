@@ -1,6 +1,7 @@
 import json
+from unittest import mock
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from wagtail.core.models import Page
 
 from tests.models import SectionedPage
@@ -75,3 +76,38 @@ class TestPagesApi(TestCase):
             if model_name == 'tests.sectionedpagesection' and pk == section_id
         ]
         self.assertEqual(len(matching_uids), 1)
+
+@override_settings(
+    WAGTAILTRANSFER_SOURCES = {
+        'staging': {
+            'CHOOSER_API': 'https://www.example.com/api/chooser/',
+        }
+    }
+)
+@mock.patch('requests.get')
+class TestChooserProxyApi(TestCase):
+    fixtures = ['test.json']
+
+    def setUp(self):
+        self.client.login(username='admin', password='password')
+
+    def test(self, get):
+        get.return_value.status_code = 200
+        get.return_value.content = b'test content'
+
+        response = self.client.get('/admin/wagtail-transfer/api/chooser-proxy/staging/foo?bar=baz', HTTP_ACCEPT='application/json')
+
+        get.assert_called_once_with('https://www.example.com/api/chooser/foo?bar=baz', headers={'Accept': 'application/json'}, timeout=5)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content, b'test content')
+
+    def test_with_unknown_source(self, get):
+        get.return_value.status_code = 200
+        get.return_value.content = b'test content'
+
+        response = self.client.get('/admin/wagtail-transfer/api/chooser-proxy/production/foo?bar=baz', HTTP_ACCEPT='application/json')
+
+        get.assert_not_called()
+
+        self.assertEqual(response.status_code, 404)
