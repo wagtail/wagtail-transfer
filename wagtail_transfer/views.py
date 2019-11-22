@@ -5,7 +5,8 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse, JsonResponse, Http404
 from django.urls import reverse
-from django.shortcuts import get_object_or_404, render
+from django.views.decorators.http import require_POST
+from django.shortcuts import get_object_or_404, render, redirect
 import requests
 
 from wagtail.core.models import Page
@@ -14,6 +15,8 @@ from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
 from .vendor.wagtail_api_v2.router import WagtailAPIRouter
 from .models import IDMapping
 from .serializers import get_model_serializer
+
+from .operations import ImportPlanner
 
 
 def pages_for_export(request, root_page_id):
@@ -79,3 +82,14 @@ def choose_page(request):
             for source_name in getattr(settings, 'WAGTAILTRANSFER_SOURCES', {}).keys()
         ]),
     })
+
+
+@require_POST
+def do_import(request):
+    response = requests.get(f"http://localhost:8000/wagtail-transfer/api/pages/{request.POST['source_page_id']}/")
+
+    importer = ImportPlanner(request.POST['source_page_id'], request.POST['dest_page_id'])
+    importer.add_json(response.content)
+    importer.run()
+
+    return redirect('wagtailadmin_explore', request.POST['dest_page_id'])

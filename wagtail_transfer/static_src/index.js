@@ -31,15 +31,31 @@ document.addEventListener('DOMContentLoaded', () => {
     .forEach(element => {
       const localApiBaseUrl = element.dataset.localApiBaseUrl; '/admin/api/v2beta/pages/';
       const sources = JSON.parse(element.dataset.sources);
+      const action = element.dataset.action;
+      const csrfToken = element.dataset.csrfToken;
 
-      [
-        {
-          label: 'staging.myapp.com',
-          value: 'staging',
-          page_chooser_api: '/admin/wagtail-transfer/api/chooser-proxy/staging/'
-        }
-      ];
-      const onSubmit = (source, sourcePage, destPage) => {};
+      const onSubmit = (source, sourcePage, destPage) => {
+        const formElement = document.createElement('form');
+        formElement.action = action;
+        formElement.method = 'post';
+
+        const addField = (name, value) => {
+          const fieldElement = document.createElement('input');
+          fieldElement.type = 'hidden';
+          fieldElement.name = name;;
+          fieldElement.value = value;
+          formElement.appendChild(fieldElement);
+        };
+
+        addField('csrfmiddlewaretoken', csrfToken);
+        addField('source', source.value);
+        addField('source_page_id', sourcePage.id);
+        addField('dest_page_id', destPage.id);
+
+        document.body.appendChild(formElement);
+
+        formElement.submit();
+      };
 
       ReactDOM.render(
         <ContentImportForm
