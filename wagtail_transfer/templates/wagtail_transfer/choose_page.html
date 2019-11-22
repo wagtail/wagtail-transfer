@@ -18,6 +18,6 @@
     {% include "wagtailadmin/shared/header.html" with title=title_str %}
 
     <div class="nice-padding">
-        <div data-wagtail-component="content-import-form" data-local-api-base-url="{% url 'wagtailadmin_api_v1:pages:listing' %}" data-sources="{{ sources_data }}"></div>
+        <div data-wagtail-component="content-import-form" data-local-api-base-url="{% url 'wagtail_transfer_admin:page_chooser_api:pages:listing' %}" data-sources="{{ sources_data }}"></div>
     </div>
 {% endblock %}
