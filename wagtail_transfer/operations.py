@@ -5,8 +5,10 @@ from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.functional import cached_property
 from modelcluster.models import ClusterableModel, get_all_child_relations
+from wagtail.core.fields import RichTextField
 from wagtail.core.models import Page
 
+from.field_adapters import rewriter
 from .models import get_base_model, IDMapping
 
 
@@ -384,6 +386,10 @@ class SaveOperationMixin:
             except KeyError:
                 continue
 
+            if isinstance(field, RichTextField):
+                value = rewriter(value, context)
+                print(value)
+
             # translate foreignkey references to their new IDs
             if isinstance(field, models.ForeignKey):
                 target_model = get_base_model(field.related_model)
@@ -406,6 +412,16 @@ class SaveOperationMixin:
                     # TODO: consult config to decide whether objective type should be 'exists' or 'updated'
                     deps.append(
                         (get_base_model(field.related_model), val, 'updated')
+                    )
+            elif isinstance(field, RichTextField):
+                objects = rewriter.objects(self.object_data['fields'].get(field.name))
+                pk = self.object_data['pk']
+                for model, id in objects:
+                    # TODO: add config check here
+                    if id == pk:
+                        continue
+                    deps.append(
+                        (model, id, 'updated')
                     )
 
         return deps
