@@ -4,7 +4,7 @@ from unittest import mock
 from django.test import TestCase, override_settings
 from wagtail.core.models import Page
 
-from tests.models import SectionedPage
+from tests.models import PageWithRichText, SectionedPage
 
 
 class TestPagesApi(TestCase):
@@ -76,6 +76,20 @@ class TestPagesApi(TestCase):
             if model_name == 'tests.sectionedpagesection' and pk == section_id
         ]
         self.assertEqual(len(matching_uids), 1)
+
+    def test_rich_text_with_page_link(self):
+        page = PageWithRichText(title="You won't believe how rich this cake was!", body='<p>But I have a <a id="1" linktype="page">link</a></p>')
+
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        response = self.client.get('/wagtail-transfer/api/pages/%d/' % page.id)
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertIn(['wagtailcore.page', 1, '11111111-1111-1111-1111-111111111111'], data['mappings'])
+
 
 @override_settings(
     WAGTAILTRANSFER_SOURCES = {

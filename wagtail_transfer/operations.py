@@ -5,8 +5,10 @@ from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.functional import cached_property
 from modelcluster.models import ClusterableModel, get_all_child_relations
+from wagtail.core.fields import RichTextField
 from wagtail.core.models import Page
 
+from .richtext import get_reference_handler
 from .models import get_base_model, IDMapping
 
 
@@ -374,6 +376,7 @@ class SaveOperationMixin:
         return get_base_model(self.model)
 
     def _populate_fields(self, context):
+        reference_handler = get_reference_handler()
         for field in self.model._meta.get_fields():
             if not isinstance(field, models.Field):
                 # populate data for actual fields only; ignore reverse relations
@@ -383,6 +386,10 @@ class SaveOperationMixin:
                 value = self.object_data['fields'][field.name]
             except KeyError:
                 continue
+
+            # translate rich text references to their new IDs if possible
+            if isinstance(field, RichTextField):
+                value = reference_handler.update_ids(value, context.destination_ids_by_source)
 
             # translate foreignkey references to their new IDs
             if isinstance(field, models.ForeignKey):
@@ -406,6 +413,16 @@ class SaveOperationMixin:
                     # TODO: consult config to decide whether objective type should be 'exists' or 'updated'
                     deps.append(
                         (get_base_model(field.related_model), val, 'updated')
+                    )
+            elif isinstance(field, RichTextField):
+                objects = get_reference_handler().get_objects(self.object_data['fields'].get(field.name))
+                pk = self.object_data['pk']
+                for model, id in objects:
+                    # TODO: add config check here
+                    if id == pk:
+                        continue
+                    deps.append(
+                        (model, id, 'exists')
                     )
 
         return deps

@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from wagtail_transfer.operations import ImportPlanner
-from tests.models import SectionedPage, SimplePage, SponsoredPage
+from tests.models import PageWithRichText, SectionedPage, SimplePage, SponsoredPage
 
 
 class TestImport(TestCase):
@@ -261,3 +261,39 @@ class TestImport(TestCase):
 
         self.assertNotEqual(new_sections[1].id, section_1_id)
         self.assertEqual(new_sections[1].title, "Eat the egg")
+
+    def test_import_page_with_rich_text_link(self):
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 15]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 12, "11111111-1111-1111-1111-111111111111"],
+                ["wagtailcore.page", 15, "01010101-0005-8765-7889-987889889898"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.pagewithrichtext",
+                    "pk": 15,
+                    "parent_id": 12,
+                    "fields": {
+                        "title": "Imported page with rich text",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "imported-rich-text-page",
+                        "body": "<p>But I have a <a id=\\"12\\" linktype=\\"page\\">link</a></p>"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(1, None)
+        importer.add_json(data)
+        importer.run()
+
+        page = PageWithRichText.objects.get(slug="imported-rich-text-page")
+
+        # tests that a page link id is changed successfully when imported
+        self.assertEqual(page.body, '<p>But I have a <a id="1" linktype="page">link</a></p>')
+
+        # TODO: this should include an embed type as well once document/image import is added

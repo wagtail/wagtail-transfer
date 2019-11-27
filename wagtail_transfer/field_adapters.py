@@ -2,7 +2,10 @@ from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
 from django.utils.encoding import is_protected_type
 
+from wagtail.core.fields import RichTextField
+
 from .models import get_base_model
+from .richtext import get_reference_handler
 
 
 class FieldAdapter:
@@ -66,10 +69,16 @@ class ManyToOneRelAdapter(FieldAdapter):
         return refs
 
 
+class RichTextAdapter(FieldAdapter):
+    def get_object_references(self, instance):
+        return get_reference_handler().get_objects(self.field.value_from_object(instance))
+
+
 ADAPTERS_BY_FIELD_CLASS = {
     models.Field: FieldAdapter,
     models.ForeignKey: ForeignKeyAdapter,
     ManyToOneRel: ManyToOneRelAdapter,
+    RichTextField: RichTextAdapter
 }
 
 
