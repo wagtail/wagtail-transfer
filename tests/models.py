@@ -1,5 +1,6 @@
 from django.db import models
 from modelcluster.fields import ParentalKey
+from wagtail.core.fields import RichTextField
 from wagtail.core.models import Orderable, Page
 
 
@@ -24,3 +25,8 @@ class SectionedPageSection(Orderable):
     page = ParentalKey(SectionedPage, related_name='sections')
     title = models.CharField(max_length=255)
     body = models.TextField()
+
+
+class PageWithRichText(Page):
+    body = RichTextField(max_length=255)
+

@@ -79,7 +79,14 @@
         "local_id": 3
     }
 },
-
+{
+    "pk": "11111111-1111-1111-1111-111111111111",
+    "model": "wagtail_transfer.idmapping",
+    "fields": {
+        "content_type": ["wagtailcore", "page"],
+        "local_id": 1
+    }
+},
 {
     "pk": 4,
     "model": "wagtailcore.page",
