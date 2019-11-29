@@ -23,9 +23,9 @@ RFC: https://github.com/wagtail/rfcs/pull/42
 
       WAGTAILTRANSFER_SOURCES = {
           'staging': {
-              'CHOOSER_API': 'https://staging.example.com/api/chooser/',
+              'CHOOSER_API': 'https://staging.example.com/wagtail-transfer/api/chooser/pages/',
           },
           'production': {
-              'CHOOSER_API': 'https://www.example.com/api/chooser/',
+              'CHOOSER_API': 'https://www.example.com/wagtail-transfer/api/chooser/pages/',
           },
       }
