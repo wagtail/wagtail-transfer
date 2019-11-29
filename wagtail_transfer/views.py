@@ -64,7 +64,9 @@ def chooser_api_proxy(request, source_name, path):
     if source_config is None:
         raise Http404("Source does not exist")
 
-    response = requests.get(f"{source_config['CHOOSER_API']}{path}?{request.GET.urlencode()}", headers={
+    base_url = source_config['BASE_URL'] + 'api/chooser/pages/'
+
+    response = requests.get(f"{base_url}{path}?{request.GET.urlencode()}", headers={
         'Accept': request.META['HTTP_ACCEPT'],
     }, timeout=5)
 
@@ -86,7 +88,8 @@ def choose_page(request):
 
 @require_POST
 def do_import(request):
-    response = requests.get(f"http://localhost:8000/wagtail-transfer/api/pages/{request.POST['source_page_id']}/")
+    source_config = settings.WAGTAILTRANSFER_SOURCES[request.POST['source']]
+    response = requests.get(f"{source_config['BASE_URL']}api/pages/{request.POST['source_page_id']}/")
 
     importer = ImportPlanner(request.POST['source_page_id'], request.POST['dest_page_id'])
     importer.add_json(response.content)

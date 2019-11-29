@@ -92,9 +92,9 @@ class TestPagesApi(TestCase):
 
 
 @override_settings(
-    WAGTAILTRANSFER_SOURCES = {
+    WAGTAILTRANSFER_SOURCES={
         'staging': {
-            'CHOOSER_API': 'https://www.example.com/api/chooser/',
+            'BASE_URL': 'https://www.example.com/wagtail-transfer/',
         }
     }
 )
@@ -111,7 +111,7 @@ class TestChooserProxyApi(TestCase):
 
         response = self.client.get('/admin/wagtail-transfer/api/chooser-proxy/staging/foo?bar=baz', HTTP_ACCEPT='application/json')
 
-        get.assert_called_once_with('https://www.example.com/api/chooser/foo?bar=baz', headers={'Accept': 'application/json'}, timeout=5)
+        get.assert_called_once_with('https://www.example.com/wagtail-transfer/api/chooser/pages/foo?bar=baz', headers={'Accept': 'application/json'}, timeout=5)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b'test content')
