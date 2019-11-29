@@ -8,7 +8,7 @@ from modelcluster.models import ClusterableModel, get_all_child_relations
 from wagtail.core.fields import RichTextField
 from wagtail.core.models import Page
 
-from.field_adapters import reference_handler
+from .richtext import get_reference_handler
 from .models import get_base_model, IDMapping
 
 
@@ -376,6 +376,7 @@ class SaveOperationMixin:
         return get_base_model(self.model)
 
     def _populate_fields(self, context):
+        reference_handler = get_reference_handler()
         # pass the ID mapping to the rich text reference handler
         reference_handler.set_context_ids(context.destination_ids_by_source)
         for field in self.model._meta.get_fields():
@@ -416,7 +417,7 @@ class SaveOperationMixin:
                         (get_base_model(field.related_model), val, 'updated')
                     )
             elif isinstance(field, RichTextField):
-                objects = reference_handler.get_objects(self.object_data['fields'].get(field.name))
+                objects = get_reference_handler().get_objects(self.object_data['fields'].get(field.name))
                 pk = self.object_data['pk']
                 for model, id in objects:
                     # TODO: add config check here

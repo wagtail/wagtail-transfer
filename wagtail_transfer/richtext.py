@@ -1,11 +1,9 @@
 import re
 
-from wagtail.core.rich_text.feature_registry import FeatureRegistry
+from wagtail.core.rich_text import features
 from wagtail.core.rich_text.rewriters import extract_attrs
 
 from .models import get_base_model
-
-features = FeatureRegistry()
 
 FIND_A_TAG = re.compile(r'<a(\b[^>]*)>')
 FIND_EMBED_TAG = re.compile(r'<embed(\b[^>]*)/>')
@@ -77,9 +75,17 @@ class MultiTypeRichTextReferenceHandler:
         return objects
 
 
-embed_handlers = features.get_embed_types()
-link_handlers = features.get_link_types()
-reference_handler = MultiTypeRichTextReferenceHandler([
-        RichTextReferenceHandler(link_handlers, FIND_A_TAG, 'linktype'),
-        RichTextReferenceHandler(embed_handlers, FIND_EMBED_TAG, 'embed')
-        ])
+REFERENCE_HANDLER = None
+
+
+def get_reference_handler():
+    global REFERENCE_HANDLER
+
+    if not REFERENCE_HANDLER:
+        embed_handlers = features.get_embed_types()
+        link_handlers = features.get_link_types()
+        REFERENCE_HANDLER = MultiTypeRichTextReferenceHandler([
+            RichTextReferenceHandler(link_handlers, FIND_A_TAG, 'linktype'),
+            RichTextReferenceHandler(embed_handlers, FIND_EMBED_TAG, 'embed')
+            ])
+    return REFERENCE_HANDLER
