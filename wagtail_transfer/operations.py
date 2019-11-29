@@ -15,8 +15,8 @@ from .models import get_base_model, IDMapping
 class ImportPlanner:
     def __init__(self, root_page_source_pk, destination_parent_id):
 
-        self.root_page_source_pk = root_page_source_pk
-        self.destination_parent_id = destination_parent_id
+        self.root_page_source_pk = int(root_page_source_pk)
+        self.destination_parent_id = int(destination_parent_id)
 
         # A mapping of objects on the source site to their IDs on the destination site.
         # Keys are tuples of (model_class, source_id); values are destination IDs.
