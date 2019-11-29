@@ -377,8 +377,6 @@ class SaveOperationMixin:
 
     def _populate_fields(self, context):
         reference_handler = get_reference_handler()
-        # pass the ID mapping to the rich text reference handler
-        reference_handler.set_context_ids(context.destination_ids_by_source)
         for field in self.model._meta.get_fields():
             if not isinstance(field, models.Field):
                 # populate data for actual fields only; ignore reverse relations
@@ -391,7 +389,7 @@ class SaveOperationMixin:
 
             # translate rich text references to their new IDs if possible
             if isinstance(field, RichTextField):
-                value = reference_handler.update_ids(value)
+                value = reference_handler.update_ids(value, context.destination_ids_by_source)
 
             # translate foreignkey references to their new IDs
             if isinstance(field, models.ForeignKey):

@@ -1,4 +1,5 @@
 import re
+from functools import partial
 
 from wagtail.core.rich_text import features
 from wagtail.core.rich_text.rewriters import extract_attrs
@@ -22,13 +23,13 @@ class RichTextReferenceHandler:
         self.type_attribute = type_attribute
         self.destination_ids_by_source = destination_ids_by_source
 
-    def update_tag_id(self, match):
+    def update_tag_id(self, match, destination_ids_by_source):
         # Updates a specific tag's id from source to destination Wagtail instance
         attrs = extract_attrs(match.group(1))
         try:
             handler = self.handlers[attrs[self.type_attribute]]
             target_model = get_base_model(handler.get_model())
-            new_id = self.destination_ids_by_source.get((target_model, int(attrs['id'])), int(attrs['id']))
+            new_id = destination_ids_by_source.get((target_model, int(attrs['id'])), int(attrs['id']))
             return FIND_ID.sub('id="{0}"'.format(str(new_id)), match.group(0))
         except KeyError:
             # If the relevant handler cannot be found, don't update the tag id
@@ -49,9 +50,9 @@ class RichTextReferenceHandler:
                 pass
         return objects
 
-    def update_ids(self, html):
+    def update_ids(self, html, destination_ids_by_source):
         # Update source instance ids to destination instance ids when possible
-        return self.tag_matcher.sub(self.update_tag_id, html)
+        return self.tag_matcher.sub(partial(self.update_tag_id, destination_ids_by_source=destination_ids_by_source), html)
 
 
 class MultiTypeRichTextReferenceHandler:
@@ -59,13 +60,9 @@ class MultiTypeRichTextReferenceHandler:
     def __init__(self, handlers):
         self.handlers = handlers
 
-    def set_context_ids(self, destination_ids_by_source):
+    def update_ids(self, html, destination_ids_by_source):
         for handler in self.handlers:
-            handler.destination_ids_by_source = destination_ids_by_source
-
-    def update_ids(self, html):
-        for handler in self.handlers:
-            html = handler.update_ids(html)
+            html = handler.update_ids(html, destination_ids_by_source)
         return html
 
     def get_objects(self, html):
