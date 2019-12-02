@@ -9,5 +9,6 @@ chooser_api.register_endpoint('pages', views.PageChooserAPIViewSet)
 
 urlpatterns = [
     url(r'^api/pages/(\d+)/$', views.pages_for_export, name='wagtail_transfer_pages'),
+    url(r'^api/objects/$', views.objects_for_export, name='wagtail_transfer_objects'),
     url(r'^api/chooser/', chooser_api.urls),
 ]
