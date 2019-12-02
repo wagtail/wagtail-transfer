@@ -21,3 +21,19 @@ def get_base_model(model):
     if model._meta.parents:
         model = model._meta.get_parent_list()[0]
     return model
+
+
+def get_model_for_path(model_path):
+    """
+    Given an 'app_name.model_name' string, return the model class
+    """
+    app_label, model_name = model_path.split('.')
+    return ContentType.objects.get_by_natural_key(app_label, model_name).model_class()
+
+
+def get_base_model_for_path(model_path):
+    """
+    Given an 'app_name.model_name' string, return the Model class for the base model
+    (e.g. for 'blog.blog_page', return Page)
+    """
+    return get_base_model(get_model_for_path(model_path))

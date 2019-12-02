@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse, JsonResponse, Http404
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.shortcuts import get_object_or_404, render, redirect
 import requests
@@ -13,7 +14,7 @@ from wagtail.core.models import Page
 
 from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
 from .vendor.wagtail_api_v2.router import WagtailAPIRouter
-from .models import IDMapping
+from .models import get_model_for_path, IDMapping
 from .serializers import get_model_serializer
 
 from .operations import ImportPlanner
@@ -49,6 +50,49 @@ def pages_for_export(request, root_page_id):
 
     return JsonResponse({
         'ids_for_import': ids_for_import,
+        'mappings': mappings,
+        'objects': objects,
+    }, json_dumps_params={'indent': 2})
+
+
+@csrf_exempt
+@require_POST
+def objects_for_export(request):
+    """
+    Accepts a POST request with a JSON payload structured as:
+        {
+            'model_label': [list of IDs],
+            'model_label': [list of IDs],
+        }
+    and returns an API response with objects / mappings populated (but ids_for_import empty).
+    """
+    request_data = json.loads(request.body.decode('utf-8'))
+
+    objects = []
+    object_references = set()
+
+    for model_path, ids in request_data.items():
+        model = get_model_for_path(model_path)
+        serializer = get_model_serializer(model)
+
+        for obj in serializer.get_objects_by_ids(ids):
+            instance_serializer = get_model_serializer(type(obj))
+            objects.append(serializer.serialize(obj))
+            object_references.update(serializer.get_object_references(obj))
+
+    mappings = []
+    for i, (model, pk) in enumerate(object_references):
+        id_mapping, created = IDMapping.objects.get_or_create(
+            content_type=ContentType.objects.get_for_model(model),
+            local_id=pk,
+            defaults={'uid': uuid.uuid1(clock_seq=i)}
+        )
+        mappings.append(
+            [model._meta.label_lower, pk, id_mapping.uid]
+        )
+
+    return JsonResponse({
+        'ids_for_import': [],
         'mappings': mappings,
         'objects': objects,
     }, json_dumps_params={'indent': 2})

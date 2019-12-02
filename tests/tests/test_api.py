@@ -91,6 +91,26 @@ class TestPagesApi(TestCase):
         self.assertIn(['wagtailcore.page', 1, '11111111-1111-1111-1111-111111111111'], data['mappings'])
 
 
+class TestObjectsApi(TestCase):
+    fixtures = ['test.json']
+
+    def test_objects_api(self):
+        request_data = {
+            'tests.advert': [1]
+        }
+        response = self.client.post(
+            '/wagtail-transfer/api/objects/', json.dumps(request_data), content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertEqual(data['ids_for_import'], [])
+        self.assertEqual(data['objects'][0]['model'], 'tests.advert')
+        self.assertEqual(data['objects'][0]['fields']['slogan'], "put a tiger in your tank")
+
+        self.assertEqual(data['mappings'], [['tests.advert', 1, 'adadadad-1111-1111-1111-111111111111']])
+
+
 @override_settings(
     WAGTAILTRANSFER_SOURCES={
         'staging': {
