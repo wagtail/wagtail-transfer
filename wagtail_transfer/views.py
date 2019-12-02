@@ -1,3 +1,4 @@
+from collections import defaultdict
 import uuid
 import json
 
@@ -137,6 +138,26 @@ def do_import(request):
 
     importer = ImportPlanner(request.POST['source_page_id'], request.POST['dest_page_id'])
     importer.add_json(response.content)
+
+    while importer.missing_object_data:
+        # convert missing_object_data from a set of (model_class, id) tuples
+        # into a dict of {model_class_label: [list_of_ids]}
+        missing_object_data_by_type = defaultdict(list)
+        for model_class, source_id in importer.missing_object_data:
+            missing_object_data_by_type[model_class].append(source_id)
+
+        request_data = {
+            model_class._meta.label_lower: ids
+            for model_class, ids in missing_object_data_by_type.items()
+        }
+
+        # request the missing object data and add to the import plan
+        response = requests.post(
+            f"{source_config['BASE_URL']}api/objects/",
+            json=request_data
+        )
+        importer.add_json(response.content)
+
     importer.run()
 
     return redirect('wagtailadmin_explore', request.POST['dest_page_id'])
