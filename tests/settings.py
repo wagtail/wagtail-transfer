@@ -130,3 +130,9 @@ SECRET_KEY = 'not needed'
 
 WAGTAIL_SITE_NAME = "wagtail-transfer"
 BASE_URL = 'http://example.com'
+
+WAGTAILTRANSFER_SOURCES = {
+    'staging': {
+        'BASE_URL': 'https://www.example.com/wagtail-transfer/',
+    }
+}

@@ -1,7 +1,7 @@
 import json
 from unittest import mock
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from wagtail.core.models import Page
 
 from tests.models import PageWithRichText, SectionedPage
@@ -111,13 +111,6 @@ class TestObjectsApi(TestCase):
         self.assertEqual(data['mappings'], [['tests.advert', 1, 'adadadad-1111-1111-1111-111111111111']])
 
 
-@override_settings(
-    WAGTAILTRANSFER_SOURCES={
-        'staging': {
-            'BASE_URL': 'https://www.example.com/wagtail-transfer/',
-        }
-    }
-)
 @mock.patch('requests.get')
 class TestChooserProxyApi(TestCase):
     fixtures = ['test.json']
