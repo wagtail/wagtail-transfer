@@ -4,14 +4,23 @@ from unittest import mock
 from django.test import TestCase
 from wagtail.core.models import Page
 
+from wagtail_transfer.auth import digest_for_source
 from tests.models import PageWithRichText, SectionedPage
 
 
 class TestPagesApi(TestCase):
     fixtures = ['test.json']
 
+    def get(self, page_id):
+        digest = digest_for_source('local', str(page_id))
+        return self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s' % (page_id, digest))
+
+    def test_incorrect_digest(self):
+        response = self.client.get('/wagtail-transfer/api/pages/2/?digest=12345678')
+        self.assertEqual(response.status_code, 403)
+
     def test_pages_api(self):
-        response = self.client.get('/wagtail-transfer/api/pages/2/')
+        response = self.get(2)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
@@ -34,7 +43,7 @@ class TestPagesApi(TestCase):
         self.assertIn(['tests.advert', 1, "adadadad-1111-1111-1111-111111111111"], mappings)
 
     def test_export_root(self):
-        response = self.client.get('/wagtail-transfer/api/pages/1/')
+        response = self.get(1)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
@@ -55,7 +64,7 @@ class TestPagesApi(TestCase):
         parent_page = Page.objects.get(url_path='/home/existing-child-page/')
         parent_page.add_child(instance=page)
 
-        response = self.client.get('/wagtail-transfer/api/pages/%d/' % parent_page.id)
+        response = self.get(parent_page.id)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
@@ -83,7 +92,7 @@ class TestPagesApi(TestCase):
         parent_page = Page.objects.get(url_path='/home/existing-child-page/')
         parent_page.add_child(instance=page)
 
-        response = self.client.get('/wagtail-transfer/api/pages/%d/' % page.id)
+        response = self.get(page.id)
 
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
@@ -94,12 +103,24 @@ class TestPagesApi(TestCase):
 class TestObjectsApi(TestCase):
     fixtures = ['test.json']
 
-    def test_objects_api(self):
-        request_data = {
+    def test_incorrect_digest(self):
+        request_body = json.dumps({
             'tests.advert': [1]
-        }
+        })
+
         response = self.client.post(
-            '/wagtail-transfer/api/objects/', json.dumps(request_data), content_type='application/json'
+            '/wagtail-transfer/api/objects/?digest=12345678', request_body, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_objects_api(self):
+        request_body = json.dumps({
+            'tests.advert': [1]
+        })
+        digest = digest_for_source('local', request_body)
+
+        response = self.client.post(
+            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_body, content_type='application/json'
         )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
