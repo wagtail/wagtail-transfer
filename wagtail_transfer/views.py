@@ -13,6 +13,7 @@ import requests
 
 from wagtail.core.models import Page
 
+from .auth import check_digest, digest_for_source
 from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
 from .vendor.wagtail_api_v2.router import WagtailAPIRouter
 from .models import get_model_for_path, IDMapping
@@ -22,6 +23,8 @@ from .operations import ImportPlanner
 
 
 def pages_for_export(request, root_page_id):
+    check_digest(str(root_page_id), request.GET.get('digest', ''))
+
     root_page = get_object_or_404(Page, id=root_page_id)
 
     pages = root_page.get_descendants(inclusive=True).specific()
@@ -67,6 +70,9 @@ def objects_for_export(request):
         }
     and returns an API response with objects / mappings populated (but ids_for_import empty).
     """
+
+    check_digest(request.body, request.GET.get('digest', ''))
+
     request_data = json.loads(request.body.decode('utf-8'))
 
     objects = []
@@ -133,8 +139,11 @@ def choose_page(request):
 
 @require_POST
 def do_import(request):
-    source_config = settings.WAGTAILTRANSFER_SOURCES[request.POST['source']]
-    response = requests.get(f"{source_config['BASE_URL']}api/pages/{request.POST['source_page_id']}/")
+    source = request.POST['source']
+    base_url = settings.WAGTAILTRANSFER_SOURCES[source]['BASE_URL']
+    digest = digest_for_source(source, str(request.POST['source_page_id']))
+
+    response = requests.get(f"{base_url}api/pages/{request.POST['source_page_id']}/", params={'digest': digest})
 
     importer = ImportPlanner(request.POST['source_page_id'], request.POST['dest_page_id'])
     importer.add_json(response.content)
@@ -146,15 +155,15 @@ def do_import(request):
         for model_class, source_id in importer.missing_object_data:
             missing_object_data_by_type[model_class].append(source_id)
 
-        request_data = {
+        request_data = json.dumps({
             model_class._meta.label_lower: ids
             for model_class, ids in missing_object_data_by_type.items()
-        }
+        })
+        digest = digest_for_source(source, request_data)
 
         # request the missing object data and add to the import plan
         response = requests.post(
-            f"{source_config['BASE_URL']}api/objects/",
-            json=request_data
+            f"{base_url}api/objects/", params={'digest': digest}, data=request_data
         )
         importer.add_json(response.content)
 

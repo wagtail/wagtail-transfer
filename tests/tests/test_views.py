@@ -1,3 +1,4 @@
+import json
 from unittest import mock
 
 from django.test import TestCase
@@ -114,15 +115,20 @@ class TestImportView(TestCase):
             'source_page_id': '12',
             'dest_page_id': '2',
         })
+        self.assertRedirects(response, '/admin/pages/2/')
 
         # Pages API should be called once, with 12 as the root page
-        get.assert_called_once_with('https://www.example.com/wagtail-transfer/api/pages/12/')
+        get.assert_called_once()
+        args, kwargs = get.call_args
+        self.assertEqual(args[0], 'https://www.example.com/wagtail-transfer/api/pages/12/')
+        self.assertIn('digest', kwargs['params'])
 
         # then the Objects API should be called, requesting adverts with ID 11 and 8
         post.assert_called_once()
         args, kwargs = post.call_args
         self.assertEqual(args[0], 'https://www.example.com/wagtail-transfer/api/objects/')
-        requested_ids = kwargs['json']['tests.advert']
+        self.assertIn('digest', kwargs['params'])
+        requested_ids = json.loads(kwargs['data'])['tests.advert']
         self.assertEqual(set(requested_ids), set([8, 11]))
 
         # Check import results
