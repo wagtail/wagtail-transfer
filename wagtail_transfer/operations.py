@@ -5,7 +5,7 @@ from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.functional import cached_property
 from modelcluster.models import ClusterableModel, get_all_child_relations
-from wagtail.core.fields import RichTextField
+from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Page
 
 from .richtext import get_reference_handler
@@ -399,6 +399,9 @@ class SaveOperationMixin:
                 target_model = get_base_model(field.related_model)
                 value = context.destination_ids_by_source[(target_model, value)]
 
+            elif isinstance(field, StreamField):
+                import pdb; pdb.set_trace()
+
             setattr(self.instance, field.get_attname(), value)
 
     def _save(self, context):
@@ -415,7 +418,7 @@ class SaveOperationMixin:
                 if val is not None:
                     # TODO: consult config to decide whether objective type should be 'exists' or 'updated'
                     deps.append(
-                        (get_base_model(field.related_model), val, 'updated')
+                        (get_base_model(field.related_model), val, 'exists')
                     )
             elif isinstance(field, RichTextField):
                 objects = get_reference_handler().get_objects(self.object_data['fields'].get(field.name))
@@ -427,6 +430,13 @@ class SaveOperationMixin:
                     deps.append(
                         (model, id, 'exists')
                     )
+
+            elif isinstance(field, StreamField):
+                from .streamfield import iterate_over_json
+                import json
+                result = iterate_over_json(field.stream_block, json.loads(self.object_data['fields'].get(field.name)))
+                import pdb; pdb.set_trace()
+
 
         return deps
 

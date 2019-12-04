@@ -2,31 +2,42 @@ from wagtail.core.blocks import ListBlock, PageChooserBlock, RichTextBlock, Stru
 
 from .richtext import get_reference_handler
 
+def map_over_json(block, stream, func):
+    try:
+        child_blocks = block.child_blocks
+        try:
+            for element in stream:
+                new_block = child_blocks.get(element['type'])
+                new_stream = element['value']
+                element['value'] = map_over_json(new_block, new_stream)
+        except TypeError:
+            for key in stream:
+                new_block = child_blocks.get(key)
+                new_stream = stream[key]
+                stream[key] = map_over_json(new_block, new_stream)
+        return stream
+    except AttributeError:
+        try:
+            new_block = block.child_block
+            for index, element in enumerate(stream):
+                stream[index] = map_over_json(new_block, element)
+            return stream
+        except AttributeError:
+            return func(block, stream)
 
-def iterate_over_base_blocks(stream):
-    for element in stream:
-        block = element.block
-        if issubclass(type(block), StreamBlock):
-            yield from iterate_over_base_blocks(element.value)
-        elif issubclass(type(block), StructBlock):
-            try:
-                yield from iterate_over_base_blocks(element.value.bound_blocks.values())
-            except AttributeError:
-                yield from iterate_over_base_blocks(element.bound_blocks.values())
-        elif issubclass(type(block), ListBlock):
-            try:
-                yield from iterate_over_base_blocks(element.value)
-            except AttributeError:
-                for value in element.value:
-                    yield (value, block.child_block)
-        else:
-            yield (element.value, block)
+
+def get_references_using_handler(block, stream, references):
+    references.union(get_block_handler(block).get_object_references(stream))
+    return stream
+
+def update_ids_using_handler(block, stream, destination_ids_by_source)
+    return get_block_handler(block).update_ids(stream, destination_ids_by_source)
+
 
 
 def get_object_references(stream):
     references = set()
     for value, block in iterate_over_base_blocks(stream):
-        print(type(block))
         handler = get_block_handler(block)
         if handler:
             references = references.union(handler.get_object_references(value))
@@ -44,6 +55,10 @@ class BaseBlockHandler:
         """
         return set()
 
+    def update_ids(self, value, destination_ids_by_source):
+        return value
+
+
 
 class RichTextBlockHandler(BaseBlockHandler):
     def get_object_references(self, value):
@@ -52,7 +67,7 @@ class RichTextBlockHandler(BaseBlockHandler):
 
 class ChooserBlockHandler(BaseBlockHandler):
     def get_object_references(self, value):
-        return {(self.block.target_model, value.pk)}
+        return {(self.block.target_model, value)}
 
 
 def get_block_handler(block):
