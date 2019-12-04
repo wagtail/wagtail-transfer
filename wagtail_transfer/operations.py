@@ -11,6 +11,8 @@ from wagtail.core.models import Page
 from .richtext import get_reference_handler
 from .models import get_base_model, IDMapping
 
+from .streamfield import get_object_references, update_object_ids
+
 
 class ImportPlanner:
     def __init__(self, root_page_source_pk, destination_parent_id):
@@ -400,7 +402,7 @@ class SaveOperationMixin:
                 value = context.destination_ids_by_source[(target_model, value)]
 
             elif isinstance(field, StreamField):
-                import pdb; pdb.set_trace()
+                value = json.dumps(update_object_ids(field.stream_block, json.loads(value), context.destination_ids_by_source))
 
             setattr(self.instance, field.get_attname(), value)
 
@@ -432,11 +434,13 @@ class SaveOperationMixin:
                     )
 
             elif isinstance(field, StreamField):
-                from .streamfield import iterate_over_json
-                import json
-                result = iterate_over_json(field.stream_block, json.loads(self.object_data['fields'].get(field.name)))
-                import pdb; pdb.set_trace()
-
+                for model, id in get_object_references(field.stream_block, json.loads(self.object_data['fields'].get(field.name))):
+                    # TODO: add config check here
+                    if id == pk:
+                        continue
+                    deps.append(
+                        (model, id, 'exists')
+                    )
 
         return deps
 
