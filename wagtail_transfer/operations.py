@@ -164,15 +164,15 @@ class ImportPlanner:
                 task = None
             else:
                 # object does not exist locally; need to create it
-                task = (model, source_id, 'create')
+                task = ('create', model, source_id)
 
         elif objective_type == 'updated':
             if mapping:
                 # object exists locally, but we need to update it
-                task = (model, source_id, 'update')
+                task = ('update', model, source_id)
             else:
                 # object does not exist locally; need to create it
-                task = (model, source_id, 'create')
+                task = ('create', model, source_id)
 
         else:
             raise ValueError("Unrecognised objective type: %r" % objective_type)
@@ -200,7 +200,7 @@ class ImportPlanner:
         except KeyError:
             pass
 
-        model, source_id, action = task
+        action, model, source_id = task
         try:
             object_data = self.object_data_by_source[(model, source_id)]
         except KeyError:
