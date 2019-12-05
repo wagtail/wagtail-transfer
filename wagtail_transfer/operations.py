@@ -1,15 +1,55 @@
 import json
+import pathlib
+from urllib.parse import urlparse
 
+from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
+from django.core.files.base import ContentFile
 from django.utils.functional import cached_property
 from modelcluster.models import ClusterableModel, get_all_child_relations
+import requests
+from taggit.managers import TaggableManager
 from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Page
 
+from .files import get_file_hash
 from .richtext import get_reference_handler
-from .models import get_base_model, get_base_model_for_path, get_model_for_path, IDMapping
+from .models import get_base_model, get_base_model_for_path, get_model_for_path, IDMapping, ImportedFile
+
+
+class FileTransferError(Exception):
+    pass
+
+
+class File:
+    """
+    Represents a file that needs to be imported
+
+    Note that local_filename is only a guideline, it may be changed to avoid conflict with an existing file
+    """
+    def __init__(self, local_filename, size, hash, source_url):
+        self.local_filename = local_filename
+        self.size = size
+        self.hash = hash
+        self.source_url = source_url
+
+    def transfer(self):
+        response = requests.get(self.source_url)
+
+        if response.status_code != 200:
+            raise FileTransferError  # TODO
+
+        return ImportedFile.objects.create(
+            file=ContentFile(response.content, name=self.local_filename),
+            source_url=self.source_url,
+            hash=self.hash,
+            size=self.size,
+        )
+
+    def __hash__(self):
+        return hash((self.local_filename, self.size, self.hash, self.source_url))
 
 from .streamfield import get_object_references, update_object_ids
 
@@ -39,6 +79,7 @@ class ImportPlanner:
         # 'located': achieved when the object has been confirmed to exist at the destination and
         #            listed in destination_ids_by_source, OR confirmed not to exist at the
         #            destination
+        # 'file-transferred' achieved when the file has been copied into storage on the destination
         self.objectives = set()
 
         # objectives that have not yet been converted into tasks
@@ -77,6 +118,9 @@ class ImportPlanner:
 
         # Mapping from tasks to operations that perform the task
         self.task_resolutions = {}
+
+        # Mapping of source_urls to instances of ImportedFile
+        self.imported_files_by_source_url = {}
 
     def add_json(self, json_data):
         """
@@ -137,6 +181,11 @@ class ImportPlanner:
             self.unhandled_objectives.add(objective)
 
     def _handle_objective(self, objective):
+        # TODO Refactor this so it looks nicer
+        if objective[0] == 'file-transferred':
+            self._handle_task(objective, ('transfer-file', objective[1]))
+            return
+
         objective_type, model, source_id = objective
 
         # look up uid for this item;
@@ -200,69 +249,73 @@ class ImportPlanner:
         except KeyError:
             pass
 
-        action, model, source_id = task
-        try:
-            object_data = self.object_data_by_source[(model, source_id)]
-        except KeyError:
-            # need to postpone this until we have the object data
-            self.postponed_tasks.add((objective, task))
-            self.missing_object_data.add((model, source_id))
-            return
-
-        # retrieve the specific model for this object
-        specific_model = get_model_for_path(object_data['model'])
-
-        if issubclass(specific_model, Page):
-            if action == 'create':
-                if source_id == self.root_page_source_pk:
-                    # this is the root page of the import; ignore the parent ID in the source
-                    # record and import at the requested destination instead
-                    operation = CreatePage(specific_model, object_data, self.destination_parent_id)
-                else:
-                    operation = CreatePage(specific_model, object_data)
-            else:  # action == 'update'
-                destination_id = self.destination_ids_by_source[(model, source_id)]
-                obj = specific_model.objects.get(pk=destination_id)
-                operation = UpdatePage(obj, object_data)
+        # TODO: Refactor this so it looks nicer
+        if task[0] == 'transfer-file':
+            operation = TransferFile(task[1])
         else:
-            # non-page model
-            if action == 'create':
-                operation = CreateModel(specific_model, object_data)
-            else:  # action == 'update'
-                destination_id = self.destination_ids_by_source[(model, source_id)]
-                obj = specific_model.objects.get(pk=destination_id)
-                operation = UpdateModel(obj, object_data)
+            action, model, source_id = task
+            try:
+                object_data = self.object_data_by_source[(model, source_id)]
+            except KeyError:
+                # need to postpone this until we have the object data
+                self.postponed_tasks.add((objective, task))
+                self.missing_object_data.add((model, source_id))
+                return
 
-        if issubclass(specific_model, ClusterableModel):
-            # Process child object relations for this item
-            # and add objectives to ensure that they're all updated to their newest versions
-            for rel in get_all_child_relations(specific_model):
-                related_base_model = get_base_model(rel.related_model)
-                child_uids = set()
+            # retrieve the specific model for this object
+            specific_model = get_model_for_path(object_data['model'])
 
-                for child_obj_data in object_data['fields'][rel.name]:
-                    # Add child object data to the object_data_by_source lookup
-                    self._add_object_data_to_lookup(child_obj_data)
+            if issubclass(specific_model, Page):
+                if action == 'create':
+                    if source_id == self.root_page_source_pk:
+                        # this is the root page of the import; ignore the parent ID in the source
+                        # record and import at the requested destination instead
+                        operation = CreatePage(specific_model, object_data, self.destination_parent_id)
+                    else:
+                        operation = CreatePage(specific_model, object_data)
+                else:  # action == 'update'
+                    destination_id = self.destination_ids_by_source[(model, source_id)]
+                    obj = specific_model.objects.get(pk=destination_id)
+                    operation = UpdatePage(obj, object_data)
+            else:
+                # non-page model
+                if action == 'create':
+                    operation = CreateModel(specific_model, object_data)
+                else:  # action == 'update'
+                    destination_id = self.destination_ids_by_source[(model, source_id)]
+                    obj = specific_model.objects.get(pk=destination_id)
+                    operation = UpdateModel(obj, object_data)
 
-                    # Add an objective for handling the child object. Regardless of whether
-                    # this is a 'create' or 'update' task, we want the child objects to be at
-                    # their most up-to-date versions, so set the objective type to 'updated'
-                    self._add_objective(('updated', related_base_model, child_obj_data['pk']))
+            if issubclass(specific_model, ClusterableModel):
+                # Process child object relations for this item
+                # and add objectives to ensure that they're all updated to their newest versions
+                for rel in get_all_child_relations(specific_model):
+                    related_base_model = get_base_model(rel.related_model)
+                    child_uids = set()
 
-                    # look up the child object's UID
-                    uid = self.uids_by_source[(related_base_model, child_obj_data['pk'])]
-                    child_uids.add(uid)
+                    for child_obj_data in object_data['fields'][rel.name]:
+                        # Add child object data to the object_data_by_source lookup
+                        self._add_object_data_to_lookup(child_obj_data)
 
-                if action == 'update':
-                    # delete any child objects on the existing object if they can't be mapped back
-                    # to one of the uids in the new set
-                    matched_destination_ids = IDMapping.objects.filter(
-                        uid__in=child_uids,
-                        content_type=ContentType.objects.get_for_model(related_base_model)
-                    ).values_list('local_id', flat=True)
-                    for child in getattr(obj, rel.name).all():
-                        if str(child.pk) not in matched_destination_ids:
-                            self.operations.add(DeleteModel(child))
+                        # Add an objective for handling the child object. Regardless of whether
+                        # this is a 'create' or 'update' task, we want the child objects to be at
+                        # their most up-to-date versions, so set the objective type to 'updated'
+                        self._add_objective(('updated', related_base_model, child_obj_data['pk']))
+
+                        # look up the child object's UID
+                        uid = self.uids_by_source[(related_base_model, child_obj_data['pk'])]
+                        child_uids.add(uid)
+
+                    if action == 'update':
+                        # delete any child objects on the existing object if they can't be mapped back
+                        # to one of the uids in the new set
+                        matched_destination_ids = IDMapping.objects.filter(
+                            uid__in=child_uids,
+                            content_type=ContentType.objects.get_for_model(related_base_model)
+                        ).values_list('local_id', flat=True)
+                        for child in getattr(obj, rel.name).all():
+                            if str(child.pk) not in matched_destination_ids:
+                                self.operations.add(DeleteModel(child))
 
         self.operations.add(operation)
         self.resolutions[objective] = operation
@@ -290,7 +343,8 @@ class ImportPlanner:
 
         context = ImportContext(
             self.destination_ids_by_source,
-            self.uids_by_source
+            self.uids_by_source,
+            self.imported_files_by_source_url,
         )
 
         # arrange operations into an order that satisfies dependencies
@@ -328,9 +382,10 @@ class ImportContext:
     (for example, once a page is created at the destination, we add its ID mapping so that we
     can handle references to it that appear in other imported pages).
     """
-    def __init__(self, destination_ids_by_source, uids_by_source):
+    def __init__(self, destination_ids_by_source, uids_by_source, imported_files_by_source_url):
         self.destination_ids_by_source = destination_ids_by_source
         self.uids_by_source = uids_by_source
+        self.imported_files_by_source_url = imported_files_by_source_url
 
 
 class Operation:
@@ -385,7 +440,20 @@ class SaveOperationMixin:
             # translate foreignkey references to their new IDs
             if isinstance(field, models.ForeignKey):
                 target_model = get_base_model(field.related_model)
-                value = context.destination_ids_by_source[(target_model, value)]
+                value = context.destination_ids_by_source.get((target_model, value))
+
+            if isinstance(field, models.FileField):
+                value = context.imported_files_by_source_url.get(value['download_url']).file.name
+                getattr(self.instance, field.get_attname()).name = value
+                continue
+
+            if isinstance(field, TaggableManager):
+                # TODO
+                continue
+
+            if isinstance(field, GenericRelation):
+                # TODO
+                continue
 
             elif isinstance(field, StreamField):
                 value = json.dumps(update_object_ids(field.stream_block, json.loads(value), context.destination_ids_by_source))
@@ -423,6 +491,22 @@ class SaveOperationMixin:
                         ('exists', model, id)
                     )
 
+            elif isinstance(field, models.FileField):
+                value = self.object_data['fields'].get(field.name)
+                existing_file = field.value_from_object(self.instance)
+
+                if existing_file:
+                    existing_file_hash = get_file_hash(field, self.instance)
+                    if existing_file_hash == value['hash']:
+                        # File not changed, so don't bother updating it
+                        continue
+
+                # Get the local filename
+                name = pathlib.PurePosixPath(urlparse(value['download_url']).path).name
+                local_filename = field.upload_to(self.instance, name)
+
+                deps.append(('file-transferred', File(local_filename, value['size'], value['hash'], value['download_url'])))
+
         return deps
 
 
@@ -430,10 +514,10 @@ class CreateModel(SaveOperationMixin, Operation):
     def __init__(self, model, object_data):
         self.model = model
         self.object_data = object_data
+        self.instance = self.model()
 
     def run(self, context):
         # Create object and populate its attributes from field_data
-        self.instance = self.model()
         self._populate_fields(context)
         self._save(context)
 
@@ -499,3 +583,11 @@ class DeleteModel(Operation):
 
     # TODO: work out whether we need to check for incoming FK relations with on_delete=CASCADE
     # and declare those as 'must delete this first' dependencies
+
+
+class TransferFile(Operation):
+    def __init__(self, file):
+        self.file = file
+
+    def run(self, context):
+        context.imported_files_by_source_url[self.file.source_url] = self.file.transfer()

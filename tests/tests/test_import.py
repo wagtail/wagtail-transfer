@@ -1,5 +1,11 @@
-from django.test import TestCase
+from unittest import mock
 
+from django.contrib.contenttypes.models import ContentType
+from django.test import TestCase
+from wagtail.core.models import Collection
+from wagtail.images.models import Image
+
+from wagtail_transfer.models import IDMapping, ImportedFile
 from wagtail_transfer.operations import ImportPlanner
 from tests.models import PageWithRichText, PageWithStreamField, SectionedPage, SimplePage, SponsoredPage
 
@@ -350,3 +356,76 @@ class TestImport(TestCase):
         imported_streamfield = page.body.stream_block.get_prep_value(page.body)
 
         self.assertEqual(imported_streamfield, [{'type': 'rich_text', 'value': '<p>I link to a <a id="1" linktype="page">page</a>.</p>', 'id': '7d4ee3d4-9213-4319-b984-45be4ded8853'}])
+
+    @mock.patch('requests.get')
+    def test_import_image_with_file(self, get):
+        get.return_value.status_code = 200
+        get.return_value.content = b'my test image file contents'
+
+        IDMapping.objects.get_or_create(
+            uid="f91cb31c-1751-11ea-8000-0800278dc04d",
+            defaults={
+                'content_type': ContentType.objects.get_for_model(Collection),
+                'local_id':  Collection.objects.get().id,
+            }
+        )
+
+        data = """{
+            "ids_for_import": [
+                ["wagtailimages.image", 53]
+            ],
+            "mappings": [
+                ["wagtailcore.collection", 3, "f91cb31c-1751-11ea-8000-0800278dc04d"],
+                ["wagtailimages.image", 53, "f91debc6-1751-11ea-8001-0800278dc04d"]
+            ],
+            "objects": [
+                {
+                    "model": "wagtailcore.collection",
+                    "pk": 3,
+                    "fields": {
+                        "path": "0001",
+                        "depth": 1,
+                        "numchild": 0,
+                        "name": "Root"
+                    }
+                },
+                {
+                    "model": "wagtailimages.image",
+                    "pk": 53,
+                    "fields": {
+                        "collection": 3,
+                        "title": "Lightnin' Hopkins",
+                        "file": {
+                            "download_url": "https://wagtail.io/media/original_images/lightnin_hopkins.jpg",
+                            "size": 18521,
+                            "hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada"
+                        },
+                        "width": 150,
+                        "height": 162,
+                        "created_at": "2019-04-01T07:31:21.251Z",
+                        "uploaded_by_user": null,
+                        "focal_point_x": null,
+                        "focal_point_y": null,
+                        "focal_point_width": null,
+                        "focal_point_height": null,
+                        "file_size": 18521,
+                        "file_hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada",
+                        "tags": "[]",
+                        "tagged_items": "[]"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(1, None)
+        importer.add_json(data)
+        importer.run()
+
+        # Check the image was imported
+        image = Image.objects.get()
+        self.assertEqual(image.title, "Lightnin' Hopkins")
+        self.assertEqual(image.file.read(), b'my test image file contents')
+
+        # TODO: We should verify these
+        self.assertEqual(image.file_size, 18521)
+        self.assertEqual(image.file_hash, "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada")
