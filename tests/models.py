@@ -1,7 +1,9 @@
 from django.db import models
 from modelcluster.fields import ParentalKey
-from wagtail.core.fields import RichTextField
+from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Orderable, Page
+
+from .blocks import BaseStreamBlock
 
 
 class SimplePage(Page):
@@ -29,4 +31,8 @@ class SectionedPageSection(Orderable):
 
 class PageWithRichText(Page):
     body = RichTextField(max_length=255)
+
+
+class PageWithStreamField(Page):
+    body = StreamField(BaseStreamBlock(), verbose_name="Page body", blank=True)
 

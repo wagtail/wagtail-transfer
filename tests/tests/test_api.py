@@ -4,7 +4,7 @@ from unittest import mock
 from django.test import TestCase, override_settings
 from wagtail.core.models import Page
 
-from tests.models import PageWithRichText, SectionedPage
+from tests.models import PageWithRichText, SectionedPage, PageWithStreamField
 
 
 class TestPagesApi(TestCase):
@@ -89,6 +89,65 @@ class TestPagesApi(TestCase):
         data = json.loads(response.content)
 
         self.assertIn(['wagtailcore.page', 1, '11111111-1111-1111-1111-111111111111'], data['mappings'])
+
+    def test_streamfield_with_page_links(self):
+        # Check that page links in a complex nested StreamField - with StreamBlock, StructBlock, and ListBlock -
+        # are all picked up in mappings
+
+        page = PageWithStreamField(title="I have a streamfield",
+                                   body=json.dumps([{'type': 'link_block',
+                                          'value':
+                                              {'page': 1,
+                                               'text': 'Test'},
+                                          'id': 'fc3b0d3d-d316-4271-9e31-84919558188a'},
+                                         {'type': 'page',
+                                          'value': 2,
+                                          'id': 'c6d07d3a-72d4-445e-8fa5-b34107291176'},
+                                         {'type': 'stream',
+                                          'value':
+                                              [{'type': 'page',
+                                                'value': 3,
+                                                'id': '8c0d7de7-4f77-4477-be67-7d990d0bfb82'}],
+                                          'id': '21ffe52a-c0fc-4ecc-92f1-17b356c9cc94'},
+                                         {'type': 'list_of_pages',
+                                          'value': [5],
+                                          'id': '17b972cb-a952-4940-87e2-e4eb00703997'}]))
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        response = self.client.get('/wagtail-transfer/api/pages/%d/' % page.id)
+
+        data = json.loads(response.content)
+
+        # test PageChooserBlock in StructBlock
+        self.assertIn(['wagtailcore.page', 1, '11111111-1111-1111-1111-111111111111'], data['mappings'])
+        # test un-nested PageChooserBlock
+        self.assertIn(['wagtailcore.page', 2, "22222222-2222-2222-2222-222222222222"], data['mappings'])
+        # test PageChooserBlock in StreamBlock
+        self.assertIn(['wagtailcore.page', 3, "33333333-3333-3333-3333-333333333333"], data['mappings'])
+        # test PageChooserBlock in ListBlock
+        self.assertIn(['wagtailcore.page', 5, "00017017-5555-5555-5555-555555555555"], data['mappings'])
+
+
+    def test_streamfield_with_rich_text(self):
+        page = PageWithStreamField(title="My streamfield rich text block has a link",
+                                   body=json.dumps([{'type': 'rich_text',
+                                          'value': '<p>I link to a <a id="1" linktype="page">page</a>.</p>',
+                                          'id': '7d4ee3d4-9213-4319-b984-45be4ded8853'}]))
+
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        response = self.client.get('/wagtail-transfer/api/pages/%d/' % page.id)
+
+        data = json.loads(response.content)
+
+        import pdb;
+        pdb.set_trace()
+
+        self.assertIn(['wagtailcore.page', 1, '11111111-1111-1111-1111-111111111111'], data['mappings'])
+
+
 
 
 @override_settings(

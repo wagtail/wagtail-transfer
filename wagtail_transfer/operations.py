@@ -413,6 +413,7 @@ class SaveOperationMixin:
     def dependencies(self):
         # A list of objectives that must be satisfied before we can import this page
         deps = super().dependencies
+        pk = self.object_data['pk']
 
         for field in self.model._meta.get_fields():
             if isinstance(field, models.ForeignKey):
@@ -420,11 +421,10 @@ class SaveOperationMixin:
                 if val is not None:
                     # TODO: consult config to decide whether objective type should be 'exists' or 'updated'
                     deps.append(
-                        (get_base_model(field.related_model), val, 'exists')
+                        (get_base_model(field.related_model), val, 'updated')
                     )
             elif isinstance(field, RichTextField):
                 objects = get_reference_handler().get_objects(self.object_data['fields'].get(field.name))
-                pk = self.object_data['pk']
                 for model, id in objects:
                     # TODO: add config check here
                     if id == pk:

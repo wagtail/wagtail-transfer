@@ -31,7 +31,7 @@ def map_over_json(block, stream, func):
 def get_references_using_handler(block, stream, references):
     block_handler = get_block_handler(block)
     if block_handler:
-        references.union(block_handler.get_object_references(stream))
+        references.update(block_handler.get_object_references(stream))
     return stream
 
 
