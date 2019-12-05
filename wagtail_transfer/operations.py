@@ -29,7 +29,7 @@ class ImportPlanner:
 
         # An objective describes a state that we want to reach, e.g.
         # "page 123 must exist at the destination in its most up-to-date form". This is represented
-        # as a tuple of (model_class, source_id, objective_type), where objective_type is one of:
+        # as a tuple of (objective_type, model_class, source_id), where objective_type is one of:
         # 'exists': achieved when the object exists at the destination site and is listed in
         #           destination_ids_by_source
         # 'updated': achieved when the object exists at the destination site, with any data updates
@@ -111,7 +111,7 @@ class ImportPlanner:
         # copy of that object on the destination site
         for model_path, source_id in data['ids_for_import']:
             model = get_base_model_for_path(model_path)
-            objective = (model, source_id, 'updated')
+            objective = ('updated', model, source_id)
 
             # add to the set of objectives that need handling
             self._add_objective(objective)
@@ -135,7 +135,7 @@ class ImportPlanner:
             self.unhandled_objectives.add(objective)
 
     def _handle_objective(self, objective):
-        model, source_id, objective_type = objective
+        objective_type, model, source_id = objective
 
         # look up uid for this item;
         # the export API is expected to supply the id->uid mapping for all referenced objects,
@@ -245,7 +245,7 @@ class ImportPlanner:
                     # Add an objective for handling the child object. Regardless of whether
                     # this is a 'create' or 'update' task, we want the child objects to be at
                     # their most up-to-date versions, so set the objective type to 'updated'
-                    self._add_objective((related_base_model, child_obj_data['pk'], 'updated'))
+                    self._add_objective(('updated', related_base_model, child_obj_data['pk']))
 
                     # look up the child object's UID
                     uid = self.uids_by_source[(related_base_model, child_obj_data['pk'])]
@@ -401,7 +401,7 @@ class SaveOperationMixin:
                 if val is not None:
                     # TODO: consult config to decide whether objective type should be 'exists' or 'updated'
                     deps.append(
-                        (get_base_model(field.related_model), val, 'updated')
+                        ('updated', get_base_model(field.related_model), val)
                     )
             elif isinstance(field, RichTextField):
                 objects = get_reference_handler().get_objects(self.object_data['fields'].get(field.name))
@@ -411,7 +411,7 @@ class SaveOperationMixin:
                     if id == pk:
                         continue
                     deps.append(
-                        (model, id, 'exists')
+                        ('exists', model, id)
                     )
 
         return deps
@@ -448,7 +448,7 @@ class CreatePage(CreateModel):
         if self.destination_parent_id is None:
             # need to ensure parent page is imported before this one
             deps.append(
-                (Page, self.object_data['parent_id'], 'exists'),
+                ('exists', Page, self.object_data['parent_id']),
             )
 
         return deps
