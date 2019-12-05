@@ -78,6 +78,8 @@ class RichTextAdapter(FieldAdapter):
 class StreamFieldAdapter(FieldAdapter):
     def get_object_references(self, instance):
         stream_block = self.field.stream_block
+
+        #get the list of dicts representation of the streamfield json
         stream = stream_block.get_prep_value(self.field.value_from_object(instance))
         return get_object_references(stream_block, stream)
 

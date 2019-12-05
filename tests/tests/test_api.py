@@ -130,6 +130,8 @@ class TestPagesApi(TestCase):
 
 
     def test_streamfield_with_rich_text(self):
+        # Check that page references within a RichTextBlock in StreamField are found correctly
+
         page = PageWithStreamField(title="My streamfield rich text block has a link",
                                    body=json.dumps([{'type': 'rich_text',
                                           'value': '<p>I link to a <a id="1" linktype="page">page</a>.</p>',
@@ -141,9 +143,6 @@ class TestPagesApi(TestCase):
         response = self.client.get('/wagtail-transfer/api/pages/%d/' % page.id)
 
         data = json.loads(response.content)
-
-        import pdb;
-        pdb.set_trace()
 
         self.assertIn(['wagtailcore.page', 1, '11111111-1111-1111-1111-111111111111'], data['mappings'])
 
