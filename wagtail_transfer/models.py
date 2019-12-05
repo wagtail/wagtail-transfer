@@ -13,6 +13,14 @@ class IDMapping(models.Model):
         unique_together = ['content_type', 'local_id']
 
 
+class ImportedFile(models.Model):
+    file = models.FileField()
+    source_url = models.URLField(max_length=1000)
+    hash = models.CharField(max_length=40)
+    size = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
 def get_base_model(model):
     """
     For the given model, return the highest concrete model in the inheritance tree -
