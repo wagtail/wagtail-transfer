@@ -1,10 +1,13 @@
 import json
+import uuid
 from unittest import mock
 
+from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
-from wagtail.core.models import Page
+from wagtail.core.models import Page, Collection
 
 from wagtail_transfer.auth import digest_for_source
+from wagtail_transfer.models import IDMapping
 from tests.models import PageWithRichText, SectionedPage, PageWithStreamField
 
 
@@ -190,6 +193,33 @@ class TestObjectsApi(TestCase):
         self.assertEqual(data['objects'][0]['fields']['slogan'], "put a tiger in your tank")
 
         self.assertEqual(data['mappings'], [['tests.advert', 1, 'adadadad-1111-1111-1111-111111111111']])
+
+    def test_objects_api_with_tree_model(self):
+        collection = Collection.objects.get().add_child(instance=Collection(name="Test collection"))
+        collection_uid = uuid.uuid4()
+
+        IDMapping.objects.create(
+            content_type=ContentType.objects.get_for_model(Collection),
+            local_id=collection.id,
+            uid=collection_uid,
+        )
+
+        request_body = json.dumps({
+            'wagtailcore.collection': [collection.id]
+        })
+        digest = digest_for_source('local', request_body)
+
+        response = self.client.post(
+            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_body, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertEqual(data['ids_for_import'], [])
+        self.assertEqual(data['objects'][0]['model'], 'wagtailcore.collection')
+        self.assertEqual(data['objects'][0]['fields']['name'], "Test collection")
+
+        self.assertEqual(data['mappings'], [['wagtailcore.collection', collection.id, str(collection_uid)]])
 
 
 @mock.patch('requests.get')
