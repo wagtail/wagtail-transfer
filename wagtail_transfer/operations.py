@@ -5,6 +5,7 @@ from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.functional import cached_property
 from modelcluster.models import ClusterableModel, get_all_child_relations
+from treebeard.mp_tree import MP_Node
 from wagtail.core.fields import RichTextField
 from wagtail.core.models import Page
 
@@ -210,18 +211,18 @@ class ImportPlanner:
         # retrieve the specific model for this object
         specific_model = get_model_for_path(object_data['model'])
 
-        if issubclass(specific_model, Page):
+        if issubclass(specific_model, MP_Node):
             if action == 'create':
-                if source_id == self.root_page_source_pk:
+                if issubclass(specific_model, Page) and source_id == self.root_page_source_pk:
                     # this is the root page of the import; ignore the parent ID in the source
                     # record and import at the requested destination instead
-                    operation = CreatePage(specific_model, object_data, self.destination_parent_id)
+                    operation = CreateTreeModel(specific_model, object_data, self.destination_parent_id)
                 else:
-                    operation = CreatePage(specific_model, object_data)
+                    operation = CreateTreeModel(specific_model, object_data)
             else:  # action == 'update'
                 destination_id = self.destination_ids_by_source[(model, source_id)]
                 obj = specific_model.objects.get(pk=destination_id)
-                operation = UpdatePage(obj, object_data)
+                operation = UpdateModel(obj, object_data)
         else:
             # non-page model
             if action == 'create':
@@ -437,7 +438,12 @@ class CreateModel(SaveOperationMixin, Operation):
         context.destination_ids_by_source[(self.base_model, source_pk)] = self.instance.pk
 
 
-class CreatePage(CreateModel):
+class CreateTreeModel(CreateModel):
+    """
+    Create an instance of a model that is structured in a Treebeard tree
+
+    For example: Pages and Collections
+    """
     def __init__(self, model, object_data, destination_parent_id=None):
         super().__init__(model, object_data)
         self.destination_parent_id = destination_parent_id
@@ -448,7 +454,7 @@ class CreatePage(CreateModel):
         if self.destination_parent_id is None:
             # need to ensure parent page is imported before this one
             deps.append(
-                (Page, self.object_data['parent_id'], 'exists'),
+                (get_base_model(self.model), self.object_data['parent_id'], 'exists'),
             )
 
         return deps
@@ -458,12 +464,12 @@ class CreatePage(CreateModel):
             # The destination parent ID was not known at the time this operation was built,
             # but should now exist in the page ID mapping
             source_parent_id = self.object_data['parent_id']
-            self.destination_parent_id = context.destination_ids_by_source[(Page, source_parent_id)]
+            self.destination_parent_id = context.destination_ids_by_source[(get_base_model(self.model), source_parent_id)]
 
-        parent_page = Page.objects.get(id=self.destination_parent_id)
+        parent = get_base_model(self.model).objects.get(id=self.destination_parent_id)
 
-        # Add the page to the database as a child of parent_page
-        parent_page.add_child(instance=self.instance)
+        # Add the page to the database as a child of parent
+        parent.add_child(instance=self.instance)
 
 
 class UpdateModel(SaveOperationMixin, Operation):
@@ -475,10 +481,6 @@ class UpdateModel(SaveOperationMixin, Operation):
     def run(self, context):
         self._populate_fields(context)
         self._save(context)
-
-
-class UpdatePage(UpdateModel):
-    pass
 
 
 class DeleteModel(Operation):

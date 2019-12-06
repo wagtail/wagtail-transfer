@@ -1,5 +1,8 @@
+from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
+from wagtail.core.models import Collection
 
+from wagtail_transfer.models import IDMapping
 from wagtail_transfer.operations import ImportPlanner
 from tests.models import PageWithRichText, SectionedPage, SimplePage, SponsoredPage
 
@@ -297,3 +300,45 @@ class TestImport(TestCase):
         self.assertEqual(page.body, '<p>But I have a <a id="1" linktype="page">link</a></p>')
 
         # TODO: this should include an embed type as well once document/image import is added
+
+    def test_import_collection(self):
+        root_collection = Collection.objects.get()
+
+        IDMapping.objects.get_or_create(
+            uid="f91cb31c-1751-11ea-8000-0800278dc04d",
+            defaults={
+                'content_type': ContentType.objects.get_for_model(Collection),
+                'local_id':  root_collection.id,
+            }
+        )
+
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.collection", 4]
+            ],
+            "mappings": [
+                ["wagtailcore.collection", """ + str(root_collection.id) + """, "f91cb31c-1751-11ea-8000-0800278dc04d"],
+                ["wagtailcore.collection", 4, "8a1d3afd-3fa2-4309-9dc7-6d31902174ca"]
+            ],
+            "objects": [
+                {
+                    "model": "wagtailcore.collection",
+                    "pk": 4,
+                    "fields": {
+                        "path": "00010001",
+                        "depth": 2,
+                        "numchild": 0,
+                        "name": "New collection"
+                    },
+                    "parent_id": """ + str(root_collection.id) + """
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(1, None)
+        importer.add_json(data)
+        importer.run()
+
+        # Check the new collection was imported
+        collection = Collection.objects.get(name="New collection")
+        self.assertEqual(collection.get_parent(), root_collection)
