@@ -413,8 +413,6 @@ class SaveOperationMixin:
                 objects = get_reference_handler().get_objects(self.object_data['fields'].get(field.name))
                 for model, id in objects:
                     # TODO: add config check here
-                    if id == pk:
-                        continue
                     deps.append(
                         (model, id, 'exists')
                     )
@@ -422,8 +420,6 @@ class SaveOperationMixin:
             elif isinstance(field, StreamField):
                 for model, id in get_object_references(field.stream_block, json.loads(self.object_data['fields'].get(field.name))):
                     # TODO: add config check here
-                    if id == pk:
-                        continue
                     deps.append(
                         (model, id, 'exists')
                     )
