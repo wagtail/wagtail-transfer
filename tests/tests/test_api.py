@@ -1,17 +1,26 @@
 import json
 from unittest import mock
 
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from wagtail.core.models import Page
 
+from wagtail_transfer.auth import digest_for_source
 from tests.models import PageWithRichText, SectionedPage, PageWithStreamField
 
 
 class TestPagesApi(TestCase):
     fixtures = ['test.json']
 
+    def get(self, page_id):
+        digest = digest_for_source('local', str(page_id))
+        return self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s' % (page_id, digest))
+
+    def test_incorrect_digest(self):
+        response = self.client.get('/wagtail-transfer/api/pages/2/?digest=12345678')
+        self.assertEqual(response.status_code, 403)
+
     def test_pages_api(self):
-        response = self.client.get('/wagtail-transfer/api/pages/2/')
+        response = self.get(2)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
@@ -34,7 +43,7 @@ class TestPagesApi(TestCase):
         self.assertIn(['tests.advert', 1, "adadadad-1111-1111-1111-111111111111"], mappings)
 
     def test_export_root(self):
-        response = self.client.get('/wagtail-transfer/api/pages/1/')
+        response = self.get(1)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
@@ -55,7 +64,7 @@ class TestPagesApi(TestCase):
         parent_page = Page.objects.get(url_path='/home/existing-child-page/')
         parent_page.add_child(instance=page)
 
-        response = self.client.get('/wagtail-transfer/api/pages/%d/' % parent_page.id)
+        response = self.get(parent_page.id)
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
@@ -83,7 +92,7 @@ class TestPagesApi(TestCase):
         parent_page = Page.objects.get(url_path='/home/existing-child-page/')
         parent_page.add_child(instance=page)
 
-        response = self.client.get('/wagtail-transfer/api/pages/%d/' % page.id)
+        response = self.get(page.id)
 
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
@@ -115,7 +124,8 @@ class TestPagesApi(TestCase):
         parent_page = Page.objects.get(url_path='/home/existing-child-page/')
         parent_page.add_child(instance=page)
 
-        response = self.client.get('/wagtail-transfer/api/pages/%d/' % page.id)
+        digest = digest_for_source('local', str(page.id))
+        response = self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s' % (page.id, digest))
 
         data = json.loads(response.content)
 
@@ -140,7 +150,8 @@ class TestPagesApi(TestCase):
         parent_page = Page.objects.get(url_path='/home/existing-child-page/')
         parent_page.add_child(instance=page)
 
-        response = self.client.get('/wagtail-transfer/api/pages/%d/' % page.id)
+        digest = digest_for_source('local', str(page.id))
+        response = self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s' % (page.id, digest))
 
         data = json.loads(response.content)
 
@@ -149,13 +160,38 @@ class TestPagesApi(TestCase):
 
 
 
-@override_settings(
-    WAGTAILTRANSFER_SOURCES = {
-        'staging': {
-            'CHOOSER_API': 'https://www.example.com/api/chooser/',
-        }
-    }
-)
+class TestObjectsApi(TestCase):
+    fixtures = ['test.json']
+
+    def test_incorrect_digest(self):
+        request_body = json.dumps({
+            'tests.advert': [1]
+        })
+
+        response = self.client.post(
+            '/wagtail-transfer/api/objects/?digest=12345678', request_body, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_objects_api(self):
+        request_body = json.dumps({
+            'tests.advert': [1]
+        })
+        digest = digest_for_source('local', request_body)
+
+        response = self.client.post(
+            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_body, content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertEqual(data['ids_for_import'], [])
+        self.assertEqual(data['objects'][0]['model'], 'tests.advert')
+        self.assertEqual(data['objects'][0]['fields']['slogan'], "put a tiger in your tank")
+
+        self.assertEqual(data['mappings'], [['tests.advert', 1, 'adadadad-1111-1111-1111-111111111111']])
+
+
 @mock.patch('requests.get')
 class TestChooserProxyApi(TestCase):
     fixtures = ['test.json']
@@ -169,7 +205,7 @@ class TestChooserProxyApi(TestCase):
 
         response = self.client.get('/admin/wagtail-transfer/api/chooser-proxy/staging/foo?bar=baz', HTTP_ACCEPT='application/json')
 
-        get.assert_called_once_with('https://www.example.com/api/chooser/foo?bar=baz', headers={'Accept': 'application/json'}, timeout=5)
+        get.assert_called_once_with('https://www.example.com/wagtail-transfer/api/chooser/pages/foo?bar=baz', headers={'Accept': 'application/json'}, timeout=5)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b'test content')

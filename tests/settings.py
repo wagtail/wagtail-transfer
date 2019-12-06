@@ -130,3 +130,17 @@ SECRET_KEY = 'not needed'
 
 WAGTAIL_SITE_NAME = "wagtail-transfer"
 BASE_URL = 'http://example.com'
+
+WAGTAILTRANSFER_SOURCES = {
+    'staging': {
+        'BASE_URL': 'https://www.example.com/wagtail-transfer/',
+        'SECRET_KEY': 'i-am-the-staging-example-secret-key',
+    },
+    'local': {
+        # so that we can use the wagtail_transfer.auth.digest_for_source helper in API tests
+        'BASE_URL': 'http://localhost/wagtail-transfer/',
+        'SECRET_KEY': 'i-am-the-local-secret-key',
+    }
+}
+
+WAGTAILTRANSFER_SECRET_KEY = 'i-am-the-local-secret-key'

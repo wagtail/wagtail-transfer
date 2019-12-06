@@ -9,7 +9,7 @@ from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Page
 
 from .richtext import get_reference_handler
-from .models import get_base_model, IDMapping
+from .models import get_base_model, get_base_model_for_path, get_model_for_path, IDMapping
 
 from .streamfield import get_object_references, update_object_ids
 
@@ -78,20 +78,6 @@ class ImportPlanner:
         # Mapping from tasks to operations that perform the task
         self.task_resolutions = {}
 
-    def _model_for_path(self, model_path):
-        """
-        Given an 'app_name.model_name' string, return the model class
-        """
-        app_label, model_name = model_path.split('.')
-        return ContentType.objects.get_by_natural_key(app_label, model_name).model_class()
-
-    def _base_model_for_path(self, model_path):
-        """
-        Given an 'app_name.model_name' string, return the Model class for the base model
-        (e.g. for 'blog.blog_page', return Page)
-        """
-        return get_base_model(self._model_for_path(model_path))
-
     def add_json(self, json_data):
         """
         Add JSON data to the import plan. The data is a dict consisting of:
@@ -113,7 +99,7 @@ class ImportPlanner:
 
         # add source id -> uid mappings to the uids_by_source dict
         for model_path, source_id, uid in data['mappings']:
-            model = self._base_model_for_path(model_path)
+            model = get_base_model_for_path(model_path)
             self.uids_by_source[(model, source_id)] = uid
 
         # add object data to the object_data_by_source dict
@@ -126,7 +112,7 @@ class ImportPlanner:
         # for each ID in the import list, add an objective to specify that we want an up-to-date
         # copy of that object on the destination site
         for model_path, source_id in data['ids_for_import']:
-            model = self._base_model_for_path(model_path)
+            model = get_base_model_for_path(model_path)
             objective = (model, source_id, 'updated')
 
             # add to the set of objectives that need handling
@@ -139,7 +125,7 @@ class ImportPlanner:
             self._handle_objective(objective)
 
     def _add_object_data_to_lookup(self, obj_data):
-        model = self._base_model_for_path(obj_data['model'])
+        model = get_base_model_for_path(obj_data['model'])
         source_id = obj_data['pk']
         self.object_data_by_source[(model, source_id)] = obj_data
 
@@ -224,7 +210,7 @@ class ImportPlanner:
             return
 
         # retrieve the specific model for this object
-        specific_model = self._model_for_path(object_data['model'])
+        specific_model = get_model_for_path(object_data['model'])
 
         if issubclass(specific_model, Page):
             if action == 'create':

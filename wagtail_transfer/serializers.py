@@ -40,6 +40,13 @@ class ModelSerializer:
 
             self.field_adapters.append(get_field_adapter(field))
 
+    def get_objects_by_ids(self, ids):
+        """
+        Given a list of IDs, return a queryset of model instances that we can
+        run serialize and get_object_references on
+        """
+        return self.model.objects.filter(pk__in=ids)
+
     def serialize_fields(self, instance):
         return {
             field_adapter.name: field_adapter.serialize(instance)
@@ -69,6 +76,10 @@ class PageSerializer(ModelSerializer):
         'go_live_at', 'expire_at', 'expired', 'locked', 'first_published_at', 'last_published_at',
         'latest_revision_created_at', 'live_revision',
     ]
+
+    def get_objects_by_ids(self, ids):
+        # serialize method needs the instance in its specific form
+        return super().get_objects_by_ids(ids).specific()
 
     def serialize(self, instance):
         result = super().serialize(instance)
