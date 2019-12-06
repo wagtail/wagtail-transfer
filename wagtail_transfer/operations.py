@@ -14,6 +14,7 @@ from taggit.managers import TaggableManager
 from wagtail.core.fields import RichTextField
 from wagtail.core.models import Page
 
+from .files import get_file_hash
 from .richtext import get_reference_handler
 from .models import get_base_model, get_base_model_for_path, get_model_for_path, IDMapping, ImportedFile
 
