@@ -1,6 +1,7 @@
 from functools import lru_cache
 
 from django.db import models
+from treebeard.mp_tree import MP_Node
 from modelcluster.fields import ParentalKey
 from wagtail.core.models import Page
 
@@ -70,9 +71,22 @@ class ModelSerializer:
         return refs
 
 
-class PageSerializer(ModelSerializer):
-    ignored_fields = [
-        'path', 'depth', 'numchild', 'url_path', 'content_type', 'draft_title', 'has_unpublished_changes', 'owner',
+class TreeModelSerializer(ModelSerializer):
+    ignored_fields = ['path', 'depth', 'numchild']
+
+    def serialize(self, instance):
+        result = super().serialize(instance)
+        if instance.is_root():
+            result['parent_id'] = None
+        else:
+            result['parent_id'] = instance.get_parent().pk
+
+        return result
+
+
+class PageSerializer(TreeModelSerializer):
+    ignored_fields = TreeModelSerializer.ignored_fields + [
+        'url_path', 'content_type', 'draft_title', 'has_unpublished_changes', 'owner',
         'go_live_at', 'expire_at', 'expired', 'locked', 'first_published_at', 'last_published_at',
         'latest_revision_created_at', 'live_revision',
     ]
@@ -81,17 +95,10 @@ class PageSerializer(ModelSerializer):
         # serialize method needs the instance in its specific form
         return super().get_objects_by_ids(ids).specific()
 
-    def serialize(self, instance):
-        result = super().serialize(instance)
-        if instance.is_root():
-            result['parent_id'] = None
-        else:
-            result['parent_id'] = instance.get_parent().pk
-        return result
-
 
 SERIALIZERS_BY_MODEL_CLASS = {
     models.Model: ModelSerializer,
+    MP_Node: TreeModelSerializer,
     Page: PageSerializer,
 }
 
