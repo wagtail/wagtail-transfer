@@ -1,54 +1,21 @@
-from wagtail.core.blocks import RichTextBlock, ChooserBlock
+from wagtail.core.blocks import ListBlock, RichTextBlock, ChooserBlock, StreamBlock, StructBlock
 
 from .richtext import get_reference_handler
 from functools import partial
-
-
-def map_over_json(block, stream, func):
-    """Apply a function, func, to each of the base blocks' values (ie not Struct, List, Stream) of a StreamField in
-    list of dicts (imported json) format. Block is the block object, stream is its value."""
-    try:
-        # test if behaviour is like a Struct- or StreamBlock, and try to recursively map over child blocks if so
-        child_blocks = block.child_blocks
-        try:
-            for element in stream:
-                new_block = child_blocks.get(element['type'])
-                new_stream = element['value']
-                element['value'] = map_over_json(new_block, new_stream, func)
-        except TypeError:
-            for key in stream:
-                new_block = child_blocks.get(key)
-                new_stream = stream[key]
-                stream[key] = map_over_json(new_block, new_stream, func)
-        return stream
-    except AttributeError:
-        try:
-            # test if behaviour is like a ListBlock, and try to recursively map over child block values if so
-            new_block = block.child_block
-            for index, element in enumerate(stream):
-                stream[index] = map_over_json(new_block, element, func)
-            return stream
-        except AttributeError:
-            # block is a base block - apply the function and return it
-            return func(block, stream)
 
 
 def get_references_using_handler(block, stream, references):
     """Gets object references from a streamfield with block object block and value stream, and updates the reference
     set with the result"""
     block_handler = get_block_handler(block)
-    if block_handler:
-        references.update(block_handler.get_object_references(stream))
+    references.update(block_handler.get_object_references(stream))
     return stream
 
 
 def update_ids_using_handler(block, stream, destination_ids_by_source):
     """Updates reference ids from source to destination site for a streamfield block, using its handler"""
     block_handler = get_block_handler(block)
-    if block_handler:
-        return block_handler.update_ids(stream, destination_ids_by_source)
-    else:
-        return stream
+    return block_handler.update_ids(stream, destination_ids_by_source)
 
 
 def get_object_references(stream_block, stream):
@@ -57,7 +24,8 @@ def get_object_references(stream_block, stream):
     being called"""
     references = set()
     get_references = partial(get_references_using_handler, references=references)
-    map_over_json(stream_block, stream, get_references)
+    stream_block_handler = get_block_handler(stream_block)
+    stream_block_handler.map_over_json(stream, get_references)
     return references
 
 
@@ -66,7 +34,8 @@ def update_object_ids(stream_block, stream, destination_ids_by_source):
     to the StreamChild object format to prevent ChooserBlocks trying to load nonexistent models with old ids upon to_python
     being called"""
     update_ids = partial(update_ids_using_handler, destination_ids_by_source=destination_ids_by_source)
-    updated_stream = map_over_json(stream_block, stream, update_ids)
+    stream_block_handler = get_block_handler(stream_block)
+    updated_stream = stream_block_handler.map_over_json(stream, update_ids)
     return updated_stream
 
 
@@ -82,7 +51,46 @@ class BaseBlockHandler:
         return set()
 
     def update_ids(self, value, destination_ids_by_source):
+        """
+        Update source site ids to destination site ids
+        """
         return value
+
+    def map_over_json(self, stream, func):
+        """
+        Apply a function, func, to each of the base blocks' values (ie not Struct, List, Stream) of a StreamField in
+        list of dicts (imported json) format.
+        """
+        return func(self.block, stream)
+
+
+class ListBlockHandler(BaseBlockHandler):
+    def map_over_json(self, stream, func):
+        new_block = self.block.child_block
+        new_block_handler = get_block_handler(new_block)
+        for index, element in enumerate(stream):
+            stream[index] = new_block_handler.map_over_json(element, func)
+        return stream
+
+
+class StreamBlockHandler(BaseBlockHandler):
+    def map_over_json(self, stream, func):
+        for element in stream:
+            new_block = self.block.child_blocks.get(element['type'])
+            new_block_handler = get_block_handler(new_block)
+            new_stream = element['value']
+            element['value'] = new_block_handler.map_over_json(new_stream, func)
+        return stream
+
+
+class StructBlockHandler(BaseBlockHandler):
+    def map_over_json(self, stream, func):
+        for key in stream:
+            new_block = self.block.child_blocks.get(key)
+            new_block_handler = get_block_handler(new_block)
+            new_stream = stream[key]
+            stream[key] = new_block_handler.map_over_json(new_stream, func)
+        return stream
 
 
 class RichTextBlockHandler(BaseBlockHandler):
@@ -109,10 +117,13 @@ def get_block_handler(block):
         if block_class in HANDLERS_BY_BLOCK_CLASS:
             handler_class = HANDLERS_BY_BLOCK_CLASS[block_class]
             return handler_class(block)
-    return None
+    return BaseBlockHandler(block)
 
 
 HANDLERS_BY_BLOCK_CLASS = {
     RichTextBlock: RichTextBlockHandler,
     ChooserBlock: ChooserBlockHandler,
+    ListBlock: ListBlockHandler,
+    StreamBlock: StreamBlockHandler,
+    StructBlock: StructBlockHandler,
 }
