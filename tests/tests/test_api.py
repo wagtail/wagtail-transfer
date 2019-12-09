@@ -8,7 +8,7 @@ from wagtail.core.models import Page, Collection
 
 from wagtail_transfer.auth import digest_for_source
 from wagtail_transfer.models import IDMapping
-from tests.models import PageWithRichText, SectionedPage, PageWithStreamField
+from tests.models import Advert, PageWithRichText, SectionedPage, PageWithStreamField, PageWithParentalManyToMany
 
 
 class TestPagesApi(TestCase):
@@ -161,6 +161,20 @@ class TestPagesApi(TestCase):
         self.assertIn(['wagtailcore.page', 1, '11111111-1111-1111-1111-111111111111'], data['mappings'])
 
 
+    def test_parental_many_to_many(self):
+
+        page = PageWithParentalManyToMany(title="This page has lots of ads!")
+        advert_1 = Advert.objects.create(slogan="Buy a thing you definitely need!")
+        advert_2 = Advert.objects.create(slogan="Buy a full-scale authentically hydrogen-filled replica of the Hindenburg!")
+        page.ads = [advert_1, advert_2]
+
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        digest = digest_for_source('local', str(page.id))
+        response = self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s' % (page.id, digest))
+
+        data = json.loads(response.content)
 
 
 class TestObjectsApi(TestCase):
