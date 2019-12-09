@@ -39,3 +39,7 @@ class PageWithStreamField(Page):
 
 class PageWithParentalManyToMany(Page):
     ads = ParentalManyToManyField(Advert)
+
+
+class ModelWithManyToMany(models.Model):
+    ads = models.ManyToManyField(Advert)
