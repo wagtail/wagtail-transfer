@@ -1,5 +1,5 @@
 from django.db import models
-from modelcluster.fields import ParentalKey
+from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Orderable, Page
 
@@ -36,3 +36,6 @@ class PageWithRichText(Page):
 class PageWithStreamField(Page):
     body = StreamField(BaseStreamBlock(), verbose_name="Page body", blank=True)
 
+
+class PageWithParentalManyToMany(Page):
+    ads = ParentalManyToManyField(Advert)
