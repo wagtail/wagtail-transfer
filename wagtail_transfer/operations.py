@@ -8,6 +8,7 @@ from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
 from django.utils.functional import cached_property
+from modelcluster.fields import ParentalManyToManyField
 from modelcluster.models import ClusterableModel, get_all_child_relations
 import requests
 from treebeard.mp_tree import MP_Node
@@ -469,6 +470,10 @@ class SaveOperationMixin:
             elif isinstance(field, StreamField):
                 value = json.dumps(update_object_ids(field.stream_block, json.loads(value), context.destination_ids_by_source))
 
+            elif isinstance(field, ParentalManyToManyField):
+                target_model = get_base_model(field.related_model)
+                value = [context.destination_ids_by_source[(target_model, pk)] for pk in value]
+
             setattr(self.instance, field.get_attname(), value)
 
     def _save(self, context):
@@ -517,6 +522,14 @@ class SaveOperationMixin:
                 local_filename = field.upload_to(self.instance, name)
 
                 deps.append(('file-transferred', File(local_filename, value['size'], value['hash'], value['download_url'])))
+
+            elif isinstance(field, ParentalManyToManyField):
+                model = get_base_model(field.related_model)
+                for id in self.object_data['fields'].get(field.name):
+                    # TODO: add config check here
+                    deps.append(
+                        ('exists', model, id)
+                    )
 
         return deps
 
