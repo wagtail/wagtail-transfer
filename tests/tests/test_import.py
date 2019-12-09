@@ -383,11 +383,9 @@ class TestImport(TestCase):
                     "model": "wagtailcore.collection",
                     "pk": 3,
                     "fields": {
-                        "path": "0001",
-                        "depth": 1,
-                        "numchild": 0,
                         "name": "Root"
-                    }
+                    },
+                    "parent_id": null
                 },
                 {
                     "model": "wagtailimages.image",
@@ -454,9 +452,6 @@ class TestImport(TestCase):
                     "model": "wagtailcore.collection",
                     "pk": 4,
                     "fields": {
-                        "path": "00010001",
-                        "depth": 2,
-                        "numchild": 0,
                         "name": "New collection"
                     },
                     "parent_id": """ + str(root_collection.id) + """
