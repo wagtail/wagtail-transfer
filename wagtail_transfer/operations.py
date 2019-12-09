@@ -391,11 +391,31 @@ class SaveOperationMixin:
             elif isinstance(field, StreamField):
                 value = json.dumps(update_object_ids(field.stream_block, json.loads(value), context.destination_ids_by_source))
 
-            elif isinstance(field, ParentalManyToManyField):
-                target_model = get_base_model(field.related_model)
-                value = [context.destination_ids_by_source[(target_model, pk)] for pk in value]
+            elif isinstance(field, models.ManyToManyField):
+
+                if isinstance(field, ParentalManyToManyField):
+                    target_model = get_base_model(field.related_model)
+                    # translate ParentalManyToMany references to new ids
+                    value = [context.destination_ids_by_source[(target_model, pk)] for pk in value]
+                else:
+                    # setting forward ManyToMany directly is prohibited
+                    continue
 
             setattr(self.instance, field.get_attname(), value)
+
+    def _populate_many_to_many_fields(self, context):
+        # this must be done after saving so that the instance has an id
+        for field in self.model._meta.get_fields():
+
+            if isinstance(field, models.ManyToManyField) and not isinstance(field, ParentalManyToManyField):
+                try:
+                    value = self.object_data['fields'][field.name]
+                except KeyError:
+                    continue
+                target_model = get_base_model(field.related_model)
+                # translate list of source site ids to destination site ids
+                value = [context.destination_ids_by_source[(target_model, pk)] for pk in value]
+                getattr(self.instance, field.get_attname()).set(value)
 
     def _save(self, context):
         self.instance.save()
@@ -428,7 +448,7 @@ class SaveOperationMixin:
                         (model, id, 'exists')
                     )
 
-            elif isinstance(field, ParentalManyToManyField):
+            elif issubclass(type(field), models.ManyToManyField):
                 model = get_base_model(field.related_model)
                 for id in self.object_data['fields'].get(field.name):
                     # TODO: add config check here
@@ -449,6 +469,7 @@ class CreateModel(SaveOperationMixin, Operation):
         self.instance = self.model()
         self._populate_fields(context)
         self._save(context)
+        self._populate_many_to_many_fields(context)
 
         # Add an IDMapping entry for the newly created page
         uid = context.uids_by_source[(self.base_model, self.object_data['pk'])]

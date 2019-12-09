@@ -86,13 +86,13 @@ class StreamFieldAdapter(FieldAdapter):
         return get_object_references(stream_block, stream)
 
 
-class ParentalManyToManyFieldAdapter(FieldAdapter):
+class ManyToManyFieldAdapter(FieldAdapter):
     def __init__(self, field):
         super().__init__(field)
         self.related_base_model = get_base_model(self.field.related_model)
 
     def _get_pks(self, instance):
-        return self.field.value_from_object(instance).values_list('pk', flat=True)
+        return [model.pk for model in self.field.value_from_object(instance)]
 
     def get_object_references(self, instance):
         refs = set()
@@ -105,18 +105,29 @@ class ParentalManyToManyFieldAdapter(FieldAdapter):
         return pks
 
 
+class ParentalManyToManyFieldAdapter(ManyToManyFieldAdapter):
+    def __init__(self, field):
+        super().__init__(field)
+        self.related_base_model = get_base_model(self.field.related_model)
+
+    def _get_pks(self, instance):
+        return self.field.value_from_object(instance).values_list('pk', flat=True)
+
+
 ADAPTERS_BY_FIELD_CLASS = {
     models.Field: FieldAdapter,
     models.ForeignKey: ForeignKeyAdapter,
     ManyToOneRel: ManyToOneRelAdapter,
     RichTextField: RichTextAdapter,
     StreamField: StreamFieldAdapter,
-    ParentalManyToManyField: ParentalManyToManyFieldAdapter,
+    models.ManyToManyField: ManyToManyFieldAdapter,
+    ParentalManyToManyField: ParentalManyToManyFieldAdapter
 }
 
 
 def get_field_adapter(field):
     # find the adapter class for the most specific class in the field's inheritance tree
+
     for field_class in type(field).__mro__:
         if field_class in ADAPTERS_BY_FIELD_CLASS:
             adapter_class = ADAPTERS_BY_FIELD_CLASS[field_class]
