@@ -7,7 +7,7 @@ from wagtail.images.models import Image
 
 from wagtail_transfer.models import IDMapping
 from wagtail_transfer.operations import ImportPlanner
-from tests.models import PageWithRichText, PageWithStreamField, SectionedPage, SimplePage, SponsoredPage
+from tests.models import PageWithParentalManyToMany, PageWithRichText, PageWithStreamField, SectionedPage, SimplePage, SponsoredPage
 
 
 class TestImport(TestCase):
@@ -573,3 +573,12 @@ class TestImport(TestCase):
         self.assertEqual(collection.get_parent(), root_collection)
         # Only the root and the imported collection should exist
         self.assertEqual(Collection.objects.count(), 2)
+
+    def test_import_page_with_parental_many_to_many(self):
+        data = """{"ids_for_import": [["wagtailcore.page", 6]], "mappings": [["tests.advert", 200, "adadadad-2222-2222-2222-222222222222"], ["wagtailcore.page", 6, "a98b0848-1a96-11ea-8001-0800278dc04d"], ["tests.advert", 300, "adadadad-3333-3333-3333-333333333333"]], "objects": [{"model": "tests.pagewithparentalmanytomany", "pk": 6, "fields": {"title": "This page has lots of ads!", "slug": "this-page-has-lots-of-ads", "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "ads": [200, 300]}, "parent_id": 1}]}"""
+
+        importer = ImportPlanner(6, 3)
+        importer.add_json(data)
+        importer.run()
+
+        page = PageWithParentalManyToMany.objects.get(slug="this-page-has-lots-of-ads")
