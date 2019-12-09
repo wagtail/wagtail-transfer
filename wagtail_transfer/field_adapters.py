@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
 from django.utils.encoding import is_protected_type
 
+from modelcluster.fields import ParentalManyToManyField
+
 from wagtail.core.fields import RichTextField, StreamField
 
 from .models import get_base_model
@@ -84,12 +86,32 @@ class StreamFieldAdapter(FieldAdapter):
         return get_object_references(stream_block, stream)
 
 
+class ParentalManyToManyFieldAdapter(FieldAdapter):
+    def __init__(self, field):
+        super().__init__(field)
+        self.related_base_model = get_base_model(self.field.related_model)
+
+    def _get_pks(self, instance):
+        return self.field.value_from_object(instance).values_list('pk', flat=True)
+
+    def get_object_references(self, instance):
+        refs = set()
+        for pk in self._get_pks(instance):
+            refs.add((self.related_base_model, pk))
+        return refs
+
+    def serialize(self, instance):
+        pks = list(self._get_pks(instance))
+        return pks
+
+
 ADAPTERS_BY_FIELD_CLASS = {
     models.Field: FieldAdapter,
     models.ForeignKey: ForeignKeyAdapter,
     ManyToOneRel: ManyToOneRelAdapter,
     RichTextField: RichTextAdapter,
     StreamField: StreamFieldAdapter,
+    ParentalManyToManyField: ParentalManyToManyFieldAdapter,
 }
 
 
