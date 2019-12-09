@@ -266,7 +266,15 @@ class ImportPlanner:
             specific_model = get_model_for_path(object_data['model'])
 
             if issubclass(specific_model, MP_Node):
-                if action == 'create':
+                if object_data['parent_id'] is None:
+                    # This is the root node; populate destination_ids_by_source so that we use the
+                    # existing root node for any references to it, rather than creating a new one
+                    destination_id = specific_model.get_first_root_node().pk
+                    self.destination_ids_by_source[(model, source_id)] = destination_id
+
+                    # No operation to be performed for this task
+                    operation = None
+                elif action == 'create':
                     if issubclass(specific_model, Page) and source_id == self.root_page_source_pk:
                         # this is the root page of the import; ignore the parent ID in the source
                         # record and import at the requested destination instead
@@ -317,12 +325,15 @@ class ImportPlanner:
                             if str(child.pk) not in matched_destination_ids:
                                 self.operations.add(DeleteModel(child))
 
-        self.operations.add(operation)
+        if operation is not None:
+            self.operations.add(operation)
+
         self.resolutions[objective] = operation
         self.task_resolutions[task] = operation
 
-        for objective in operation.dependencies:
-            self._add_objective(objective)
+        if operation is not None:
+            for objective in operation.dependencies:
+                self._add_objective(objective)
 
     def _retry_tasks(self):
         """

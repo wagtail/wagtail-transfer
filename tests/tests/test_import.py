@@ -428,6 +428,73 @@ class TestImport(TestCase):
         self.assertEqual(image.file_size, 18521)
         self.assertEqual(image.file_hash, "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada")
 
+    @mock.patch('requests.get')
+    def test_import_image_with_file_without_root_collection_mapping(self, get):
+        get.return_value.status_code = 200
+        get.return_value.content = b'my test image file contents'
+
+        data = """{
+            "ids_for_import": [
+                ["wagtailimages.image", 53]
+            ],
+            "mappings": [
+                ["wagtailcore.collection", 3, "f91cb31c-1751-11ea-8000-0800278dc04d"],
+                ["wagtailimages.image", 53, "f91debc6-1751-11ea-8001-0800278dc04d"]
+            ],
+            "objects": [
+                {
+                    "model": "wagtailcore.collection",
+                    "pk": 3,
+                    "fields": {
+                        "name": "the other root"
+                    },
+                    "parent_id": null
+                },
+                {
+                    "model": "wagtailimages.image",
+                    "pk": 53,
+                    "fields": {
+                        "collection": 3,
+                        "title": "Lightnin' Hopkins",
+                        "file": {
+                            "download_url": "https://wagtail.io/media/original_images/lightnin_hopkins.jpg",
+                            "size": 18521,
+                            "hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada"
+                        },
+                        "width": 150,
+                        "height": 162,
+                        "created_at": "2019-04-01T07:31:21.251Z",
+                        "uploaded_by_user": null,
+                        "focal_point_x": null,
+                        "focal_point_y": null,
+                        "focal_point_width": null,
+                        "focal_point_height": null,
+                        "file_size": 18521,
+                        "file_hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada",
+                        "tags": "[]",
+                        "tagged_items": "[]"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(1, None)
+        importer.add_json(data)
+        importer.run()
+
+        # Check the image was imported
+        image = Image.objects.get()
+        self.assertEqual(image.title, "Lightnin' Hopkins")
+        self.assertEqual(image.file.read(), b'my test image file contents')
+
+        # It should be in the existing root collection (no new collection should be created)
+        self.assertEqual(image.collection.name, "Root")
+        self.assertEqual(Collection.objects.count(), 1)
+
+        # TODO: We should verify these
+        self.assertEqual(image.file_size, 18521)
+        self.assertEqual(image.file_hash, "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada")
+
     def test_import_collection(self):
         root_collection = Collection.objects.get()
 
@@ -466,3 +533,43 @@ class TestImport(TestCase):
         # Check the new collection was imported
         collection = Collection.objects.get(name="New collection")
         self.assertEqual(collection.get_parent(), root_collection)
+
+    def test_import_collection_without_root_collection_mapping(self):
+        root_collection = Collection.objects.get()
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.collection", 4]
+            ],
+            "mappings": [
+                ["wagtailcore.collection", 1, "f91cb31c-1751-11ea-8000-0800278dc04d"],
+                ["wagtailcore.collection", 4, "8a1d3afd-3fa2-4309-9dc7-6d31902174ca"]
+            ],
+            "objects": [
+                {
+                    "model": "wagtailcore.collection",
+                    "pk": 4,
+                    "fields": {
+                        "name": "New collection"
+                    },
+                    "parent_id": 1
+                },
+                {
+                    "model": "wagtailcore.collection",
+                    "pk": 1,
+                    "fields": {
+                        "name": "source site root"
+                    },
+                    "parent_id": null
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(1, None)
+        importer.add_json(data)
+        importer.run()
+
+        # Check the new collection was imported into the existing root collection
+        collection = Collection.objects.get(name="New collection")
+        self.assertEqual(collection.get_parent(), root_collection)
+        # Only the root and the imported collection should exist
+        self.assertEqual(Collection.objects.count(), 2)
