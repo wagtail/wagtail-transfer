@@ -185,5 +185,35 @@
         "password": "md5$seasalt$1e9bf2bf5606aa5c39852cc30f0f6f22",
         "email": "admin@example.com"
     }
+},
+{
+    "pk": "adadadad-2222-2222-2222-222222222222",
+    "model": "wagtail_transfer.idmapping",
+    "fields": {
+        "content_type": ["tests", "advert"],
+        "local_id": 2
+    }
+},
+{
+    "pk": "adadadad-3333-3333-3333-333333333333",
+    "model": "wagtail_transfer.idmapping",
+    "fields": {
+        "content_type": ["tests", "advert"],
+        "local_id": 3
+    }
+},
+{
+    "pk": 2,
+    "model": "tests.advert",
+    "fields": {
+        "slogan": "Buy a thing you definitely need!"
+    }
+},
+{
+    "pk": 3,
+    "model": "tests.advert",
+    "fields": {
+        "slogan": "Buy a full-scale authentically hydrogen-filled replica of the Hindenburg!"
+    }
 }
 ]
