@@ -308,26 +308,26 @@ class TestImport(TestCase):
         data = """{
                 "ids_for_import": [
                     ["wagtailcore.page", 6]
-                ], 
+                ],
                 "mappings": [
-                    ["wagtailcore.page", 6, "0c7a9390-16cb-11ea-8000-0800278dc04d"], 
-                    ["wagtailcore.page", 300, "33333333-3333-3333-3333-333333333333"], 
-                    ["wagtailcore.page", 200, "22222222-2222-2222-2222-222222222222"], 
-                    ["wagtailcore.page", 500, "00017017-5555-5555-5555-555555555555"], 
+                    ["wagtailcore.page", 6, "0c7a9390-16cb-11ea-8000-0800278dc04d"],
+                    ["wagtailcore.page", 300, "33333333-3333-3333-3333-333333333333"],
+                    ["wagtailcore.page", 200, "22222222-2222-2222-2222-222222222222"],
+                    ["wagtailcore.page", 500, "00017017-5555-5555-5555-555555555555"],
                     ["wagtailcore.page", 100, "11111111-1111-1111-1111-111111111111"]
-                ], 
+                ],
                 "objects": [
                     {
-                        "model": "tests.pagewithstreamfield", 
-                        "pk": 6, 
+                        "model": "tests.pagewithstreamfield",
+                        "pk": 6,
                         "fields": {
-                            "title": "I have a streamfield", 
-                            "slug": "i-have-a-streamfield", 
-                            "live": true, 
-                            "seo_title": "", 
-                            "show_in_menus": false, 
-                            "search_description": "", 
-                            "body": "[{\\"type\\": \\"link_block\\", \\"value\\": {\\"page\\": 100, \\"text\\": \\"Test\\"}, \\"id\\": \\"fc3b0d3d-d316-4271-9e31-84919558188a\\"}, {\\"type\\": \\"page\\", \\"value\\": 200, \\"id\\": \\"c6d07d3a-72d4-445e-8fa5-b34107291176\\"}, {\\"type\\": \\"stream\\", \\"value\\": [{\\"type\\": \\"page\\", \\"value\\": 300, \\"id\\": \\"8c0d7de7-4f77-4477-be67-7d990d0bfb82\\"}], \\"id\\": \\"21ffe52a-c0fc-4ecc-92f1-17b356c9cc94\\"}, {\\"type\\": \\"list_of_pages\\", \\"value\\": [500], \\"id\\": \\"17b972cb-a952-4940-87e2-e4eb00703997\\"}]"}, 
+                            "title": "I have a streamfield",
+                            "slug": "i-have-a-streamfield",
+                            "live": true,
+                            "seo_title": "",
+                            "show_in_menus": false,
+                            "search_description": "",
+                            "body": "[{\\"type\\": \\"link_block\\", \\"value\\": {\\"page\\": 100, \\"text\\": \\"Test\\"}, \\"id\\": \\"fc3b0d3d-d316-4271-9e31-84919558188a\\"}, {\\"type\\": \\"page\\", \\"value\\": 200, \\"id\\": \\"c6d07d3a-72d4-445e-8fa5-b34107291176\\"}, {\\"type\\": \\"stream\\", \\"value\\": [{\\"type\\": \\"page\\", \\"value\\": 300, \\"id\\": \\"8c0d7de7-4f77-4477-be67-7d990d0bfb82\\"}], \\"id\\": \\"21ffe52a-c0fc-4ecc-92f1-17b356c9cc94\\"}, {\\"type\\": \\"list_of_pages\\", \\"value\\": [500], \\"id\\": \\"17b972cb-a952-4940-87e2-e4eb00703997\\"}]"},
                             "parent_id": 300
                         }
                     ]
