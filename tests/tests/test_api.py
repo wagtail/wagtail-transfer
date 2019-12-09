@@ -8,7 +8,7 @@ from wagtail.core.models import Page, Collection
 
 from wagtail_transfer.auth import digest_for_source
 from wagtail_transfer.models import IDMapping
-from tests.models import Advert, PageWithRichText, SectionedPage, PageWithStreamField, PageWithParentalManyToMany
+from tests.models import Advert, ModelWithManyToMany, PageWithRichText, SectionedPage, PageWithStreamField, PageWithParentalManyToMany
 
 
 class TestPagesApi(TestCase):
@@ -162,7 +162,6 @@ class TestPagesApi(TestCase):
 
 
     def test_parental_many_to_many(self):
-
         page = PageWithParentalManyToMany(title="This page has lots of ads!")
         advert_2 = Advert.objects.get(id=2)
         advert_3 = Advert.objects.get(id=3)
@@ -238,6 +237,29 @@ class TestObjectsApi(TestCase):
         self.assertEqual(data['objects'][0]['fields']['name'], "Test collection")
 
         self.assertEqual(data['mappings'], [['wagtailcore.collection', collection.id, str(collection_uid)]])
+
+    def test_many_to_many(self):
+        advert_2 = Advert.objects.get(id=2)
+        advert_3 = Advert.objects.get(id=3)
+        ad_holder = ModelWithManyToMany.objects.create()
+        ad_holder.ads.set([advert_2, advert_3])
+        ad_holder.save()
+
+        request_body = json.dumps({
+            'tests.modelwithmanytomany': [1]
+        })
+        digest = digest_for_source('local', request_body)
+
+        response = self.client.post(
+            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_body, content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertIn(['tests.advert', 2, "adadadad-2222-2222-2222-222222222222"], data['mappings'])
+        self.assertIn(['tests.advert', 3, "adadadad-3333-3333-3333-333333333333"], data['mappings'])
+        self.assertEqual([2, 3], data['objects'][0]['fields']['ads'])
 
 
 @mock.patch('requests.get')
