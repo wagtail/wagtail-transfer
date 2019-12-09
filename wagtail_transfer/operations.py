@@ -4,6 +4,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.functional import cached_property
+from modelcluster.fields import ParentalManyToManyField
 from modelcluster.models import ClusterableModel, get_all_child_relations
 from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Page
@@ -390,6 +391,10 @@ class SaveOperationMixin:
             elif isinstance(field, StreamField):
                 value = json.dumps(update_object_ids(field.stream_block, json.loads(value), context.destination_ids_by_source))
 
+            elif isinstance(field, ParentalManyToManyField):
+                target_model = get_base_model(field.related_model)
+                value = [context.destination_ids_by_source[(target_model, pk)] for pk in value]
+
             setattr(self.instance, field.get_attname(), value)
 
     def _save(self, context):
@@ -399,7 +404,6 @@ class SaveOperationMixin:
     def dependencies(self):
         # A list of objectives that must be satisfied before we can import this page
         deps = super().dependencies
-        pk = self.object_data['pk']
 
         for field in self.model._meta.get_fields():
             if isinstance(field, models.ForeignKey):
@@ -419,6 +423,14 @@ class SaveOperationMixin:
 
             elif isinstance(field, StreamField):
                 for model, id in get_object_references(field.stream_block, json.loads(self.object_data['fields'].get(field.name))):
+                    # TODO: add config check here
+                    deps.append(
+                        (model, id, 'exists')
+                    )
+
+            elif isinstance(field, ParentalManyToManyField):
+                model = get_base_model(field.related_model)
+                for id in self.object_data['fields'].get(field.name):
                     # TODO: add config check here
                     deps.append(
                         (model, id, 'exists')
