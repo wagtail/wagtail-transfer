@@ -164,9 +164,9 @@ class TestPagesApi(TestCase):
     def test_parental_many_to_many(self):
 
         page = PageWithParentalManyToMany(title="This page has lots of ads!")
-        advert_1 = Advert.objects.create(slogan="Buy a thing you definitely need!")
-        advert_2 = Advert.objects.create(slogan="Buy a full-scale authentically hydrogen-filled replica of the Hindenburg!")
-        page.ads = [advert_1, advert_2]
+        advert_2 = Advert.objects.get(id=2)
+        advert_3 = Advert.objects.get(id=3)
+        page.ads = [advert_2, advert_3]
 
         parent_page = Page.objects.get(url_path='/home/existing-child-page/')
         parent_page.add_child(instance=page)
@@ -175,6 +175,10 @@ class TestPagesApi(TestCase):
         response = self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s' % (page.id, digest))
 
         data = json.loads(response.content)
+
+        self.assertIn(['tests.advert', 2, "adadadad-2222-2222-2222-222222222222"], data['mappings'])
+        self.assertIn(['tests.advert', 3, "adadadad-3333-3333-3333-333333333333"], data['mappings'])
+        self.assertEqual([2, 3], data['objects'][0]['fields']['ads'])
 
 
 class TestObjectsApi(TestCase):
