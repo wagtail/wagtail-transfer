@@ -392,22 +392,19 @@ class SaveOperationMixin:
                 value = json.dumps(update_object_ids(field.stream_block, json.loads(value), context.destination_ids_by_source))
 
             elif isinstance(field, models.ManyToManyField):
-
-                if isinstance(field, ParentalManyToManyField):
-                    target_model = get_base_model(field.related_model)
-                    # translate ParentalManyToMany references to new ids
-                    value = [context.destination_ids_by_source[(target_model, pk)] for pk in value]
-                else:
-                    # setting forward ManyToMany directly is prohibited
-                    continue
+                # setting forward ManyToMany directly is prohibited
+                continue
 
             setattr(self.instance, field.get_attname(), value)
 
     def _populate_many_to_many_fields(self, context):
-        # this must be done after saving so that the instance has an id
-        for field in self.model._meta.get_fields():
+        save_needed = False
 
-            if isinstance(field, models.ManyToManyField) and not isinstance(field, ParentalManyToManyField):
+        # for ManyToManyField, this must be done after saving so that the instance has an id.
+        # for ParentalManyToManyField, this could be done before, but doing both together avoids additional
+        # complexity as the method is identical
+        for field in self.model._meta.get_fields():
+            if isinstance(field, models.ManyToManyField):
                 try:
                     value = self.object_data['fields'][field.name]
                 except KeyError:
@@ -416,6 +413,11 @@ class SaveOperationMixin:
                 # translate list of source site ids to destination site ids
                 value = [context.destination_ids_by_source[(target_model, pk)] for pk in value]
                 getattr(self.instance, field.get_attname()).set(value)
+                save_needed = True
+        if save_needed:
+            # _save() for creating a page may attempt to re-add it as a child, so the instance (assumed to be already
+            # in the tree) is saved directly
+            self.instance.save()
 
     def _save(self, context):
         self.instance.save()
