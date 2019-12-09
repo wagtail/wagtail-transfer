@@ -399,7 +399,6 @@ class SaveOperationMixin:
     def dependencies(self):
         # A list of objectives that must be satisfied before we can import this page
         deps = super().dependencies
-        pk = self.object_data['pk']
 
         for field in self.model._meta.get_fields():
             if isinstance(field, models.ForeignKey):
