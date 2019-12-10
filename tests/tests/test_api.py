@@ -141,7 +141,6 @@ class TestPagesApi(TestCase):
         # test PageChooserBlock in ListBlock
         self.assertIn(['wagtailcore.page', 5, "00017017-5555-5555-5555-555555555555"], data['mappings'])
 
-
     def test_streamfield_with_rich_text(self):
         # Check that page references within a RichTextBlock in StreamField are found correctly
 
@@ -160,7 +159,6 @@ class TestPagesApi(TestCase):
 
         self.assertIn(['wagtailcore.page', 1, '11111111-1111-1111-1111-111111111111'], data['mappings'])
 
-
     def test_parental_many_to_many(self):
         page = PageWithParentalManyToMany(title="This page has lots of ads!")
         advert_2 = Advert.objects.get(id=2)
@@ -177,7 +175,7 @@ class TestPagesApi(TestCase):
 
         self.assertIn(['tests.advert', 2, "adadadad-2222-2222-2222-222222222222"], data['mappings'])
         self.assertIn(['tests.advert', 3, "adadadad-3333-3333-3333-333333333333"], data['mappings'])
-        self.assertEqual([2, 3], data['objects'][0]['fields']['ads'])
+        self.assertEqual({2, 3}, set(data['objects'][0]['fields']['ads']))
 
 
 class TestObjectsApi(TestCase):
@@ -259,7 +257,7 @@ class TestObjectsApi(TestCase):
 
         self.assertIn(['tests.advert', 2, "adadadad-2222-2222-2222-222222222222"], data['mappings'])
         self.assertIn(['tests.advert', 3, "adadadad-3333-3333-3333-333333333333"], data['mappings'])
-        self.assertEqual([2, 3], data['objects'][0]['fields']['ads'])
+        self.assertEqual({2, 3}, set(data['objects'][0]['fields']['ads']))
 
 
 @mock.patch('requests.get')
