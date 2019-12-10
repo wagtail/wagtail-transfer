@@ -587,7 +587,7 @@ class TestImport(TestCase):
         advert_2 = Advert.objects.get(id=2)
         advert_3 = Advert.objects.get(id=3)
 
-        self.assertEqual(list(page.ads.all()), [advert_2, advert_3])
+        self.assertEqual(set(page.ads.all()), {advert_2, advert_3})
 
     def test_import_object_with_many_to_many(self):
         # Test that an imported object with a ManyToManyField has its ids converted to the destination site's
@@ -600,4 +600,4 @@ class TestImport(TestCase):
         ad_holder = ModelWithManyToMany.objects.get(id=1)
         advert_2 = Advert.objects.get(id=2)
         advert_3 = Advert.objects.get(id=3)
-        self.assertEqual(list(ad_holder.ads.all()), [advert_2, advert_3])
+        self.assertEqual(set(ad_holder.ads.all()), {advert_2, advert_3})
