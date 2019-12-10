@@ -115,15 +115,6 @@ class ManyToManyFieldAdapter(FieldAdapter):
         return pks
 
 
-class ParentalManyToManyFieldAdapter(ManyToManyFieldAdapter):
-    def __init__(self, field):
-        super().__init__(field)
-        self.related_base_model = get_base_model(self.field.related_model)
-
-    def _get_pks(self, instance):
-        return self.field.value_from_object(instance).values_list('pk', flat=True)
-
-
 ADAPTERS_BY_FIELD_CLASS = {
     models.Field: FieldAdapter,
     models.ForeignKey: ForeignKeyAdapter,
@@ -132,7 +123,6 @@ ADAPTERS_BY_FIELD_CLASS = {
     StreamField: StreamFieldAdapter,
     models.FileField: FileAdapter,
     models.ManyToManyField: ManyToManyFieldAdapter,
-    ParentalManyToManyField: ParentalManyToManyFieldAdapter
 }
 
 
