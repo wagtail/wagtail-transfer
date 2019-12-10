@@ -545,7 +545,7 @@ class SaveOperationMixin:
 
                 deps.append(('file-transferred', File(local_filename, value['size'], value['hash'], value['download_url'])))
 
-            elif issubclass(type(field), models.ManyToManyField):
+            elif isinstance(field, models.ManyToManyField):
                 model = get_base_model(field.related_model)
                 for id in self.object_data['fields'].get(field.name):
                     # TODO: add config check here
