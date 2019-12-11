@@ -93,7 +93,7 @@ export default function ImportContentForm({
 
   return (
     <div>
-      <h2>Enter source site URL</h2>
+      <h2>Select source site</h2>
       <SourceSelectorWidget
         sources={sources}
         selectedSource={source}

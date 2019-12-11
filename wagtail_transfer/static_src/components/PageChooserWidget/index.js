@@ -8,6 +8,9 @@ export default function PageChooserWidget({ apiBaseUrl, value, onChange }) {
       onChange(newValue);
     });
   };
+  const onClickClear = () => {
+    onChange(null);
+  };
 
   const classNames = ['chooser', 'page-chooser'];
 
@@ -24,7 +27,16 @@ export default function PageChooserWidget({ apiBaseUrl, value, onChange }) {
                 className="button action-choose button-small button-secondary"
                 onClick={onClickChoose}
               >
-                Choose another page
+                Change
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className="button action-clear button-small button-secondary"
+                onClick={onClickClear}
+              >
+                Clear
               </button>
             </li>
           </ul>
