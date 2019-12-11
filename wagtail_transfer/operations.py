@@ -84,6 +84,28 @@ class Objective:
         return hash((self.type, self.model, self.source_id))
 
 
+class ImportContext:
+    """
+    Persistent state required when running the import; this includes mappings from the source
+    site's IDs to the destination site's IDs, which will be added to as the import proceeds
+    (for example, once a page is created at the destination, we add its ID mapping so that we
+    can handle references to it that appear in other imported pages).
+    """
+    def __init__(self):
+        # A mapping of objects on the source site to their IDs on the destination site.
+        # Keys are tuples of (model_class, source_id); values are destination IDs.
+        # model_class must be the highest concrete model in the inheritance tree - i.e.
+        # Page, not BlogPage
+        self.destination_ids_by_source = {}
+
+        # a mapping of objects on the source site to their UIDs.
+        # Keys are tuples of (model_class, source_id); values are UIDs.
+        self.uids_by_source = {}
+
+        # Mapping of source_urls to instances of ImportedFile
+        self.imported_files_by_source_url = {}
+
+
 class ImportPlanner:
     def __init__(self, root_page_source_pk, destination_parent_id):
 
@@ -93,20 +115,12 @@ class ImportPlanner:
         else:
             self.destination_parent_id = int(destination_parent_id)
 
-        # A mapping of objects on the source site to their IDs on the destination site.
-        # Keys are tuples of (model_class, source_id); values are destination IDs.
-        # model_class must be the highest concrete model in the inheritance tree - i.e.
-        # Page, not BlogPage
-        self.destination_ids_by_source = {}
+        self.context = ImportContext()
 
         self.objectives = set()
 
         # objectives that have not yet been converted into tasks
         self.unhandled_objectives = set()
-
-        # a mapping of objects on the source site to their UIDs.
-        # Keys are tuples of (model_class, source_id); values are UIDs.
-        self.uids_by_source = {}
 
         # a mapping of objects on the source site to their field data
         self.object_data_by_source = {}
@@ -160,7 +174,7 @@ class ImportPlanner:
         # add source id -> uid mappings to the uids_by_source dict
         for model_path, source_id, uid in data['mappings']:
             model = get_base_model_for_path(model_path)
-            self.uids_by_source[(model, source_id)] = uid
+            self.context.uids_by_source[(model, source_id)] = uid
 
         # add object data to the object_data_by_source dict
         for obj_data in data['objects']:
@@ -200,7 +214,7 @@ class ImportPlanner:
         # look up uid for this item;
         # the export API is expected to supply the id->uid mapping for all referenced objects,
         # so this lookup should always succeed (and if it doesn't, we leave the KeyError uncaught)
-        uid = self.uids_by_source[(objective.model, objective.source_id)]
+        uid = self.context.uids_by_source[(objective.model, objective.source_id)]
 
         # look for a matching uid on the destination site
         try:
@@ -209,7 +223,7 @@ class ImportPlanner:
             mapping = None
 
         if mapping:
-            self.destination_ids_by_source[(objective.model, objective.source_id)] = mapping.content_object.pk
+            self.context.destination_ids_by_source[(objective.model, objective.source_id)] = mapping.content_object.pk
 
         if objective.type == 'exists':
             if mapping:
@@ -270,7 +284,7 @@ class ImportPlanner:
                 # This is the root node; populate destination_ids_by_source so that we use the
                 # existing root node for any references to it, rather than creating a new one
                 destination_id = specific_model.get_first_root_node().pk
-                self.destination_ids_by_source[(model, source_id)] = destination_id
+                self.context.destination_ids_by_source[(model, source_id)] = destination_id
 
                 # No operation to be performed for this task
                 operation = None
@@ -282,7 +296,7 @@ class ImportPlanner:
                 else:
                     operation = CreateTreeModel(specific_model, object_data)
             else:  # action == 'update'
-                destination_id = self.destination_ids_by_source[(model, source_id)]
+                destination_id = self.context.destination_ids_by_source[(model, source_id)]
                 obj = specific_model.objects.get(pk=destination_id)
                 operation = UpdateModel(obj, object_data)
         else:
@@ -290,7 +304,7 @@ class ImportPlanner:
             if action == 'create':
                 operation = CreateModel(specific_model, object_data)
             else:  # action == 'update'
-                destination_id = self.destination_ids_by_source[(model, source_id)]
+                destination_id = self.context.destination_ids_by_source[(model, source_id)]
                 obj = specific_model.objects.get(pk=destination_id)
                 operation = UpdateModel(obj, object_data)
 
@@ -313,7 +327,7 @@ class ImportPlanner:
                     )
 
                     # look up the child object's UID
-                    uid = self.uids_by_source[(related_base_model, child_obj_data['pk'])]
+                    uid = self.context.uids_by_source[(related_base_model, child_obj_data['pk'])]
                     child_uids.add(uid)
 
                 if action == 'update':
@@ -354,11 +368,6 @@ class ImportPlanner:
         if self.unhandled_objectives or self.postponed_tasks:
             raise ImproperlyConfigured("Cannot run import until all dependencies are resoved")
 
-        context = ImportContext(
-            self.destination_ids_by_source,
-            self.uids_by_source,
-        )
-
         # arrange operations into an order that satisfies dependencies
         operation_order = []
         for operation in self.operations:
@@ -368,7 +377,7 @@ class ImportPlanner:
         # run operations in order
         with transaction.atomic():
             for operation in operation_order:
-                operation.run(context)
+                operation.run(self.context)
 
     def _add_to_operation_order(self, operation, operation_order):
         if operation in operation_order:
@@ -385,19 +394,6 @@ class ImportPlanner:
                 self._add_to_operation_order(resolution, operation_order)
 
         operation_order.append(operation)
-
-
-class ImportContext:
-    """
-    Persistent state required when running the import; this includes mappings from the source
-    site's IDs to the destination site's IDs, which will be added to as the import proceeds
-    (for example, once a page is created at the destination, we add its ID mapping so that we
-    can handle references to it that appear in other imported pages).
-    """
-    def __init__(self, destination_ids_by_source, uids_by_source):
-        self.destination_ids_by_source = destination_ids_by_source
-        self.uids_by_source = uids_by_source
-        self.imported_files_by_source_url = {}
 
 
 class Operation:
