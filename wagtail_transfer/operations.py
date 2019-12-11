@@ -144,18 +144,19 @@ class ImportPlanner:
 
         # set of operations to be performed in this import.
         # An operation is an object with a `run` method which accomplishes the task.
-        # It also has a list of dependencies - objectives that must be completed before the `run`
-        # method can be called.
+        # It also has a list of dependencies - source IDs of objects that must exist at the
+        # destination before the `run` method can be called.
         self.operations = set()
 
-        # Mapping from objectives to operations that satisfy that objective. If the objective
-        # does not require any action (e.g. it's an 'ensure exists' on an object that already
-        # exists), the value is None.
-        # A task can be converted into an operation once all the object data relating to it has
-        # been fetched.
+        # Mapping from (model, source_id) to an operation that creates that object. If the object
+        # already exists at the destination, the value is None. This will be used to solve
+        # dependencies between operations, where a database record cannot be created/updated until
+        # an object that it references exists at the destination site
         self.resolutions = {}
 
-        # Mapping from tasks to operations that perform the task
+        # Mapping from tasks to operations that perform the task. This will be used to identify
+        # cases where the same task arises multiple times over the course of planning the import,
+        # and prevent us from running the same database operation multiple times as a result
         self.task_resolutions = {}
 
     def add_json(self, json_data):
@@ -235,6 +236,7 @@ class ImportPlanner:
             if mapping:
                 # object exists; no further action
                 task = None
+                self.resolutions[(objective.model, objective.source_id)] = None
             else:
                 # object does not exist locally; need to create it
                 task = ('create', objective.model, objective.source_id)
@@ -243,6 +245,9 @@ class ImportPlanner:
             if mapping:
                 # object exists locally, but we need to update it
                 task = ('update', objective.model, objective.source_id)
+                # since the object already exists at the destination, any objects referencing it
+                # do NOT have to wait for this task to complete
+                self.resolutions[(objective.model, objective.source_id)] = None
             else:
                 # object does not exist locally; need to create it
                 task = ('create', objective.model, objective.source_id)
@@ -252,8 +257,6 @@ class ImportPlanner:
 
         if task:
             self._handle_task(objective, task)
-        else:
-            self.resolutions[objective] = None
 
     def _handle_task(self, objective, task):
         """
@@ -261,17 +264,23 @@ class ImportPlanner:
         the object data for this object, in which case it will be added to postponed_tasks
         """
 
-        # It's possible that we've already found a resolution for this task in the process of
-        # solving another objective; for example, "ensure page 123 exists" and "ensure page 123
-        # is fully updated" might both be solved by creating page 123. If so, we re-use the
-        # same operation that we built previously; this ensures that when we establish an order
-        # for the operations to happen in, we'll recognise the duplicate and won't run it twice.
-        try:
-            operation = self.task_resolutions[task]
-            self.resolutions[objective] = operation
+        # It's possible that over the course of planning the import, we will encounter multiple
+        # tasks relating to the same object. For example, a page may be part of the selected
+        # subtree to be imported, and, separately, be referenced from another page - both of
+        # these will trigger an 'update' or 'create' task for that page (according to whether
+        # it already exists or not).
+
+        # Given that the only defined task types are 'update' and 'create', and the choice between
+        # these depends ONLY on whether the object previously existed at the destination or not,
+        # we can be confident that all of the tasks we encounter for a given object will be the
+        # same type.
+
+        # Therefore, if we find an existing entry for this task in task_resolutions, we know that
+        # we've already handled this task and updated the ImportPlanner state accordingly
+        # (including `task_resolutions`, `resolutions` and `operations`), and should quit now
+        # rather than create duplicate database operations.
+        if task in self.task_resolutions:
             return
-        except KeyError:
-            pass
 
         action, model, source_id = task
         try:
@@ -350,12 +359,29 @@ class ImportPlanner:
         if operation is not None:
             self.operations.add(operation)
 
-        self.resolutions[objective] = operation
+        if action == 'create':
+            # For 'create' actions, record this operation in `resolutions`, so that any operations
+            # that identify this object as a dependency know that this operation has to happen
+            # first.
+
+            # (Alternatively, the operation can be None, and that's fine too: it means that we've
+            # been able to populate destination_ids_by_source with no further action, and so the
+            # dependent operation has nothing to wait for.)
+
+            # For 'update' actions, this doesn't matter, since we can happily fill in the
+            # destination ID wherever it's being referenced, regardless of whether that object has
+            # completed its update or not; in this case, we would have already set the resolution
+            # to None during _handle_objective.
+            self.resolutions[(model, source_id)] = operation
+
         self.task_resolutions[task] = operation
 
         if operation is not None:
-            for objective in operation.dependencies:
-                self._add_objective(objective)
+            for model, source_id in operation.dependencies:
+                objective_type = 'updated' if model._meta.label_lower in UPDATE_RELATED_MODELS else 'exists'
+                self._add_objective(
+                    Objective(objective_type, model, source_id)
+                )
 
     def _retry_tasks(self):
         """
@@ -416,7 +442,7 @@ class Operation:
 
     @property
     def dependencies(self):
-        """A list of objectives that must be satisfied before we can import this page."""
+        """A list of (model, source_id) tuples that must exist at the destination before we can import this page."""
         return []
 
 
@@ -531,31 +557,27 @@ class SaveOperationMixin:
             if isinstance(field, models.ForeignKey):
                 val = self.object_data['fields'].get(field.name)
                 if val is not None:
-                    objective_type = 'updated' if field.related_model._meta.label_lower in UPDATE_RELATED_MODELS else 'exists'
                     deps.append(
-                        Objective(objective_type, get_base_model(field.related_model), val)
+                        (get_base_model(field.related_model), val)
                     )
             elif isinstance(field, RichTextField):
                 objects = get_reference_handler().get_objects(self.object_data['fields'].get(field.name))
                 for model, id in objects:
-                    objective_type = 'updated' if model._meta.label_lower in UPDATE_RELATED_MODELS else 'exists'
                     deps.append(
-                        Objective(objective_type, model, id)
+                        (model, id)
                     )
 
             elif isinstance(field, StreamField):
                 for model, id in get_object_references(field.stream_block, json.loads(self.object_data['fields'].get(field.name))):
-                    objective_type = 'updated' if model._meta.label_lower in UPDATE_RELATED_MODELS else 'exists'
                     deps.append(
-                        Objective(objective_type, model, id)
+                        (model, id)
                     )
 
             elif isinstance(field, models.ManyToManyField):
                 model = get_base_model(field.related_model)
-                objective_type = 'updated' if model._meta.label_lower in UPDATE_RELATED_MODELS else 'exists'
                 for id in self.object_data['fields'].get(field.name):
                     deps.append(
-                        Objective(objective_type, model, id)
+                        (model, id)
                     )
 
         return deps
@@ -598,7 +620,7 @@ class CreateTreeModel(CreateModel):
         if self.destination_parent_id is None:
             # need to ensure parent page is imported before this one
             deps.append(
-                Objective('exists', get_base_model(self.model), self.object_data['parent_id']),
+                (get_base_model(self.model), self.object_data['parent_id']),
             )
 
         return deps
