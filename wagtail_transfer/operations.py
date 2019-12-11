@@ -56,6 +56,38 @@ class File:
 from .streamfield import get_object_references, update_object_ids
 
 
+class Objective:
+    """
+    An objective describes a state of an individual database object that we wish to
+    reach as a result of this import, for example:
+    "page 123 must exist at the destination in its most up-to-date form".
+    The object is identified by a model and its ID on the source site, and the
+    objective type is one of:
+
+    'exists': achieved when the object exists at the destination site and is listed in
+              destination_ids_by_source
+    'updated': achieved when the object exists at the destination site, with any data updates
+               from the source site applied, and is listed in destination_ids_by_source
+    'located': achieved when the object has been confirmed to exist at the destination and
+               listed in destination_ids_by_source, OR confirmed not to exist at the
+               destination
+    """
+
+    def __init__(self, objective_type, model, source_id):
+        self.type = objective_type
+        self.model = model
+        self.source_id = source_id
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, Objective)
+            and (self.type, self.model, self.source_id) == (other.type, other.model, other.source_id)
+        )
+
+    def __hash__(self):
+        return hash((self.type, self.model, self.source_id))
+
+
 class ImportPlanner:
     def __init__(self, root_page_source_pk, destination_parent_id):
 
@@ -71,16 +103,6 @@ class ImportPlanner:
         # Page, not BlogPage
         self.destination_ids_by_source = {}
 
-        # An objective describes a state that we want to reach, e.g.
-        # "page 123 must exist at the destination in its most up-to-date form". This is represented
-        # as a tuple of (objective_type, model_class, source_id), where objective_type is one of:
-        # 'exists': achieved when the object exists at the destination site and is listed in
-        #           destination_ids_by_source
-        # 'updated': achieved when the object exists at the destination site, with any data updates
-        #            from the source site applied, and is listed in destination_ids_by_source
-        # 'located': achieved when the object has been confirmed to exist at the destination and
-        #            listed in destination_ids_by_source, OR confirmed not to exist at the
-        #            destination
         self.objectives = set()
 
         # objectives that have not yet been converted into tasks
@@ -155,7 +177,7 @@ class ImportPlanner:
         # copy of that object on the destination site
         for model_path, source_id in data['ids_for_import']:
             model = get_base_model_for_path(model_path)
-            objective = ('updated', model, source_id)
+            objective = Objective('updated', model, source_id)
 
             # add to the set of objectives that need handling
             self._add_objective(objective)
@@ -179,12 +201,10 @@ class ImportPlanner:
             self.unhandled_objectives.add(objective)
 
     def _handle_objective(self, objective):
-        objective_type, model, source_id = objective
-
         # look up uid for this item;
         # the export API is expected to supply the id->uid mapping for all referenced objects,
         # so this lookup should always succeed (and if it doesn't, we leave the KeyError uncaught)
-        uid = self.uids_by_source[(model, source_id)]
+        uid = self.uids_by_source[(objective.model, objective.source_id)]
 
         # look for a matching uid on the destination site
         try:
@@ -193,31 +213,31 @@ class ImportPlanner:
             mapping = None
 
         if mapping:
-            self.destination_ids_by_source[(model, source_id)] = mapping.content_object.pk
+            self.destination_ids_by_source[(objective.model, objective.source_id)] = mapping.content_object.pk
 
-        if objective_type == 'located':
+        if objective.type == 'located':
             # for this objective, we are only required to find the corresponding destination ID
             # or determine that there isn't one - so there is no further action
             task = None
 
-        elif objective_type == 'exists':
+        elif objective.type == 'exists':
             if mapping:
                 # object exists; no further action
                 task = None
             else:
                 # object does not exist locally; need to create it
-                task = ('create', model, source_id)
+                task = ('create', objective.model, objective.source_id)
 
-        elif objective_type == 'updated':
+        elif objective.type == 'updated':
             if mapping:
                 # object exists locally, but we need to update it
-                task = ('update', model, source_id)
+                task = ('update', objective.model, objective.source_id)
             else:
                 # object does not exist locally; need to create it
-                task = ('create', model, source_id)
+                task = ('create', objective.model, objective.source_id)
 
         else:
-            raise ValueError("Unrecognised objective type: %r" % objective_type)
+            raise ValueError("Unrecognised objective type: %r" % objective.type)
 
         if task:
             self._handle_task(objective, task)
@@ -297,7 +317,9 @@ class ImportPlanner:
                     # Add an objective for handling the child object. Regardless of whether
                     # this is a 'create' or 'update' task, we want the child objects to be at
                     # their most up-to-date versions, so set the objective type to 'updated'
-                    self._add_objective(('updated', related_base_model, child_obj_data['pk']))
+                    self._add_objective(
+                        Objective('updated', related_base_model, child_obj_data['pk'])
+                    )
 
                     # look up the child object's UID
                     uid = self.uids_by_source[(related_base_model, child_obj_data['pk'])]
@@ -518,21 +540,21 @@ class SaveOperationMixin:
                 if val is not None:
                     # TODO: consult config to decide whether objective type should be 'exists' or 'updated'
                     deps.append(
-                        ('updated', get_base_model(field.related_model), val)
+                        Objective('updated', get_base_model(field.related_model), val)
                     )
             elif isinstance(field, RichTextField):
                 objects = get_reference_handler().get_objects(self.object_data['fields'].get(field.name))
                 for model, id in objects:
                     # TODO: add config check here
                     deps.append(
-                        ('exists', model, id)
+                        Objective('exists', model, id)
                     )
 
             elif isinstance(field, StreamField):
                 for model, id in get_object_references(field.stream_block, json.loads(self.object_data['fields'].get(field.name))):
                     # TODO: add config check here
                     deps.append(
-                        ('exists', model, id)
+                        Objective('exists', model, id)
                     )
 
             elif isinstance(field, models.ManyToManyField):
@@ -540,7 +562,7 @@ class SaveOperationMixin:
                 for id in self.object_data['fields'].get(field.name):
                     # TODO: add config check here
                     deps.append(
-                        ('exists', model, id)
+                        Objective('exists', model, id)
                     )
 
         return deps
@@ -583,7 +605,7 @@ class CreateTreeModel(CreateModel):
         if self.destination_parent_id is None:
             # need to ensure parent page is imported before this one
             deps.append(
-                ('exists', get_base_model(self.model), self.object_data['parent_id']),
+                Objective('exists', get_base_model(self.model), self.object_data['parent_id']),
             )
 
         return deps
