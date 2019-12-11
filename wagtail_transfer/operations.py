@@ -121,9 +121,6 @@ class ImportPlanner:
         # Mapping from tasks to operations that perform the task
         self.task_resolutions = {}
 
-        # Mapping of source_urls to instances of ImportedFile
-        self.imported_files_by_source_url = {}
-
     def add_json(self, json_data):
         """
         Add JSON data to the import plan. The data is a dict consisting of:
@@ -356,7 +353,6 @@ class ImportPlanner:
         context = ImportContext(
             self.destination_ids_by_source,
             self.uids_by_source,
-            self.imported_files_by_source_url,
         )
 
         # arrange operations into an order that satisfies dependencies
@@ -394,10 +390,10 @@ class ImportContext:
     (for example, once a page is created at the destination, we add its ID mapping so that we
     can handle references to it that appear in other imported pages).
     """
-    def __init__(self, destination_ids_by_source, uids_by_source, imported_files_by_source_url):
+    def __init__(self, destination_ids_by_source, uids_by_source):
         self.destination_ids_by_source = destination_ids_by_source
         self.uids_by_source = uids_by_source
-        self.imported_files_by_source_url = imported_files_by_source_url
+        self.imported_files_by_source_url = {}
 
 
 class Operation:
