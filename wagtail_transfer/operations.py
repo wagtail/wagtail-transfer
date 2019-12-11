@@ -8,7 +8,6 @@ from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
 from django.utils.functional import cached_property
-from modelcluster.fields import ParentalManyToManyField
 from modelcluster.models import ClusterableModel, get_all_child_relations
 import requests
 from treebeard.mp_tree import MP_Node
