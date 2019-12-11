@@ -73,7 +73,8 @@ class TestImport(TestCase):
                 ["wagtailcore.page", 15, "00017017-5555-5555-5555-555555555555"],
                 ["wagtailcore.page", 16, "00e99e99-6666-6666-6666-666666666666"],
                 ["tests.advert", 11, "adadadad-1111-1111-1111-111111111111"],
-                ["tests.advert", 8, "adadadad-8888-8888-8888-888888888888"]
+                ["tests.advert", 8, "adadadad-8888-8888-8888-888888888888"],
+                ["tests.author", 100, "b00cb00c-1111-1111-1111-111111111111"]
             ],
             "objects": [
                 {
@@ -98,7 +99,8 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "oil-is-still-great",
                         "advert": 11,
-                        "intro": "yay fossil fuels and climate change"
+                        "intro": "yay fossil fuels and climate change",
+                        "author": 100
                     }
                 },
                 {
@@ -127,6 +129,14 @@ class TestImport(TestCase):
                     "fields": {
                         "slogan": "go to work on an egg"
                     }
+                },
+                {
+                    "model": "tests.author",
+                    "pk": 100,
+                    "fields": {
+                        "name": "Jack Kerouac",
+                        "bio": "Jack Kerouac's car has been fixed now."
+                    }
                 }
             ]
         }"""
@@ -139,6 +149,8 @@ class TestImport(TestCase):
         self.assertEqual(updated_page.intro, "yay fossil fuels and climate change")
         # advert is listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so changes to the advert should have been pulled in too
         self.assertEqual(updated_page.advert.slogan, "put a leopard in your tank")
+        # author is not listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so should be left unchanged
+        self.assertEqual(updated_page.author.bio, "Jack Kerouac's car has broken down.")
 
         created_page = SponsoredPage.objects.get(url_path='/home/eggs-are-great-too/')
         self.assertEqual(created_page.intro, "you can make cakes with them")

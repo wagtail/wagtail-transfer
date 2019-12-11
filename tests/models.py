@@ -14,8 +14,14 @@ class Advert(models.Model):
     slogan = models.CharField(max_length=255)
 
 
+class Author(models.Model):
+    name = models.CharField(max_length=255)
+    bio = models.TextField()
+
+
 class SponsoredPage(Page):
     advert = models.ForeignKey(Advert, blank=True, null=True, on_delete=models.SET_NULL)
+    author = models.ForeignKey(Author, blank=True, null=True, on_delete=models.SET_NULL)
     intro = models.TextField()
 
 

@@ -130,7 +130,8 @@
     "model": "tests.sponsoredpage",
     "fields": {
         "advert": 1,
-        "intro": "yay fossil fuels etc"
+        "intro": "yay fossil fuels etc",
+        "author": 1
     }
 },
 {
@@ -215,5 +216,20 @@
     "fields": {
         "slogan": "Buy a full-scale authentically hydrogen-filled replica of the Hindenburg!"
     }
-}
-]
+},
+{
+    "pk": "b00cb00c-1111-1111-1111-111111111111",
+    "model": "wagtail_transfer.idmapping",
+    "fields": {
+        "content_type": ["tests", "author"],
+        "local_id": 1
+    }
+},
+{
+    "pk": 1,
+    "model": "tests.author",
+    "fields": {
+        "name": "Jack Kerouac",
+        "bio": "Jack Kerouac's car has broken down."
+    }
+}]
