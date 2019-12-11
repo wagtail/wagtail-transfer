@@ -68,9 +68,6 @@ class Objective:
               destination_ids_by_source
     'updated': achieved when the object exists at the destination site, with any data updates
                from the source site applied, and is listed in destination_ids_by_source
-    'located': achieved when the object has been confirmed to exist at the destination and
-               listed in destination_ids_by_source, OR confirmed not to exist at the
-               destination
     """
 
     def __init__(self, objective_type, model, source_id):
@@ -215,12 +212,7 @@ class ImportPlanner:
         if mapping:
             self.destination_ids_by_source[(objective.model, objective.source_id)] = mapping.content_object.pk
 
-        if objective.type == 'located':
-            # for this objective, we are only required to find the corresponding destination ID
-            # or determine that there isn't one - so there is no further action
-            task = None
-
-        elif objective.type == 'exists':
+        if objective.type == 'exists':
             if mapping:
                 # object exists; no further action
                 task = None
