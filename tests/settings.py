@@ -144,3 +144,5 @@ WAGTAILTRANSFER_SOURCES = {
 }
 
 WAGTAILTRANSFER_SECRET_KEY = 'i-am-the-local-secret-key'
+
+WAGTAILTRANSFER_UPDATE_RELATED_MODELS = ['wagtailimages.image', 'tests.advert']

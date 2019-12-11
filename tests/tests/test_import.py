@@ -137,6 +137,7 @@ class TestImport(TestCase):
 
         updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
         self.assertEqual(updated_page.intro, "yay fossil fuels and climate change")
+        # advert is listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so changes to the advert should have been pulled in too
         self.assertEqual(updated_page.advert.slogan, "put a leopard in your tank")
 
         created_page = SponsoredPage.objects.get(url_path='/home/eggs-are-great-too/')
@@ -576,7 +577,27 @@ class TestImport(TestCase):
 
     def test_import_page_with_parental_many_to_many(self):
         # Test that a page with a ParentalManyToManyField has its ids translated to the destination site's appropriately
-        data = """{"ids_for_import": [["wagtailcore.page", 6]], "mappings": [["tests.advert", 200, "adadadad-2222-2222-2222-222222222222"], ["wagtailcore.page", 6, "a98b0848-1a96-11ea-8001-0800278dc04d"], ["tests.advert", 300, "adadadad-3333-3333-3333-333333333333"]], "objects": [{"model": "tests.pagewithparentalmanytomany", "pk": 6, "fields": {"title": "This page has lots of ads!", "slug": "this-page-has-lots-of-ads", "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "ads": [200, 300]}, "parent_id": 1}]}"""
+        data = """{
+            "ids_for_import": [["wagtailcore.page", 6]],
+            "mappings": [
+                ["tests.advert", 200, "adadadad-2222-2222-2222-222222222222"],
+                ["wagtailcore.page", 6, "a98b0848-1a96-11ea-8001-0800278dc04d"],
+                ["tests.advert", 300, "adadadad-3333-3333-3333-333333333333"]
+            ],
+            "objects": [
+                {"model": "tests.pagewithparentalmanytomany", "pk": 6, "fields": {"title": "This page has lots of ads!", "slug": "this-page-has-lots-of-ads", "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "ads": [200, 300]}, "parent_id": 1},
+                {
+                    "model": "tests.advert",
+                    "pk": 200,
+                    "fields": {"slogan": "Buy a thing you definitely need!"}
+                },
+                {
+                    "model": "tests.advert",
+                    "pk": 300,
+                    "fields": {"slogan": "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!"}
+                }
+            ]}
+        """
 
         importer = ImportPlanner(6, 3)
         importer.add_json(data)
@@ -589,9 +610,31 @@ class TestImport(TestCase):
 
         self.assertEqual(set(page.ads.all()), {advert_2, advert_3})
 
+        # advert is listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so changes to the advert should have been pulled in too
+        self.assertEqual(advert_3.slogan, "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!")
+
     def test_import_object_with_many_to_many(self):
         # Test that an imported object with a ManyToManyField has its ids converted to the destination site's
-        data = """{"ids_for_import": [["tests.modelwithmanytomany", 1]], "mappings": [["tests.advert", 200, "adadadad-2222-2222-2222-222222222222"], ["tests.advert", 300, "adadadad-3333-3333-3333-333333333333"], ["tests.modelwithmanytomany", 1, "6a5e5e52-1aa0-11ea-8002-0800278dc04d"]], "objects": [{"model": "tests.modelwithmanytomany", "pk": 1, "fields": {"ads": [200, 300]}}]}"""
+        data = """{
+            "ids_for_import": [["tests.modelwithmanytomany", 1]],
+            "mappings": [
+                ["tests.advert", 200, "adadadad-2222-2222-2222-222222222222"],
+                ["tests.advert", 300, "adadadad-3333-3333-3333-333333333333"],
+                ["tests.modelwithmanytomany", 1, "6a5e5e52-1aa0-11ea-8002-0800278dc04d"]
+            ],
+            "objects": [
+                {"model": "tests.modelwithmanytomany", "pk": 1, "fields": {"ads": [200, 300]}},
+                {
+                    "model": "tests.advert",
+                    "pk": 200,
+                    "fields": {"slogan": "Buy a thing you definitely need!"}
+                },
+                {
+                    "model": "tests.advert",
+                    "pk": 300,
+                    "fields": {"slogan": "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!"}
+                }
+            ]}"""
 
         importer = ImportPlanner(6, 3)
         importer.add_json(data)
@@ -601,3 +644,6 @@ class TestImport(TestCase):
         advert_2 = Advert.objects.get(id=2)
         advert_3 = Advert.objects.get(id=3)
         self.assertEqual(set(ad_holder.ads.all()), {advert_2, advert_3})
+
+        # advert is listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so changes to the advert should have been pulled in too
+        self.assertEqual(advert_3.slogan, "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!")

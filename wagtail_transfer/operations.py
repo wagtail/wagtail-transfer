@@ -2,6 +2,7 @@ import json
 import pathlib
 from urllib.parse import urlparse
 
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
@@ -18,6 +19,11 @@ from wagtail.core.models import Page
 from .files import get_file_hash
 from .richtext import get_reference_handler
 from .models import get_base_model, get_base_model_for_path, get_model_for_path, IDMapping, ImportedFile
+
+
+default_update_related_models = ['wagtailimages.image']
+
+UPDATE_RELATED_MODELS = getattr(settings, 'WAGTAILTRANSFER_UPDATE_RELATED_MODELS', default_update_related_models)
 
 
 class FileTransferError(Exception):
@@ -525,31 +531,31 @@ class SaveOperationMixin:
             if isinstance(field, models.ForeignKey):
                 val = self.object_data['fields'].get(field.name)
                 if val is not None:
-                    # TODO: consult config to decide whether objective type should be 'exists' or 'updated'
+                    objective_type = 'updated' if field.related_model._meta.label_lower in UPDATE_RELATED_MODELS else 'exists'
                     deps.append(
-                        Objective('updated', get_base_model(field.related_model), val)
+                        Objective(objective_type, get_base_model(field.related_model), val)
                     )
             elif isinstance(field, RichTextField):
                 objects = get_reference_handler().get_objects(self.object_data['fields'].get(field.name))
                 for model, id in objects:
-                    # TODO: add config check here
+                    objective_type = 'updated' if model._meta.label_lower in UPDATE_RELATED_MODELS else 'exists'
                     deps.append(
-                        Objective('exists', model, id)
+                        Objective(objective_type, model, id)
                     )
 
             elif isinstance(field, StreamField):
                 for model, id in get_object_references(field.stream_block, json.loads(self.object_data['fields'].get(field.name))):
-                    # TODO: add config check here
+                    objective_type = 'updated' if model._meta.label_lower in UPDATE_RELATED_MODELS else 'exists'
                     deps.append(
-                        Objective('exists', model, id)
+                        Objective(objective_type, model, id)
                     )
 
             elif isinstance(field, models.ManyToManyField):
                 model = get_base_model(field.related_model)
+                objective_type = 'updated' if model._meta.label_lower in UPDATE_RELATED_MODELS else 'exists'
                 for id in self.object_data['fields'].get(field.name):
-                    # TODO: add config check here
                     deps.append(
-                        Objective('exists', model, id)
+                        Objective(objective_type, model, id)
                     )
 
         return deps
