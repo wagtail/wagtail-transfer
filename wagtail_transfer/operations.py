@@ -213,8 +213,9 @@ class ImportPlanner:
         data = json.loads(json_data)
 
         # add source id -> uid mappings to the uids_by_source dict
-        for model_path, source_id, uid in data['mappings']:
+        for model_path, source_id, jsonish_uid in data['mappings']:
             model = get_base_model_for_path(model_path)
+            uid = get_locator_for_model(model).uid_from_json(jsonish_uid)
             self.context.uids_by_source[(model, source_id)] = uid
 
         # add object data to the object_data_by_source dict
@@ -656,6 +657,7 @@ class UpdateModel(SaveOperationMixin, Operation):
     def run(self, context):
         self._populate_fields(context)
         self._save(context)
+        self._populate_many_to_many_fields(context)
 
 
 class DeleteModel(Operation):

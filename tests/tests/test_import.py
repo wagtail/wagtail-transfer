@@ -729,3 +729,67 @@ class TestImport(TestCase):
 
         # advert is listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so changes to the advert should have been pulled in too
         self.assertEqual(advert_3.slogan, "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!")
+
+    def test_import_with_field_based_lookup(self):
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 15]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 15, "00017017-5555-5555-5555-555555555555"],
+                ["tests.advert", 11, "adadadad-1111-1111-1111-111111111111"],
+                ["tests.author", 100, "b00cb00c-1111-1111-1111-111111111111"],
+                ["tests.category", 101, ["Cars"]],
+                ["tests.category", 102, ["Environment"]]
+            ],
+            "objects": [
+                {
+                    "model": "tests.sponsoredpage",
+                    "pk": 15,
+                    "parent_id": 1,
+                    "fields": {
+                        "title": "Oil is still great",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "oil-is-still-great",
+                        "advert": 11,
+                        "intro": "yay fossil fuels and climate change",
+                        "author": 100,
+                        "categories": [101, 102]
+                    }
+                },
+                {
+                    "model": "tests.advert",
+                    "pk": 11,
+                    "fields": {
+                        "slogan": "put a leopard in your tank"
+                    }
+                },
+                {
+                    "model": "tests.author",
+                    "pk": 100,
+                    "fields": {
+                        "name": "Jack Kerouac",
+                        "bio": "Jack Kerouac's car has been fixed now."
+                    }
+                },
+                {
+                    "model": "tests.category",
+                    "pk": 102,
+                    "fields": {
+                        "name": "Environment",
+                        "colour": "green"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(15, None)
+        importer.add_json(data)
+        importer.run()
+
+        updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
+        # The 'Cars' category should have been matched by name to the existing record
+        self.assertEqual(updated_page.categories.get(name='Cars').colour, "red")
+        # The 'Environment' category should have been created
+        self.assertEqual(updated_page.categories.get(name='Environment').colour, "green")
