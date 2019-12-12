@@ -5,12 +5,16 @@ model-specific such as a slug field.
 """
 
 from functools import lru_cache
+import uuid
 
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
 from django.db import IntegrityError
 
-from .models import IDMapping
+from .models import IDMapping, get_base_model
+
+
+UUID_SEQUENCE = 0
 
 
 class IDMappingLocator:
@@ -37,6 +41,19 @@ class IDMappingLocator:
 
         return mapping.content_object
 
+    def get_uid_for_local_id(self, id):
+        global UUID_SEQUENCE
+
+        """Get UID for the instance with the given ID (assigning one if one doesn't exist already)"""
+        id_mapping, created = IDMapping.objects.get_or_create(
+            content_type=self.content_type,
+            local_id=id,
+            defaults={'uid': uuid.uuid1(clock_seq=UUID_SEQUENCE)}
+        )
+        UUID_SEQUENCE += 1
+
+        return id_mapping.uid
+
     def attach_uid(self, instance, uid):
         """
         Do whatever needs to be done to ensure that the given instance can be located under the
@@ -56,4 +73,4 @@ class IDMappingLocator:
 
 @lru_cache(maxsize=None)
 def get_locator_for_model(model):
-    return IDMappingLocator(model)
+    return IDMappingLocator(get_base_model(model))
