@@ -8,3 +8,7 @@
     color: #fff;
     border-radius: 0px;
 }
+
+.transfer.chooser.page-chooser .unchosen::before {
+    content: none;
+}

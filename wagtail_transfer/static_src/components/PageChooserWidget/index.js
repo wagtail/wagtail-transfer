@@ -2,7 +2,7 @@ import * as React from 'react';
 
 import { createReactPageChooser } from '../../chooser';
 
-export default function PageChooserWidget({ apiBaseUrl, value, onChange }) {
+export default function PageChooserWidget({ apiBaseUrl, value, onChange, chosenText, unchosenText }) {
   const onClickChoose = () => {
     createReactPageChooser(apiBaseUrl, [], 'root', newValue => {
       onChange(newValue);
@@ -12,14 +12,14 @@ export default function PageChooserWidget({ apiBaseUrl, value, onChange }) {
     onChange(null);
   };
 
-  const classNames = ['chooser'];
+  const classNames = ['chooser', 'page-chooser', 'transfer'];
 
   if (value !== null) {
     return (
       <div className={classNames.join(' ')}>
         <div className="chosen">
           <span className="title">{value.title}</span>
-
+          {chosenText}
           <ul className="actions">
             <li>
               <button
@@ -56,6 +56,7 @@ export default function PageChooserWidget({ apiBaseUrl, value, onChange }) {
           >
             Choose a parent page
           </button>
+          {unchosenText}
         </div>
       </div>
     );

@@ -25,28 +25,7 @@ function SourceSelectorWidget({ sources, selectedSource, onChange }) {
   );
 }
 
-function SubmitButton({ apiBaseUrl, sourcePage, onClick, disabled }) {
-  const [numPages, setNumPages] = React.useState(null);
-
-  React.useEffect(() => {
-    // Fetch descendant count whenever sourcePage is changed
-    if (numPages !== null) {
-      setNumPages(null);
-    }
-
-    if (sourcePage) {
-      const fetchNumPages = async () => {
-        const api = new PagesAPI(apiBaseUrl);
-        const page = await api.getPage(sourcePage.id, {
-          fields: 'descendants'
-        });
-
-        setNumPages(page.meta.descendants.count + 1);
-      };
-
-      fetchNumPages();
-    }
-  }, [sourcePage]);
+function SubmitButton({ apiBaseUrl, sourcePage, onClick, disabled, numPages }) {
 
   let buttonText = 'Import';
   if (numPages !== null) {
@@ -91,6 +70,28 @@ export default function ImportContentForm({
     onSubmit(source, sourcePage, destPage);
   };
 
+  const [numPages, setNumPages] = React.useState(null);
+
+  React.useEffect(() => {
+    // Fetch descendant count whenever sourcePage is changed
+    if (numPages !== null) {
+      setNumPages(null);
+    }
+
+    if (sourcePage) {
+      const fetchNumPages = async () => {
+        const api = new PagesAPI(source ? source.page_chooser_api : null);
+        const page = await api.getPage(sourcePage.id, {
+          fields: 'descendants'
+        });
+
+        setNumPages(page.meta.descendants.count+1);
+      };
+
+      fetchNumPages();
+    }
+  }, [sourcePage]);
+
   return (
     <div>
       <h2>Select source site</h2>
@@ -106,6 +107,8 @@ export default function ImportContentForm({
           apiBaseUrl={source.page_chooser_api}
           value={sourcePage}
           onChange={setSourcePage}
+          unchosenText="All child pages will be imported"
+          chosenText={"This page has "+(numPages-1)+"child pages."}
         />
       ) : (
         ''
@@ -117,6 +120,8 @@ export default function ImportContentForm({
           apiBaseUrl={localApiBaseUrl}
           value={destPage}
           onChange={setDestPage}
+          unchosenText="Imported pages will be created as children of this page."
+          chosenText="Imported pages will be created as children of this page."
         />
       ) : (
         ''
@@ -127,6 +132,7 @@ export default function ImportContentForm({
         sourcePage={sourcePage}
         onClick={onClickSubmit}
         disabled={!destPage}
+        numPages = {numPages}
       />
     </div>
   );
