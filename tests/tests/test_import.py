@@ -103,7 +103,8 @@ class TestImport(TestCase):
                         "slug": "oil-is-still-great",
                         "advert": 11,
                         "intro": "yay fossil fuels and climate change",
-                        "author": 100
+                        "author": 100,
+                        "categories": []
                     }
                 },
                 {
@@ -123,7 +124,8 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "eggs-are-great-too",
                         "advert": 8,
-                        "intro": "you can make cakes with them"
+                        "intro": "you can make cakes with them",
+                        "categories": []
                     }
                 },
                 {
@@ -184,7 +186,8 @@ class TestImport(TestCase):
                         "slug": "oil-is-still-great",
                         "advert": 11,
                         "intro": "yay fossil fuels and climate change",
-                        "author": 100
+                        "author": 100,
+                        "categories": []
                     }
                 },
                 {

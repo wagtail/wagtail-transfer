@@ -19,10 +19,16 @@ class Author(models.Model):
     bio = models.TextField()
 
 
+class Category(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    colour = models.CharField(max_length=255, blank=True, null=True)
+
+
 class SponsoredPage(Page):
     advert = models.ForeignKey(Advert, blank=True, null=True, on_delete=models.SET_NULL)
     author = models.ForeignKey(Author, blank=True, null=True, on_delete=models.SET_NULL)
     intro = models.TextField()
+    categories = ParentalManyToManyField(Category)
 
 
 class SectionedPage(Page):

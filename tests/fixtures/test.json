@@ -240,4 +240,12 @@
         "content_type": ["tests", "author"],
         "local_id": 9999
     }
+},
+{
+    "pk": 1,
+    "model": "tests.category",
+    "fields": {
+        "name": "Cars",
+        "colour": "red"
+    }
 }]
