@@ -66,31 +66,24 @@ from .streamfield import get_object_references, update_object_ids
 
 class Objective:
     """
-    An objective describes a state of an individual database object that we wish to
-    reach as a result of this import, for example:
-    "page 123 must exist at the destination in its most up-to-date form".
-    The object is identified by a model and its ID on the source site, and the
-    objective type is one of:
-
-    'exists': achieved when the object exists at the destination site and is listed in
-              destination_ids_by_source
-    'updated': achieved when the object exists at the destination site, with any data updates
-               from the source site applied, and is listed in destination_ids_by_source
+    An objective identifies an individual database object that we want to exist on the destination
+    site as a result of this import. If must_update is true, it should additionally be updated to
+    the latest version that exists on the source site.
     """
 
-    def __init__(self, objective_type, model, source_id):
-        self.type = objective_type
+    def __init__(self, model, source_id, must_update=False):
         self.model = model
         self.source_id = source_id
+        self.must_update = must_update
 
     def __eq__(self, other):
         return (
             isinstance(other, Objective)
-            and (self.type, self.model, self.source_id) == (other.type, other.model, other.source_id)
+            and (self.model, self.source_id, self.must_update) == (other.model, other.source_id, other.must_update)
         )
 
     def __hash__(self):
-        return hash((self.type, self.model, self.source_id))
+        return hash((self.model, self.source_id, self.must_update))
 
 
 class ImportContext:
@@ -197,7 +190,7 @@ class ImportPlanner:
         # copy of that object on the destination site
         for model_path, source_id in data['ids_for_import']:
             model = get_base_model_for_path(model_path)
-            objective = Objective('updated', model, source_id)
+            objective = Objective(model, source_id, must_update=True)
 
             # add to the set of objectives that need handling
             self._add_objective(objective)
@@ -235,16 +228,7 @@ class ImportPlanner:
         if mapping:
             self.context.destination_ids_by_source[(objective.model, objective.source_id)] = mapping.content_object.pk
 
-        if objective.type == 'exists':
-            if mapping:
-                # object exists; no further action
-                task = None
-                self.resolutions[(objective.model, objective.source_id)] = None
-            else:
-                # object does not exist locally; need to create it
-                task = ('create', objective.model, objective.source_id)
-
-        elif objective.type == 'updated':
+        if objective.must_update:
             if mapping:
                 # object exists locally, but we need to update it
                 task = ('update', objective.model, objective.source_id)
@@ -254,9 +238,14 @@ class ImportPlanner:
             else:
                 # object does not exist locally; need to create it
                 task = ('create', objective.model, objective.source_id)
-
-        else:
-            raise ValueError("Unrecognised objective type: %r" % objective.type)
+        else:  # object does not require updating
+            if mapping:
+                # object exists; no further action
+                task = None
+                self.resolutions[(objective.model, objective.source_id)] = None
+            else:
+                # object does not exist locally; need to create it
+                task = ('create', objective.model, objective.source_id)
 
         if task:
             self._handle_task(task)
@@ -339,9 +328,9 @@ class ImportPlanner:
 
                     # Add an objective for handling the child object. Regardless of whether
                     # this is a 'create' or 'update' task, we want the child objects to be at
-                    # their most up-to-date versions, so set the objective type to 'updated'
+                    # their most up-to-date versions, so set the objective to 'must update'
                     self._add_objective(
-                        Objective('updated', related_base_model, child_obj_data['pk'])
+                        Objective(related_base_model, child_obj_data['pk'], must_update=True)
                     )
 
                     # look up the child object's UID
@@ -381,9 +370,8 @@ class ImportPlanner:
 
         if operation is not None:
             for model, source_id in operation.dependencies:
-                objective_type = 'updated' if model._meta.label_lower in UPDATE_RELATED_MODELS else 'exists'
                 self._add_objective(
-                    Objective(objective_type, model, source_id)
+                    Objective(model, source_id, must_update=(model._meta.label_lower in UPDATE_RELATED_MODELS))
                 )
 
     def _retry_tasks(self):
