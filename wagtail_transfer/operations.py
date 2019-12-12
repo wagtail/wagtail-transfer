@@ -258,27 +258,18 @@ class ImportPlanner:
             self.unhandled_objectives.add(objective)
 
     def _handle_objective(self, objective):
-        if objective.must_update:
-            if objective.exists_at_destination:
-                # object exists locally, but we need to update it
-                task = ('update', objective.model, objective.source_id)
-                # since the object already exists at the destination, any objects referencing it
-                # do NOT have to wait for this task to complete
-                self.resolutions[(objective.model, objective.source_id)] = None
-            else:
-                # object does not exist locally; need to create it
-                task = ('create', objective.model, objective.source_id)
-        else:  # object does not require updating
-            if objective.exists_at_destination:
-                # object exists; no further action
-                task = None
-                self.resolutions[(objective.model, objective.source_id)] = None
-            else:
-                # object does not exist locally; need to create it
-                task = ('create', objective.model, objective.source_id)
-
-        if task:
+        if not objective.exists_at_destination:
+            # object does not exist locally; need to create it
+            task = ('create', objective.model, objective.source_id)
             self._handle_task(task)
+        else:
+            # object already exists at the destination, so any objects referencing it can go ahead
+            # without being blocked by this task
+            self.resolutions[(objective.model, objective.source_id)] = None
+
+            if objective.must_update:
+                task = ('update', objective.model, objective.source_id)
+                self._handle_task(task)
 
     def _handle_task(self, task):
         """
