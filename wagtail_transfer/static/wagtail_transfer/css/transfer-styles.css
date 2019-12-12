@@ -1,0 +1,10 @@
+.transfer.button.button-secondary.bicolor {
+    overflow: visible;
+    border: 1px solid #00676a;
+}
+
+.transfer.button.button-secondary.bicolor::before {
+    background-color: #00676a;
+    color: #fff;
+    border-radius: 0px;
+}
