@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
-from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.base import ContentFile
@@ -17,8 +16,9 @@ from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Page
 
 from .files import get_file_hash
+from .locators import get_locator_for_model
 from .richtext import get_reference_handler
-from .models import get_base_model, get_base_model_for_path, get_model_for_path, IDMapping, ImportedFile
+from .models import get_base_model, get_base_model_for_path, get_model_for_path, ImportedFile
 
 
 default_update_related_models = ['wagtailimages.image']
@@ -99,16 +99,7 @@ class Objective:
         # so this lookup should always succeed (and if it doesn't, we leave the KeyError uncaught)
         uid = self.context.uids_by_source[(self.model, self.source_id)]
 
-        # look for a matching uid on the destination site
-        try:
-            mapping = IDMapping.objects.get(uid=uid)
-        except IDMapping.DoesNotExist:
-            self._exists_at_destination = False
-            return
-
-        # check that the object pointed to by IDMapping actually exists, because the
-        # IDMapping record sticks around on object deletion
-        destination_object = mapping.content_object
+        destination_object = get_locator_for_model(self.model).find(uid)
         if destination_object is None:
             self._exists_at_destination = False
         else:
@@ -364,12 +355,15 @@ class ImportPlanner:
                 if action == 'update':
                     # delete any child objects on the existing object if they can't be mapped back
                     # to one of the uids in the new set
-                    matched_destination_ids = IDMapping.objects.filter(
-                        uid__in=child_uids,
-                        content_type=ContentType.objects.get_for_model(related_base_model)
-                    ).values_list('local_id', flat=True)
+                    locator = get_locator_for_model(related_base_model)
+                    matched_destination_ids = set()
+                    for uid in child_uids:
+                        child = locator.find(uid)
+                        if child is not None:
+                            matched_destination_ids.add(child.pk)
+
                     for child in getattr(obj, rel.name).all():
-                        if str(child.pk) not in matched_destination_ids:
+                        if child.pk not in matched_destination_ids:
                             self.operations.add(DeleteModel(child))
 
         if operation is not None:
@@ -610,11 +604,9 @@ class CreateModel(SaveOperationMixin, Operation):
         self._save(context)
         self._populate_many_to_many_fields(context)
 
-        # Add an IDMapping entry for the newly created page;
-        # use update_or_create to account for the possibility of an existing IDMapping for the same
-        # UID, left over from the object being previously imported and then deleted
+        # record the UID for the newly created page
         uid = context.uids_by_source[(self.base_model, self.object_data['pk'])]
-        IDMapping.objects.update_or_create(uid=uid, defaults={'content_object': self.instance})
+        get_locator_for_model(self.base_model).attach_uid(self.instance, uid)
 
         # Also add it to destination_ids_by_source mapping
         source_pk = self.object_data['pk']
