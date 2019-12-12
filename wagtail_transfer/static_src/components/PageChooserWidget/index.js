@@ -12,7 +12,7 @@ export default function PageChooserWidget({ apiBaseUrl, value, onChange }) {
     onChange(null);
   };
 
-  const classNames = ['chooser', 'page-chooser'];
+  const classNames = ['chooser'];
 
   if (value !== null) {
     return (
@@ -51,10 +51,10 @@ export default function PageChooserWidget({ apiBaseUrl, value, onChange }) {
         <div className="unchosen">
           <button
             type="button"
-            className="button action-choose button-small button-secondary"
+            className="transfer bicolor button button-secondary action-choose icon icon-doc-empty-inverse"
             onClick={onClickChoose}
           >
-            Choose a page
+            Choose a parent page
           </button>
         </div>
       </div>
