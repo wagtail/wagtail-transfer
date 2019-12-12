@@ -23,7 +23,10 @@ from .models import get_base_model, get_base_model_for_path, get_model_for_path,
 
 default_update_related_models = ['wagtailimages.image']
 
-UPDATE_RELATED_MODELS = getattr(settings, 'WAGTAILTRANSFER_UPDATE_RELATED_MODELS', default_update_related_models)
+UPDATE_RELATED_MODELS = [
+    model_label.lower()
+    for model_label in getattr(settings, 'WAGTAILTRANSFER_UPDATE_RELATED_MODELS', default_update_related_models)
+]
 
 
 class FileTransferError(Exception):
