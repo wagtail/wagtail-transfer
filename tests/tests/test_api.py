@@ -8,7 +8,10 @@ from wagtail.core.models import Page, Collection
 
 from wagtail_transfer.auth import digest_for_source
 from wagtail_transfer.models import IDMapping
-from tests.models import Advert, ModelWithManyToMany, PageWithRichText, SectionedPage, PageWithStreamField, PageWithParentalManyToMany
+from tests.models import (
+    Advert, Category, ModelWithManyToMany, PageWithRichText, SectionedPage, SponsoredPage,
+    PageWithStreamField, PageWithParentalManyToMany
+)
 
 
 class TestPagesApi(TestCase):
@@ -177,6 +180,20 @@ class TestPagesApi(TestCase):
         self.assertIn(['tests.advert', 3, "adadadad-3333-3333-3333-333333333333"], data['mappings'])
         self.assertEqual({2, 3}, set(data['objects'][0]['fields']['ads']))
 
+    def test_related_model_with_field_lookup(self):
+        page = SponsoredPage.objects.get(id=5)
+        page.categories.add(Category.objects.get(name='Cars'))
+        page.save()
+
+        response = self.get(5)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        mappings = data['mappings']
+
+        # Category objects in the mappings section should be identified by name, not UUID
+        self.assertIn(['tests.category', 1, ['Cars']], mappings)
+
 
 class TestObjectsApi(TestCase):
     fixtures = ['test.json']
@@ -258,6 +275,22 @@ class TestObjectsApi(TestCase):
         self.assertIn(['tests.advert', 2, "adadadad-2222-2222-2222-222222222222"], data['mappings'])
         self.assertIn(['tests.advert', 3, "adadadad-3333-3333-3333-333333333333"], data['mappings'])
         self.assertEqual({2, 3}, set(data['objects'][0]['fields']['ads']))
+
+    def test_model_with_field_lookup(self):
+        request_body = json.dumps({
+            'tests.category': [1]
+        })
+        digest = digest_for_source('local', request_body)
+
+        response = self.client.post(
+            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_body, content_type='application/json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        # Category objects in the mappings section should be identified by name, not UUID
+        self.assertIn(['tests.category', 1, ['Cars']], data['mappings'])
 
 
 @mock.patch('requests.get')

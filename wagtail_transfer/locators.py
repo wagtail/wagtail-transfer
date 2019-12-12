@@ -7,6 +7,7 @@ model-specific such as a slug field.
 from functools import lru_cache
 import uuid
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
 from django.db import IntegrityError
@@ -15,6 +16,12 @@ from .models import IDMapping, get_base_model
 
 
 UUID_SEQUENCE = 0
+
+# dict of models that should be located by field values using FieldLocator,
+# rather than by UUID mapping
+LOOKUP_FIELDS = {}
+for model_label, fields in getattr(settings, 'WAGTAILTRANSFER_LOOKUP_FIELDS', {}).items():
+    LOOKUP_FIELDS[model_label.lower()] = fields
 
 
 class IDMappingLocator:
@@ -70,7 +77,57 @@ class IDMappingLocator:
             uid=uid, defaults={'content_type': self.content_type, 'local_id': instance.pk}
         )
 
+    def uid_from_json(self, json_uid):
+        """
+        Convert the UID representation originating from JSON data into the native type used by
+        this locator
+        """
+        # No conversion necessary, as UID is a string, and JSON handles those fine...
+        return json_uid
+
+
+class FieldLocator:
+    def __init__(self, model, fields):
+        if model._meta.parents:
+            raise ImproperlyConfigured(
+                "FieldLocator cannot be used on MTI subclasses (got %r)" % model
+            )
+        self.model = model
+        self.fields = fields
+
+    def get_uid_for_local_id(self, id):
+        # For field-based lookups, the UID is a tuple of field values
+        return self.model.objects.values_list(*self.fields).get(pk=id)
+
+    def attach_uid(self, instance, uid):
+        # UID is derived directly from the object data, so nothing needs to be done to associate
+        # the UID with the object
+        pass
+
+    def uid_from_json(self, json_uid):
+        # A UID coming from JSON data will arrive as a list (because JSON has no tuple type),
+        # but we need a tuple because the importer logic expects a hashable type that we can use
+        # in sets and dict keys
+        return tuple(json_uid)
+
+    def find(self, uid):
+        # pair up field names with their respective items in the UID tuple, to form a filter dict
+        # that we can use for an ORM lookup
+        filters = dict(zip(self.fields, uid))
+
+        try:
+            return self.model.objects.get(**filters)
+        except self.model.DoesNotExist:
+            return None
+
 
 @lru_cache(maxsize=None)
 def get_locator_for_model(model):
-    return IDMappingLocator(get_base_model(model))
+    base_model = get_base_model(model)
+    try:
+        # Use FieldLocator if an entry exists in LOOKUP_FIELDS
+        fields = LOOKUP_FIELDS[base_model._meta.label_lower]
+        return FieldLocator(base_model, fields)
+    except KeyError:
+        # Fall back on IDMappingLocator
+        return IDMappingLocator(base_model)
