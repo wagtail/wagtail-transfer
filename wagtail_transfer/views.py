@@ -1,5 +1,4 @@
 from collections import defaultdict
-import uuid
 import json
 
 from django.conf import settings
@@ -14,9 +13,10 @@ import requests
 from wagtail.core.models import Page
 
 from .auth import check_digest, digest_for_source
+from .locators import get_locator_for_model
 from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
 from .vendor.wagtail_api_v2.router import WagtailAPIRouter
-from .models import get_model_for_path, IDMapping
+from .models import get_model_for_path
 from .serializers import get_model_serializer
 
 from .operations import ImportPlanner
@@ -42,14 +42,10 @@ def pages_for_export(request, root_page_id):
         object_references.update(serializer.get_object_references(page))
 
     mappings = []
-    for i, (model, pk) in enumerate(object_references):
-        id_mapping, created = IDMapping.objects.get_or_create(
-            content_type=ContentType.objects.get_for_model(model),
-            local_id=pk,
-            defaults={'uid': uuid.uuid1(clock_seq=i)}
-        )
+    for model, pk in object_references:
+        uid = get_locator_for_model(model).get_uid_for_local_id(pk)
         mappings.append(
-            [model._meta.label_lower, pk, id_mapping.uid]
+            [model._meta.label_lower, pk, uid]
         )
 
     return JsonResponse({
@@ -88,14 +84,10 @@ def objects_for_export(request):
             object_references.update(serializer.get_object_references(obj))
 
     mappings = []
-    for i, (model, pk) in enumerate(object_references):
-        id_mapping, created = IDMapping.objects.get_or_create(
-            content_type=ContentType.objects.get_for_model(model),
-            local_id=pk,
-            defaults={'uid': uuid.uuid1(clock_seq=i)}
-        )
+    for model, pk in object_references:
+        uid = get_locator_for_model(model).get_uid_for_local_id(pk)
         mappings.append(
-            [model._meta.label_lower, pk, id_mapping.uid]
+            [model._meta.label_lower, pk, uid]
         )
 
     return JsonResponse({
