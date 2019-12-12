@@ -18,25 +18,27 @@ export default function PageChooserWidget({ apiBaseUrl, value, onChange, chosenT
     return (
       <div className={classNames.join(' ')}>
         <div className="chosen">
-          <span className="title">{value.title}</span>
-          {chosenText}
-          <ul className="actions">
+          <div className="transfer title-wrapper">
+            <h3 className="transfer title">{value.title}</h3>
+            <h6 className="transfer subtitle">{chosenText}</h6>
+          </div>
+          <ul className="transfer actions">
             <li>
               <button
                 type="button"
-                className="button action-choose button-small button-secondary"
+                className="action-choose link"
                 onClick={onClickChoose}
               >
-                Change
+                CHANGE
               </button>
             </li>
             <li>
               <button
                 type="button"
-                className="button action-clear button-small button-secondary"
+                className="action-clear link"
                 onClick={onClickClear}
               >
-                Clear
+                CLEAR
               </button>
             </li>
           </ul>
@@ -56,7 +58,7 @@ export default function PageChooserWidget({ apiBaseUrl, value, onChange, chosenT
           >
             Choose a parent page
           </button>
-          {unchosenText}
+          <h6 className="transfer subtitle">{unchosenText}</h6>
         </div>
       </div>
     );

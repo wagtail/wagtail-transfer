@@ -108,7 +108,7 @@ export default function ImportContentForm({
           value={sourcePage}
           onChange={setSourcePage}
           unchosenText="All child pages will be imported"
-          chosenText={"This page has "+(numPages-1)+"child pages."}
+          chosenText={"This page has "+(numPages-1)+" child pages."}
         />
       ) : (
         ''
