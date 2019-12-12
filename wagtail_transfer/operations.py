@@ -256,9 +256,9 @@ class ImportPlanner:
             raise ValueError("Unrecognised objective type: %r" % objective.type)
 
         if task:
-            self._handle_task(objective, task)
+            self._handle_task(task)
 
-    def _handle_task(self, objective, task):
+    def _handle_task(self, task):
         """
         Attempt to convert a task into a corresponding operation.May fail if we do not yet have
         the object data for this object, in which case it will be added to postponed_tasks
@@ -287,7 +287,7 @@ class ImportPlanner:
             object_data = self.object_data_by_source[(model, source_id)]
         except KeyError:
             # need to postpone this until we have the object data
-            self.postponed_tasks.add((objective, task))
+            self.postponed_tasks.add(task)
             self.missing_object_data.add((model, source_id))
             return
 
@@ -393,8 +393,8 @@ class ImportPlanner:
         # FIXME: move this to the place where we make the subsequent API fetch
         self.missing_object_data.clear()
 
-        for objective, task in previous_postponed_tasks:
-            self._handle_task(objective, task)
+        for task in previous_postponed_tasks:
+            self._handle_task(task)
 
     def run(self):
         if self.unhandled_objectives or self.postponed_tasks:
