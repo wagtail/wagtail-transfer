@@ -106,12 +106,15 @@ class Objective:
             self._exists_at_destination = False
             return
 
-        # TODO: check that the object pointed to by IDMapping actually exists, because the
-        # IDMapping record won't be dropped on object deletion
-
-        self._destination_id = mapping.content_object.pk
-        self._exists_at_destination = True
-        self.context.destination_ids_by_source[(self.model, self.source_id)] = self._destination_id
+        # check that the object pointed to by IDMapping actually exists, because the
+        # IDMapping record sticks around on object deletion
+        destination_object = mapping.content_object
+        if destination_object is None:
+            self._exists_at_destination = False
+        else:
+            self._destination_id = destination_object.pk
+            self._exists_at_destination = True
+            self.context.destination_ids_by_source[(self.model, self.source_id)] = self._destination_id
 
     @property
     def exists_at_destination(self):
@@ -607,9 +610,11 @@ class CreateModel(SaveOperationMixin, Operation):
         self._save(context)
         self._populate_many_to_many_fields(context)
 
-        # Add an IDMapping entry for the newly created page
+        # Add an IDMapping entry for the newly created page;
+        # use update_or_create to account for the possibility of an existing IDMapping for the same
+        # UID, left over from the object being previously imported and then deleted
         uid = context.uids_by_source[(self.base_model, self.object_data['pk'])]
-        IDMapping.objects.create(uid=uid, content_object=self.instance)
+        IDMapping.objects.update_or_create(uid=uid, defaults={'content_object': self.instance})
 
         # Also add it to destination_ids_by_source mapping
         source_pk = self.object_data['pk']
