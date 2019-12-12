@@ -94,14 +94,22 @@ export default function ImportContentForm({
 
   return (
     <div>
+    <ol className="transfer numbered">
+      <li className="transfer numbered">
+      <div class="transfer list-container">
       <h2>Select source site</h2>
+      </div>
       <SourceSelectorWidget
         sources={sources}
         selectedSource={source}
         onChange={setSource}
       />
+      </li>
 
+      <li className="transfer numbered">
+      <div class="transfer list-container">
       <h2>Select pages to import</h2>
+      </div>
       {source ? (
         <PageChooserWidget
           apiBaseUrl={source.page_chooser_api}
@@ -112,9 +120,12 @@ export default function ImportContentForm({
         />
       ) : (
         ''
-      )}
+      )}</li>
 
+      <li className="transfer numbered">
+      <div class="transfer list-container">
       <h2>Select destination parent page</h2>
+      </div>
       {sourcePage ? (
         <PageChooserWidget
           apiBaseUrl={localApiBaseUrl}
@@ -126,7 +137,6 @@ export default function ImportContentForm({
       ) : (
         ''
       )}
-
       <SubmitButton
         apiBaseUrl={source ? source.page_chooser_api : null}
         sourcePage={sourcePage}
@@ -134,6 +144,8 @@ export default function ImportContentForm({
         disabled={!destPage}
         numPages = {numPages}
       />
+      </li>
+      </ol>
     </div>
   );
 }
