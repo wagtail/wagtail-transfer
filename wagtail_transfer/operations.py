@@ -71,10 +71,54 @@ class Objective:
     the latest version that exists on the source site.
     """
 
-    def __init__(self, model, source_id, must_update=False):
+    def __init__(self, model, source_id, context, must_update=False):
         self.model = model
         self.source_id = source_id
+        self.context = context
         self.must_update = must_update
+
+        # Whether this object exists at the destination; None indicates 'not checked yet'
+        self._exists_at_destination = None
+        self._destination_id = None
+
+    def _find_at_destination(self):
+        """
+        Check if this object exists at the destination and populate self._exists_at_destination,
+        self._destination_id and self.context.destination_ids_by_source accordingly
+        """
+        # see if there's already an entry in destination_ids_by_source
+        try:
+            self._destination_id = self.context.destination_ids_by_source[(self.model, self.source_id)]
+            self._exists_at_destination = True
+            return
+        except KeyError:
+            pass
+
+        # look up uid for this item;
+        # the export API is expected to supply the id->uid mapping for all referenced objects,
+        # so this lookup should always succeed (and if it doesn't, we leave the KeyError uncaught)
+        uid = self.context.uids_by_source[(self.model, self.source_id)]
+
+        # look for a matching uid on the destination site
+        try:
+            mapping = IDMapping.objects.get(uid=uid)
+        except IDMapping.DoesNotExist:
+            self._exists_at_destination = False
+            return
+
+        # TODO: check that the object pointed to by IDMapping actually exists, because the
+        # IDMapping record won't be dropped on object deletion
+
+        self._destination_id = mapping.content_object.pk
+        self._exists_at_destination = True
+        self.context.destination_ids_by_source[(self.model, self.source_id)] = self._destination_id
+
+    @property
+    def exists_at_destination(self):
+        if self._exists_at_destination is None:
+            self._find_at_destination()
+
+        return self._exists_at_destination
 
     def __eq__(self, other):
         return (
@@ -190,7 +234,7 @@ class ImportPlanner:
         # copy of that object on the destination site
         for model_path, source_id in data['ids_for_import']:
             model = get_base_model_for_path(model_path)
-            objective = Objective(model, source_id, must_update=True)
+            objective = Objective(model, source_id, self.context, must_update=True)
 
             # add to the set of objectives that need handling
             self._add_objective(objective)
@@ -214,22 +258,8 @@ class ImportPlanner:
             self.unhandled_objectives.add(objective)
 
     def _handle_objective(self, objective):
-        # look up uid for this item;
-        # the export API is expected to supply the id->uid mapping for all referenced objects,
-        # so this lookup should always succeed (and if it doesn't, we leave the KeyError uncaught)
-        uid = self.context.uids_by_source[(objective.model, objective.source_id)]
-
-        # look for a matching uid on the destination site
-        try:
-            mapping = IDMapping.objects.get(uid=uid)
-        except IDMapping.DoesNotExist:
-            mapping = None
-
-        if mapping:
-            self.context.destination_ids_by_source[(objective.model, objective.source_id)] = mapping.content_object.pk
-
         if objective.must_update:
-            if mapping:
+            if objective.exists_at_destination:
                 # object exists locally, but we need to update it
                 task = ('update', objective.model, objective.source_id)
                 # since the object already exists at the destination, any objects referencing it
@@ -239,7 +269,7 @@ class ImportPlanner:
                 # object does not exist locally; need to create it
                 task = ('create', objective.model, objective.source_id)
         else:  # object does not require updating
-            if mapping:
+            if objective.exists_at_destination:
                 # object exists; no further action
                 task = None
                 self.resolutions[(objective.model, objective.source_id)] = None
@@ -330,7 +360,7 @@ class ImportPlanner:
                     # this is a 'create' or 'update' task, we want the child objects to be at
                     # their most up-to-date versions, so set the objective to 'must update'
                     self._add_objective(
-                        Objective(related_base_model, child_obj_data['pk'], must_update=True)
+                        Objective(related_base_model, child_obj_data['pk'], self.context, must_update=True)
                     )
 
                     # look up the child object's UID
@@ -371,7 +401,7 @@ class ImportPlanner:
         if operation is not None:
             for model, source_id in operation.dependencies:
                 self._add_objective(
-                    Objective(model, source_id, must_update=(model._meta.label_lower in UPDATE_RELATED_MODELS))
+                    Objective(model, source_id, self.context, must_update=(model._meta.label_lower in UPDATE_RELATED_MODELS))
                 )
 
     def _retry_tasks(self):
