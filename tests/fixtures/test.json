@@ -232,4 +232,12 @@
         "name": "Jack Kerouac",
         "bio": "Jack Kerouac's car has broken down."
     }
+},
+{
+    "pk": "b00cb00c-0000-0000-0000-00000de1e7ed",
+    "model": "wagtail_transfer.idmapping",
+    "fields": {
+        "content_type": ["tests", "author"],
+        "local_id": 9999
+    }
 }]

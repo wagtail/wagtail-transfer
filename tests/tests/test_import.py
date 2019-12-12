@@ -7,7 +7,10 @@ from wagtail.images.models import Image
 
 from wagtail_transfer.models import IDMapping
 from wagtail_transfer.operations import ImportPlanner
-from tests.models import Advert, ModelWithManyToMany, PageWithParentalManyToMany, PageWithRichText, PageWithStreamField, SectionedPage, SimplePage, SponsoredPage
+from tests.models import (
+    Advert, Author, ModelWithManyToMany, PageWithParentalManyToMany, PageWithRichText,
+    PageWithStreamField, SectionedPage, SimplePage, SponsoredPage
+)
 
 
 class TestImport(TestCase):
@@ -155,6 +158,70 @@ class TestImport(TestCase):
         created_page = SponsoredPage.objects.get(url_path='/home/eggs-are-great-too/')
         self.assertEqual(created_page.intro, "you can make cakes with them")
         self.assertEqual(created_page.advert.slogan, "go to work on an egg")
+
+    def test_import_pages_with_orphaned_uid(self):
+        # the author UID listed here exists in the destination's IDMapping table, but
+        # the Author record is missing; this would correspond to an author that was previously
+        # imported and then deleted.
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 15]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 15, "00017017-5555-5555-5555-555555555555"],
+                ["tests.advert", 11, "adadadad-1111-1111-1111-111111111111"],
+                ["tests.author", 100, "b00cb00c-0000-0000-0000-00000de1e7ed"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.sponsoredpage",
+                    "pk": 15,
+                    "parent_id": 1,
+                    "fields": {
+                        "title": "Oil is still great",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "oil-is-still-great",
+                        "advert": 11,
+                        "intro": "yay fossil fuels and climate change",
+                        "author": 100
+                    }
+                },
+                {
+                    "model": "tests.advert",
+                    "pk": 11,
+                    "fields": {
+                        "slogan": "put a leopard in your tank"
+                    }
+                },
+                {
+                    "model": "tests.author",
+                    "pk": 100,
+                    "fields": {
+                        "name": "Edgar Allen Poe",
+                        "bio": "Edgar Allen Poe has come back from the dead"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(15, None)
+        importer.add_json(data)
+        importer.run()
+
+        updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
+        # author should be recreated
+        self.assertEqual(updated_page.author.name, "Edgar Allen Poe")
+        self.assertEqual(updated_page.author.bio, "Edgar Allen Poe has come back from the dead")
+        # make sure it has't just overwritten the old author...
+        self.assertTrue(Author.objects.filter(name="Jack Kerouac").exists())
+
+        # there should now be an IDMapping record for the previously orphaned UID, pointing to the
+        # newly created author
+        self.assertEqual(
+            IDMapping.objects.get(uid="b00cb00c-0000-0000-0000-00000de1e7ed").content_object,
+            updated_page.author
+        )
 
     def test_import_page_with_child_models(self):
         data = """{
