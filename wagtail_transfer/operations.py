@@ -15,10 +15,12 @@ from taggit.managers import TaggableManager
 from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Page
 
+from .field_adapters import get_field_adapter
 from .files import get_file_hash
 from .locators import get_locator_for_model
 from .richtext import get_reference_handler
 from .models import get_base_model, get_base_model_for_path, get_model_for_path, ImportedFile
+from .streamfield import get_object_references
 
 
 default_update_related_models = ['wagtailimages.image']
@@ -60,8 +62,6 @@ class File:
 
     def __hash__(self):
         return hash((self.local_filename, self.size, self.hash, self.source_url))
-
-from .streamfield import get_object_references, update_object_ids
 
 
 class Objective:
@@ -472,7 +472,6 @@ class SaveOperationMixin:
         return get_base_model(self.model)
 
     def _populate_fields(self, context):
-        reference_handler = get_reference_handler()
         for field in self.model._meta.get_fields():
             if not isinstance(field, models.Field):
                 # populate data for actual fields only; ignore reverse relations
@@ -482,15 +481,6 @@ class SaveOperationMixin:
                 value = self.object_data['fields'][field.name]
             except KeyError:
                 continue
-
-            # translate rich text references to their new IDs if possible
-            if isinstance(field, RichTextField):
-                value = reference_handler.update_ids(value, context.destination_ids_by_source)
-
-            # translate foreignkey references to their new IDs
-            if isinstance(field, models.ForeignKey):
-                target_model = get_base_model(field.related_model)
-                value = context.destination_ids_by_source.get((target_model, value))
 
             if isinstance(field, models.FileField):
                 imported_file = context.imported_files_by_source_url.get(value['download_url'])
@@ -524,13 +514,11 @@ class SaveOperationMixin:
                 # TODO
                 continue
 
-            elif isinstance(field, StreamField):
-                value = json.dumps(update_object_ids(field.stream_block, json.loads(value), context.destination_ids_by_source))
-
-            elif isinstance(field, models.ManyToManyField):
+            if isinstance(field, models.ManyToManyField):
                 # setting forward ManyToMany directly is prohibited
                 continue
 
+            value = get_field_adapter(field).update_object_references(value, context.destination_ids_by_source)
             setattr(self.instance, field.get_attname(), value)
 
     def _populate_many_to_many_fields(self, context):
