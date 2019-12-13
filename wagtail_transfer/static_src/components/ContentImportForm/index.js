@@ -25,7 +25,7 @@ function SourceSelectorWidget({ sources, selectedSource, onChange }) {
   );
 }
 
-function SubmitButton({ apiBaseUrl, sourcePage, onClick, disabled, numPages }) {
+function SubmitButton({ onClick, disabled, numPages }) {
   let buttonText = 'Import';
   if (numPages !== null) {
     if (numPages == 1) {
@@ -139,8 +139,6 @@ export default function ImportContentForm({
           )}
           <div>
             <SubmitButton
-              apiBaseUrl={source ? source.page_chooser_api : null}
-              sourcePage={sourcePage}
               onClick={onClickSubmit}
               disabled={!destPage}
               numPages={numPages}
