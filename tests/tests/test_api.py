@@ -16,7 +16,7 @@ from wagtail.documents.models import Document
 from wagtail_transfer.auth import digest_for_source
 from wagtail_transfer.models import IDMapping
 from tests.models import (
-    Advert, Category, ModelWithManyToMany, PageWithRichText, SectionedPage, SponsoredPage,
+    Advert, Avatar, Category, ModelWithManyToMany, PageWithRichText, SectionedPage, SponsoredPage,
     PageWithStreamField, PageWithParentalManyToMany
 )
 
@@ -333,6 +333,24 @@ class TestObjectsApi(TestCase):
         self.assertEqual(obj['fields']['file']['download_url'], 'http://example.com/media/documents/document.txt')
         self.assertEqual(obj['fields']['file']['size'], 33)
         self.assertEqual(obj['fields']['file']['hash'], '9b90daf19b6e1e8a4852c64f9ea7fec5bcc5f7fb')
+
+    def test_custom_model_with_file_field(self):
+        with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
+            avatar = Avatar.objects.create(
+                image=ImageFile(f, name='wagtail.jpg')
+            )
+
+        response = self.get({
+            'tests.avatar': [avatar.pk]
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertEqual(len(data['objects']), 1)
+        obj = data['objects'][0]
+        self.assertEqual(obj['fields']['image']['download_url'], 'http://example.com/media/avatars/wagtail.jpg')
+        self.assertEqual(obj['fields']['image']['size'], 1160)
+        self.assertEqual(obj['fields']['image']['hash'], '45c5db99aea04378498883b008ee07528f5ae416')
 
 
 @mock.patch('requests.get')

@@ -75,5 +75,5 @@ def get_file_hash(field, instance):
         return hash_getter()
 
     # Fall back to calculating it on the fly
-    with open_file(field, self.field.value_from_object(instance)) as f:
+    with open_file(field, field.value_from_object(instance)) as f:
         return hashlib.sha1(f.read()).hexdigest()

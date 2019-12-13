@@ -55,3 +55,7 @@ class PageWithParentalManyToMany(Page):
 
 class ModelWithManyToMany(models.Model):
     ads = models.ManyToManyField(Advert)
+
+
+class Avatar(models.Model):
+    image = models.ImageField(upload_to='avatars')
