@@ -26,7 +26,6 @@ function SourceSelectorWidget({ sources, selectedSource, onChange }) {
 }
 
 function SubmitButton({ apiBaseUrl, sourcePage, onClick, disabled, numPages }) {
-
   let buttonText = 'Import';
   if (numPages !== null) {
     if (numPages == 1) {
@@ -85,7 +84,7 @@ export default function ImportContentForm({
           fields: 'descendants'
         });
 
-        setNumPages(page.meta.descendants.count+1);
+        setNumPages(page.meta.descendants.count + 1);
       };
 
       fetchNumPages();
@@ -116,7 +115,7 @@ export default function ImportContentForm({
               value={sourcePage}
               onChange={setSourcePage}
               unchosenText="All child pages will be imported"
-              chosenText={"This page has "+(numPages-1)+" child pages."}
+              chosenText={'This page has ' + (numPages - 1) + ' child pages.'}
             />
           ) : (
             ''
@@ -144,7 +143,7 @@ export default function ImportContentForm({
               sourcePage={sourcePage}
               onClick={onClickSubmit}
               disabled={!destPage}
-              numPages = {numPages}
+              numPages={numPages}
             />
           </div>
         </li>
