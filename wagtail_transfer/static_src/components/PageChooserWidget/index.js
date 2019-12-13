@@ -35,7 +35,7 @@ export default function PageChooserWidget({
                 className="action-choose link"
                 onClick={onClickChoose}
               >
-                CHANGE
+                Change
               </button>
             </li>
             <li>
@@ -44,7 +44,7 @@ export default function PageChooserWidget({
                 className="action-clear link"
                 onClick={onClickClear}
               >
-                CLEAR
+                Clear
               </button>
             </li>
           </ul>
