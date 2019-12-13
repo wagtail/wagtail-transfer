@@ -208,15 +208,17 @@ class TestObjectsApi(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
+    def get(self, request_body):
+        request_json = json.dumps(request_body)
+        digest = digest_for_source('local', request_json)
+        return self.client.post(
+            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_json, content_type='application/json'
+        )
+
     def test_objects_api(self):
-        request_body = json.dumps({
+        response = self.get({
             'tests.advert': [1]
         })
-        digest = digest_for_source('local', request_body)
-
-        response = self.client.post(
-            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_body, content_type='application/json'
-        )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
@@ -236,14 +238,9 @@ class TestObjectsApi(TestCase):
             uid=collection_uid,
         )
 
-        request_body = json.dumps({
+        response = self.get({
             'wagtailcore.collection': [collection.id]
         })
-        digest = digest_for_source('local', request_body)
-
-        response = self.client.post(
-            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_body, content_type='application/json'
-        )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
@@ -260,15 +257,9 @@ class TestObjectsApi(TestCase):
         ad_holder.ads.set([advert_2, advert_3])
         ad_holder.save()
 
-        request_body = json.dumps({
+        response = self.get({
             'tests.modelwithmanytomany': [1]
         })
-        digest = digest_for_source('local', request_body)
-
-        response = self.client.post(
-            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_body, content_type='application/json'
-        )
-
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
@@ -277,15 +268,9 @@ class TestObjectsApi(TestCase):
         self.assertEqual({2, 3}, set(data['objects'][0]['fields']['ads']))
 
     def test_model_with_field_lookup(self):
-        request_body = json.dumps({
+        response = self.get({
             'tests.category': [1]
         })
-        digest = digest_for_source('local', request_body)
-
-        response = self.client.post(
-            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_body, content_type='application/json'
-        )
-
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
