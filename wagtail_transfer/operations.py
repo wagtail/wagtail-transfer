@@ -1,20 +1,15 @@
 import json
-import pathlib
-from urllib.parse import urlparse
 
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.functional import cached_property
 from modelcluster.models import ClusterableModel, get_all_child_relations
 from treebeard.mp_tree import MP_Node
-from taggit.managers import TaggableManager
 from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Page
 
 from .field_adapters import get_field_adapter
-from .files import get_file_hash, File
 from .locators import get_locator_for_model
 from .richtext import get_reference_handler
 from .models import get_base_model, get_base_model_for_path, get_model_for_path
@@ -447,44 +442,7 @@ class SaveOperationMixin:
             except KeyError:
                 continue
 
-            if isinstance(field, models.FileField):
-                imported_file = context.imported_files_by_source_url.get(value['download_url'])
-                if imported_file is None:
-
-                    existing_file = field.value_from_object(self.instance)
-
-                    if existing_file:
-                        existing_file_hash = get_file_hash(field, self.instance)
-                        if existing_file_hash == value['hash']:
-                            # File not changed, so don't bother updating it
-                            continue
-
-                    # Get the local filename
-                    name = pathlib.PurePosixPath(urlparse(value['download_url']).path).name
-                    local_filename = field.upload_to(self.instance, name)
-
-                    _file = File(local_filename, value['size'], value['hash'], value['download_url'])
-                    imported_file = _file.transfer()
-                    context.imported_files_by_source_url[_file.source_url] = imported_file
-
-                value = imported_file.file.name
-                getattr(self.instance, field.get_attname()).name = value
-                continue
-
-            if isinstance(field, TaggableManager):
-                # TODO
-                continue
-
-            if isinstance(field, GenericRelation):
-                # TODO
-                continue
-
-            if isinstance(field, models.ManyToManyField):
-                # setting forward ManyToMany directly is prohibited
-                continue
-
-            value = get_field_adapter(field).update_object_references(value, context.destination_ids_by_source)
-            setattr(self.instance, field.get_attname(), value)
+            get_field_adapter(field).populate_field(self.instance, value, context)
 
     def _populate_many_to_many_fields(self, context):
         save_needed = False
