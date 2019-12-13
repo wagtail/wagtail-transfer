@@ -1,16 +1,16 @@
+from functools import lru_cache
+import json
+
 from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
 from django.utils.encoding import is_protected_type
-
-from modelcluster.fields import ParentalManyToManyField
 
 from wagtail.core.fields import RichTextField, StreamField
 
 from .files import get_file_size, get_file_hash
 from .models import get_base_model
 from .richtext import get_reference_handler
-from .streamfield import get_object_references
-
+from .streamfield import get_object_references, update_object_ids
 
 class FieldAdapter:
     def __init__(self, field):
@@ -34,6 +34,14 @@ class FieldAdapter:
         """
         return set()
 
+    def update_object_references(self, value, destination_ids_by_source):
+        """
+        Return a modified version of value with object references replaced by their corresponding
+        entries in destination_ids_by_source - a mapping of (model_class, source_id) to
+        destination_id
+        """
+        return value
+
 
 class ForeignKeyAdapter(FieldAdapter):
     def __init__(self, field):
@@ -46,6 +54,9 @@ class ForeignKeyAdapter(FieldAdapter):
             return set()
         else:
             return {(self.related_base_model, pk)}
+
+    def update_object_references(self, value, destination_ids_by_source):
+        return destination_ids_by_source.get((self.related_base_model, value))
 
 
 class ManyToOneRelAdapter(FieldAdapter):
@@ -77,14 +88,22 @@ class RichTextAdapter(FieldAdapter):
     def get_object_references(self, instance):
         return get_reference_handler().get_objects(self.field.value_from_object(instance))
 
+    def update_object_references(self, value, destination_ids_by_source):
+        return get_reference_handler().update_ids(value, destination_ids_by_source)
+
 
 class StreamFieldAdapter(FieldAdapter):
-    def get_object_references(self, instance):
-        stream_block = self.field.stream_block
+    def __init__(self, field):
+        super().__init__(field)
+        self.stream_block = self.field.stream_block
 
-        #get the list of dicts representation of the streamfield json
-        stream = stream_block.get_prep_value(self.field.value_from_object(instance))
-        return get_object_references(stream_block, stream)
+    def get_object_references(self, instance):
+        # get the list of dicts representation of the streamfield json
+        stream = self.stream_block.get_prep_value(self.field.value_from_object(instance))
+        return get_object_references(self.stream_block, stream)
+
+    def update_object_references(self, value, destination_ids_by_source):
+        return json.dumps(update_object_ids(self.stream_block, json.loads(value), destination_ids_by_source))
 
 
 class FileAdapter(FieldAdapter):
@@ -126,6 +145,7 @@ ADAPTERS_BY_FIELD_CLASS = {
 }
 
 
+@lru_cache(maxsize=None)
 def get_field_adapter(field):
     # find the adapter class for the most specific class in the field's inheritance tree
 
