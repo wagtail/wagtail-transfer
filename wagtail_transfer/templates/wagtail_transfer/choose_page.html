@@ -5,6 +5,7 @@
     {{ block.super }}
 
     {% include "wagtailadmin/pages/_editor_css.html" %}
+    <link rel="stylesheet" href="{% versioned_static 'wagtail_transfer/css/transfer-styles.css' %}">
 {% endblock %}
 
 {% block extra_js %}

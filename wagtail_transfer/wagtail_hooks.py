@@ -25,9 +25,3 @@ class WagtailTransferMenuItem(MenuItem):
 @hooks.register('register_admin_menu_item')
 def register_admin_menu_item():
     return WagtailTransferMenuItem('Import pages', reverse('wagtail_transfer_admin:choose_page'), classnames='icon icon-doc-empty-inverse', order=10000)
-
-
-# Register a custom css file for the wagtail admin.
-@hooks.register("insert_global_admin_css", order=1000)
-def global_admin_css():
-    return format_html('<link rel="stylesheet" href="{}">', static("wagtail_transfer/css/transfer-styles.css"))
