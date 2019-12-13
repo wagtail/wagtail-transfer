@@ -6,20 +6,18 @@ from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
-from django.core.files.base import ContentFile
 from django.utils.functional import cached_property
 from modelcluster.models import ClusterableModel, get_all_child_relations
-import requests
 from treebeard.mp_tree import MP_Node
 from taggit.managers import TaggableManager
 from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Page
 
 from .field_adapters import get_field_adapter
-from .files import get_file_hash
+from .files import get_file_hash, File
 from .locators import get_locator_for_model
 from .richtext import get_reference_handler
-from .models import get_base_model, get_base_model_for_path, get_model_for_path, ImportedFile
+from .models import get_base_model, get_base_model_for_path, get_model_for_path
 from .streamfield import get_object_references
 
 
@@ -29,39 +27,6 @@ UPDATE_RELATED_MODELS = [
     model_label.lower()
     for model_label in getattr(settings, 'WAGTAILTRANSFER_UPDATE_RELATED_MODELS', default_update_related_models)
 ]
-
-
-class FileTransferError(Exception):
-    pass
-
-
-class File:
-    """
-    Represents a file that needs to be imported
-
-    Note that local_filename is only a guideline, it may be changed to avoid conflict with an existing file
-    """
-    def __init__(self, local_filename, size, hash, source_url):
-        self.local_filename = local_filename
-        self.size = size
-        self.hash = hash
-        self.source_url = source_url
-
-    def transfer(self):
-        response = requests.get(self.source_url)
-
-        if response.status_code != 200:
-            raise FileTransferError  # TODO
-
-        return ImportedFile.objects.create(
-            file=ContentFile(response.content, name=self.local_filename),
-            source_url=self.source_url,
-            hash=self.hash,
-            size=self.size,
-        )
-
-    def __hash__(self):
-        return hash((self.local_filename, self.size, self.hash, self.source_url))
 
 
 class Objective:
