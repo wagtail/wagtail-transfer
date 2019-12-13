@@ -50,9 +50,10 @@ def get_file_size(field, instance):
         return instance.get_file_size()
 
     # Allow developers to provide a file size getter for custom file fields
-    size_getter = getattr(instance, 'wagtailtransfer_get_{}_size', None)
-    if size_getter:
-        return size_getter()
+    # TODO: complete, test and document this mechanism
+    # size_getter = getattr(instance, 'wagtailtransfer_get_{}_size', None)
+    # if size_getter:
+    #     return size_getter()
 
     # Fall back to asking Django
     # This is potentially very slow as it may result in a call to an external storage service
@@ -70,9 +71,10 @@ def get_file_hash(field, instance):
         return instance.get_file_hash()
 
     # Allow developers to provide a file hash getter for custom file fields
-    hash_getter = getattr(instance, 'wagtailtransfer_get_{}_hash', None)
-    if hash_getter:
-        return hash_getter()
+    # TODO: complete, test and document this mechanism
+    # hash_getter = getattr(instance, 'wagtailtransfer_get_{}_hash', None)
+    # if hash_getter:
+    #     return hash_getter()
 
     # Fall back to calculating it on the fly
     with open_file(field, field.value_from_object(instance)) as f:
