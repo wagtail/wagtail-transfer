@@ -2,7 +2,13 @@ import * as React from 'react';
 
 import { createReactPageChooser } from '../../chooser';
 
-export default function PageChooserWidget({ apiBaseUrl, value, onChange, chosenText, unchosenText }) {
+export default function PageChooserWidget({
+  apiBaseUrl,
+  value,
+  onChange,
+  chosenText,
+  unchosenText
+}) {
   const onClickChoose = () => {
     createReactPageChooser(apiBaseUrl, [], 'root', newValue => {
       onChange(newValue);

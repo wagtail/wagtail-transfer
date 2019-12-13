@@ -29,7 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document
     .querySelectorAll('[data-wagtail-component="content-import-form"]')
     .forEach(element => {
-      const localApiBaseUrl = element.dataset.localApiBaseUrl; '/admin/api/v2beta/pages/';
+      const localApiBaseUrl = element.dataset.localApiBaseUrl;
+      ('/admin/api/v2beta/pages/');
       const sources = JSON.parse(element.dataset.sources);
       const action = element.dataset.action;
       const csrfToken = element.dataset.csrfToken;
@@ -42,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const addField = (name, value) => {
           const fieldElement = document.createElement('input');
           fieldElement.type = 'hidden';
-          fieldElement.name = name;;
+          fieldElement.name = name;
           fieldElement.value = value;
           formElement.appendChild(fieldElement);
         };
