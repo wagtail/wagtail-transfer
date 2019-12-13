@@ -1,5 +1,8 @@
+import os.path
+import shutil
 from unittest import mock
 
+from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from wagtail.core.models import Collection
@@ -12,9 +15,19 @@ from tests.models import (
     PageWithStreamField, SectionedPage, SimplePage, SponsoredPage
 )
 
+# We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
+# ever run these tests with non-test settings for any reason
+TEST_MEDIA_DIR = os.path.join(os.path.join(settings.BASE_DIR, 'test-media'))
+
 
 class TestImport(TestCase):
     fixtures = ['test.json']
+
+    def setUp(self):
+        shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
+
+    def tearDown(self):
+        shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
 
     def test_import_pages(self):
         data = """{
