@@ -4,6 +4,7 @@ from unittest import mock
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.core.files.images import ImageFile
 from django.test import TestCase
 from wagtail.core.models import Collection
 from wagtail.images.models import Image
@@ -18,6 +19,7 @@ from tests.models import (
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason
 TEST_MEDIA_DIR = os.path.join(os.path.join(settings.BASE_DIR, 'test-media'))
+FIXTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fixtures')
 
 
 class TestImport(TestCase):
@@ -516,6 +518,7 @@ class TestImport(TestCase):
         importer.run()
 
         # Check the image was imported
+        get.assert_called()
         image = Image.objects.get()
         self.assertEqual(image.title, "Lightnin' Hopkins")
         self.assertEqual(image.file.read(), b'my test image file contents')
@@ -579,6 +582,7 @@ class TestImport(TestCase):
         importer.run()
 
         # Check the image was imported
+        get.assert_called()
         image = Image.objects.get()
         self.assertEqual(image.title, "Lightnin' Hopkins")
         self.assertEqual(image.file.read(), b'my test image file contents')
@@ -590,6 +594,164 @@ class TestImport(TestCase):
         # TODO: We should verify these
         self.assertEqual(image.file_size, 18521)
         self.assertEqual(image.file_hash, "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada")
+
+    @mock.patch('requests.get')
+    def test_existing_image_is_not_refetched(self, get):
+        """
+        If an incoming object has a FileField that reports the same size/hash as the existing
+        file, we should not refetch the file
+        """
+
+        get.return_value.status_code = 200
+        get.return_value.content = b'my test image file contents'
+
+        with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
+            image = Image.objects.create(
+                title="Wagtail",
+                file=ImageFile(f, name='wagtail.jpg')
+            )
+
+        IDMapping.objects.get_or_create(
+            uid="f91debc6-1751-11ea-8001-0800278dc04d",
+            defaults={
+                'content_type': ContentType.objects.get_for_model(Image),
+                'local_id': image.id,
+            }
+        )
+
+        data = """{
+            "ids_for_import": [
+                ["wagtailimages.image", 53]
+            ],
+            "mappings": [
+                ["wagtailcore.collection", 3, "f91cb31c-1751-11ea-8000-0800278dc04d"],
+                ["wagtailimages.image", 53, "f91debc6-1751-11ea-8001-0800278dc04d"]
+            ],
+            "objects": [
+                {
+                    "model": "wagtailcore.collection",
+                    "pk": 3,
+                    "fields": {
+                        "name": "root"
+                    },
+                    "parent_id": null
+                },
+                {
+                    "model": "wagtailimages.image",
+                    "pk": 53,
+                    "fields": {
+                        "collection": 3,
+                        "title": "A lovely wagtail",
+                        "file": {
+                            "download_url": "https://wagtail.io/media/original_images/wagtail.jpg",
+                            "size": 1160,
+                            "hash": "45c5db99aea04378498883b008ee07528f5ae416"
+                        },
+                        "width": 32,
+                        "height": 40,
+                        "created_at": "2019-04-01T07:31:21.251Z",
+                        "uploaded_by_user": null,
+                        "focal_point_x": null,
+                        "focal_point_y": null,
+                        "focal_point_width": null,
+                        "focal_point_height": null,
+                        "file_size": 1160,
+                        "file_hash": "45c5db99aea04378498883b008ee07528f5ae416",
+                        "tags": "[]",
+                        "tagged_items": "[]"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(1, None)
+        importer.add_json(data)
+        importer.run()
+
+        get.assert_not_called()
+        image = Image.objects.get()
+        # Metadata was updated...
+        self.assertEqual(image.title, "A lovely wagtail")
+        # but file is left alone (i.e. it has not been replaced with 'my test image file contents')
+        self.assertEqual(image.file.size, 1160)
+
+    @mock.patch('requests.get')
+    def test_replace_image(self, get):
+        """
+        If an incoming object has a FileField that reports a different size/hash to the existing
+        file, we should fetch it and update the field
+        """
+
+        get.return_value.status_code = 200
+        get.return_value.content = b'my test image file contents'
+
+        with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
+            image = Image.objects.create(
+                title="Wagtail",
+                file=ImageFile(f, name='wagtail.jpg')
+            )
+
+        IDMapping.objects.get_or_create(
+            uid="f91debc6-1751-11ea-8001-0800278dc04d",
+            defaults={
+                'content_type': ContentType.objects.get_for_model(Image),
+                'local_id': image.id,
+            }
+        )
+
+        data = """{
+            "ids_for_import": [
+                ["wagtailimages.image", 53]
+            ],
+            "mappings": [
+                ["wagtailcore.collection", 3, "f91cb31c-1751-11ea-8000-0800278dc04d"],
+                ["wagtailimages.image", 53, "f91debc6-1751-11ea-8001-0800278dc04d"]
+            ],
+            "objects": [
+                {
+                    "model": "wagtailcore.collection",
+                    "pk": 3,
+                    "fields": {
+                        "name": "root"
+                    },
+                    "parent_id": null
+                },
+                {
+                    "model": "wagtailimages.image",
+                    "pk": 53,
+                    "fields": {
+                        "collection": 3,
+                        "title": "A lovely wagtail",
+                        "file": {
+                            "download_url": "https://wagtail.io/media/original_images/wagtail.jpg",
+                            "size": 27,
+                            "hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada"
+                        },
+                        "width": 32,
+                        "height": 40,
+                        "created_at": "2019-04-01T07:31:21.251Z",
+                        "uploaded_by_user": null,
+                        "focal_point_x": null,
+                        "focal_point_y": null,
+                        "focal_point_width": null,
+                        "focal_point_height": null,
+                        "file_size": 27,
+                        "file_hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada",
+                        "tags": "[]",
+                        "tagged_items": "[]"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(1, None)
+        importer.add_json(data)
+        importer.run()
+
+        get.assert_called()
+        image = Image.objects.get()
+        self.assertEqual(image.title, "A lovely wagtail")
+        self.assertEqual(image.file.read(), b'my test image file contents')
 
     def test_import_collection(self):
         root_collection = Collection.objects.get()
