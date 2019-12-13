@@ -94,57 +94,60 @@ export default function ImportContentForm({
 
   return (
     <div>
-    <ol className="transfer numbered">
-      <li className="transfer numbered">
-      <div class="transfer list-container">
-      <h2>Select source site</h2>
-      </div>
-      <SourceSelectorWidget
-        sources={sources}
-        selectedSource={source}
-        onChange={setSource}
-      />
-      </li>
+      <ol className="transfer numbered">
+        <li className="transfer numbered">
+          <div class="transfer list-container">
+            <h2>Select source site</h2>
+          </div>
+          <SourceSelectorWidget
+            sources={sources}
+            selectedSource={source}
+            onChange={setSource}
+          />
+        </li>
 
-      <li className="transfer numbered">
-      <div class="transfer list-container">
-      <h2>Select pages to import</h2>
-      </div>
-      {source ? (
-        <PageChooserWidget
-          apiBaseUrl={source.page_chooser_api}
-          value={sourcePage}
-          onChange={setSourcePage}
-          unchosenText="All child pages will be imported"
-          chosenText={"This page has "+(numPages-1)+" child pages."}
-        />
-      ) : (
-        ''
-      )}</li>
+        <li className="transfer numbered">
+          <div class="transfer list-container">
+            <h2>Select pages to import</h2>
+          </div>
+          {source ? (
+            <PageChooserWidget
+              apiBaseUrl={source.page_chooser_api}
+              value={sourcePage}
+              onChange={setSourcePage}
+              unchosenText="All child pages will be imported"
+              chosenText={"This page has "+(numPages-1)+" child pages."}
+            />
+          ) : (
+            ''
+          )}
+        </li>
 
-      <li className="transfer numbered">
-      <div class="transfer list-container">
-      <h2>Select destination parent page</h2>
-      </div>
-      {sourcePage ? (
-        <PageChooserWidget
-          apiBaseUrl={localApiBaseUrl}
-          value={destPage}
-          onChange={setDestPage}
-          unchosenText="Imported pages will be created as children of this page."
-          chosenText="Imported pages will be created as children of this page."
-        />
-      ) : (
-        ''
-      )}
-      <SubmitButton
-        apiBaseUrl={source ? source.page_chooser_api : null}
-        sourcePage={sourcePage}
-        onClick={onClickSubmit}
-        disabled={!destPage}
-        numPages = {numPages}
-      />
-      </li>
+        <li className="transfer numbered">
+          <div class="transfer list-container">
+            <h2>Select destination parent page</h2>
+          </div>
+          {sourcePage ? (
+            <PageChooserWidget
+              apiBaseUrl={localApiBaseUrl}
+              value={destPage}
+              onChange={setDestPage}
+              unchosenText="Imported pages will be created as children of this page."
+              chosenText="Imported pages will be created as children of this page."
+            />
+          ) : (
+            ''
+          )}
+          <div>
+            <SubmitButton
+              apiBaseUrl={source ? source.page_chooser_api : null}
+              sourcePage={sourcePage}
+              onClick={onClickSubmit}
+              disabled={!destPage}
+              numPages = {numPages}
+            />
+          </div>
+        </li>
       </ol>
     </div>
   );
