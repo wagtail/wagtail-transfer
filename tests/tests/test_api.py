@@ -1,10 +1,17 @@
 import json
+import os.path
+import shutil
 import uuid
 from unittest import mock
 
+from django.conf import settings
+from django.core.files import File
+from django.core.files.images import ImageFile
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from wagtail.core.models import Page, Collection
+from wagtail.images.models import Image
+from wagtail.documents.models import Document
 
 from wagtail_transfer.auth import digest_for_source
 from wagtail_transfer.models import IDMapping
@@ -12,6 +19,12 @@ from tests.models import (
     Advert, Category, ModelWithManyToMany, PageWithRichText, SectionedPage, SponsoredPage,
     PageWithStreamField, PageWithParentalManyToMany
 )
+
+
+# We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
+# ever run these tests with non-test settings for any reason
+TEST_MEDIA_DIR = os.path.join(os.path.join(settings.BASE_DIR, 'test-media'))
+FIXTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fixtures')
 
 
 class TestPagesApi(TestCase):
@@ -198,6 +211,12 @@ class TestPagesApi(TestCase):
 class TestObjectsApi(TestCase):
     fixtures = ['test.json']
 
+    def setUp(self):
+        shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
+
+    def tearDown(self):
+        shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
+
     def test_incorrect_digest(self):
         request_body = json.dumps({
             'tests.advert': [1]
@@ -276,6 +295,44 @@ class TestObjectsApi(TestCase):
 
         # Category objects in the mappings section should be identified by name, not UUID
         self.assertIn(['tests.category', 1, ['Cars']], data['mappings'])
+
+    def test_image(self):
+        with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
+            image = Image.objects.create(
+                title="Wagtail",
+                file=ImageFile(f, name='wagtail.jpg')
+            )
+
+        response = self.get({
+            'wagtailimages.image': [image.pk]
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertEqual(len(data['objects']), 1)
+        obj = data['objects'][0]
+        self.assertEqual(obj['fields']['file']['download_url'], 'http://example.com/media/original_images/wagtail.jpg')
+        self.assertEqual(obj['fields']['file']['size'], 1160)
+        self.assertEqual(obj['fields']['file']['hash'], '45c5db99aea04378498883b008ee07528f5ae416')
+
+    def test_document(self):
+        with open(os.path.join(FIXTURES_DIR, 'document.txt'), 'rb') as f:
+            document = Document.objects.create(
+                title="Test document",
+                file=File(f, name='document.txt')
+            )
+
+        response = self.get({
+            'wagtaildocs.document': [document.pk]
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertEqual(len(data['objects']), 1)
+        obj = data['objects'][0]
+        self.assertEqual(obj['fields']['file']['download_url'], 'http://example.com/media/documents/document.txt')
+        self.assertEqual(obj['fields']['file']['size'], 33)
+        self.assertEqual(obj['fields']['file']['hash'], '9b90daf19b6e1e8a4852c64f9ea7fec5bcc5f7fb')
 
 
 @mock.patch('requests.get')
