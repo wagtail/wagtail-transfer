@@ -1,16 +1,20 @@
 from functools import lru_cache
 import json
+import pathlib
+from urllib.parse import urlparse
 
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
 from django.utils.encoding import is_protected_type
-
+from taggit.managers import TaggableManager
 from wagtail.core.fields import RichTextField, StreamField
 
-from .files import get_file_size, get_file_hash
+from .files import get_file_size, get_file_hash, File
 from .models import get_base_model
 from .richtext import get_reference_handler
 from .streamfield import get_object_references, update_object_ids
+
 
 class FieldAdapter:
     def __init__(self, field):
@@ -41,6 +45,14 @@ class FieldAdapter:
         destination_id
         """
         return value
+
+    def populate_field(self, instance, value, context):
+        """
+        Populate this field on the passed model instance, given a value in its serialized form
+        as returned by `serialize`
+        """
+        value = self.update_object_references(value, context.destination_ids_by_source)
+        setattr(instance, self.field.get_attname(), value)
 
 
 class ForeignKeyAdapter(FieldAdapter):
@@ -114,6 +126,29 @@ class FileAdapter(FieldAdapter):
             'hash': get_file_hash(self.field, instance),
         }
 
+    def populate_field(self, instance, value, context):
+        imported_file = context.imported_files_by_source_url.get(value['download_url'])
+        if imported_file is None:
+
+            existing_file = self.field.value_from_object(instance)
+
+            if existing_file:
+                existing_file_hash = get_file_hash(self.field, instance)
+                if existing_file_hash == value['hash']:
+                    # File not changed, so don't bother updating it
+                    return
+
+            # Get the local filename
+            name = pathlib.PurePosixPath(urlparse(value['download_url']).path).name
+            local_filename = self.field.upload_to(instance, name)
+
+            _file = File(local_filename, value['size'], value['hash'], value['download_url'])
+            imported_file = _file.transfer()
+            context.imported_files_by_source_url[_file.source_url] = imported_file
+
+        value = imported_file.file.name
+        getattr(instance, self.field.get_attname()).name = value
+
 
 class ManyToManyFieldAdapter(FieldAdapter):
     def __init__(self, field):
@@ -133,6 +168,22 @@ class ManyToManyFieldAdapter(FieldAdapter):
         pks = list(self._get_pks(instance))
         return pks
 
+    def populate_field(self, instance, value, context):
+        # setting forward ManyToMany directly is prohibited
+        pass
+
+
+class TaggableManagerAdapter(FieldAdapter):
+    def populate_field(self, instance, value, context):
+        # TODO
+        pass
+
+
+class GenericRelationAdapter(FieldAdapter):
+    def populate_field(self, instance, value, context):
+        # TODO
+        pass
+
 
 ADAPTERS_BY_FIELD_CLASS = {
     models.Field: FieldAdapter,
@@ -142,6 +193,8 @@ ADAPTERS_BY_FIELD_CLASS = {
     StreamField: StreamFieldAdapter,
     models.FileField: FileAdapter,
     models.ManyToManyField: ManyToManyFieldAdapter,
+    TaggableManager: TaggableManagerAdapter,
+    GenericRelation: GenericRelationAdapter,
 }
 
 
