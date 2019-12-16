@@ -118,6 +118,22 @@ class TestPagesApi(TestCase):
 
         self.assertIn(['wagtailcore.page', 1, '11111111-1111-1111-1111-111111111111'], data['mappings'])
 
+    def test_rich_text_with_dead_page_link(self):
+        page = PageWithRichText(title="You won't believe how rich this cake was!", body='<p>But I have a <a id="999" linktype="page">link</a></p>')
+
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        response = self.get(page.id)
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertTrue(any(
+            model == 'wagtailcore.page' and id == 999
+            for model, id, uid in data['mappings']
+        ))
+
     def test_streamfield_with_page_links(self):
         # Check that page links in a complex nested StreamField - with StreamBlock, StructBlock, and ListBlock -
         # are all picked up in mappings
@@ -174,6 +190,25 @@ class TestPagesApi(TestCase):
         data = json.loads(response.content)
 
         self.assertIn(['wagtailcore.page', 1, '11111111-1111-1111-1111-111111111111'], data['mappings'])
+
+    def test_streamfield_with_dead_page_link(self):
+        page = PageWithStreamField(
+            title="I have a streamfield",
+            body=json.dumps([
+                {'type': 'link_block', 'value': {'page': 999, 'text': 'Test'}, 'id': 'fc3b0d3d-d316-4271-9e31-84919558188a'},
+            ])
+        )
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        digest = digest_for_source('local', str(page.id))
+        response = self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s' % (page.id, digest))
+
+        data = json.loads(response.content)
+        self.assertTrue(any(
+            model == 'wagtailcore.page' and id == 999
+            for model, id, uid in data['mappings']
+        ))
 
     def test_parental_many_to_many(self):
         page = PageWithParentalManyToMany(title="This page has lots of ads!")
