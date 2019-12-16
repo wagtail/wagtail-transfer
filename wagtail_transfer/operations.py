@@ -165,6 +165,10 @@ class ImportPlanner:
         # through related object references
         self.base_import_ids = set()
 
+        # Set of (model, source_id) tuples for items that we failed to create, either because
+        # NO_FOLLOW_MODELS told us not to, or because they did not exist on the source site.
+        self.failed_creations = set()
+
     def add_json(self, json_data):
         """
         Add JSON data to the import plan. The data is a dict consisting of:
@@ -228,15 +232,20 @@ class ImportPlanner:
 
     def _handle_objective(self, objective):
         if not objective.exists_at_destination:
+
             # object does not exist locally - create it if we're allowed to do so, i.e.
             # it is in the set of objects explicitly selected for import, or it is a related object
             # that we have not been blocked from following by NO_FOLLOW_MODELS
             if (
-                objective.model._meta.label_lower not in NO_FOLLOW_MODELS
-                or (objective.model, objective.source_id) in self.base_import_ids
+                objective.model._meta.label_lower in NO_FOLLOW_MODELS
+                and (objective.model, objective.source_id) not in self.base_import_ids
             ):
+                # NO_FOLLOW_MODELS prevents us from creating this object
+                self.failed_creations.add((objective.model, objective.source_id))
+            else:
                 task = ('create', objective.model, objective.source_id)
                 self._handle_task(task)
+
         else:
             # object already exists at the destination, so any objects referencing it can go ahead
             # without being blocked by this task
@@ -390,16 +399,73 @@ class ImportPlanner:
         if self.unhandled_objectives or self.postponed_tasks:
             raise ImproperlyConfigured("Cannot run import until all dependencies are resoved")
 
+        # filter out unsatisfiable operations
+        statuses = {}
+        satisfiable_operations = [
+            op for op in self.operations
+            if self._check_satisfiable(op, statuses)
+        ]
+
         # arrange operations into an order that satisfies dependencies
         operation_order = []
-        for operation in self.operations:
-            if operation:
-                self._add_to_operation_order(operation, operation_order)
+        for operation in satisfiable_operations:
+            self._add_to_operation_order(operation, operation_order)
 
         # run operations in order
         with transaction.atomic():
             for operation in operation_order:
                 operation.run(self.context)
+
+    def _check_satisfiable(self, operation, statuses):
+        # Check whether the given operation's dependencies are satisfiable. statuses is a dict of
+        # previous results - keys are (model, id) pairs and the value is:
+        #  True - dependency is satisfiable
+        #  False - dependency is not satisfiable
+        #  None - the satisfiability check is currently in progress -
+        #         if we encounter this we have found a circular dependency.
+        for (model, id, is_hard_dep) in operation.dependencies:
+            if not is_hard_dep:
+                continue  # ignore soft dependencies here
+
+            try:
+                # Look for a previous result for this dependency
+                result = statuses[(model, id)]
+                if result is False or result is None:
+                    # Dependency is known to be unsatisfiable, or we have just found a circular
+                    # dependency
+                    return False
+            except KeyError:
+                # No previous result - need to determine it now.
+                # Mark this as 'in progress', to spot circular dependencies
+                statuses[(model, id)] = None
+
+                # Look for a resolution for this dependency (i.e. an Operation that creates it)
+                try:
+                    resolution = self.resolutions[(model, id)]
+                except KeyError:
+                    # If the resolution is missing, it *should* be for one of the reasons we've
+                    # accounted for and logged in failed_creations. Otherwise, that's a bug, and
+                    # we should fail loudly now
+                    if (model, id) not in self.failed_creations:
+                        raise
+
+                    # The dependency is not satisfiable (for a reason we know about in
+                    # failed_creations), and so the overall operation fails too
+                    statuses[(model, id)] = False
+                    return False
+
+                if resolution is None:
+                    # the dependency was already satisfied, with no further action required
+                    statuses[(model, id)] = True
+                else:
+                    # resolution is an Operation that we now need to check recursively
+                    result = self._check_satisfiable(resolution, statuses)
+                    statuses[(model, id)] = result
+                    if result is False:
+                        return False
+
+        # We've got through all the dependencies without anything failing. Yay!
+        return True
 
     def _add_to_operation_order(self, operation, operation_order):
         if operation in operation_order:
