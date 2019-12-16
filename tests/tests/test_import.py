@@ -14,7 +14,7 @@ from wagtail_transfer.models import IDMapping
 from wagtail_transfer.operations import ImportPlanner
 from tests.models import (
     Advert, Author, ModelWithManyToMany, PageWithParentalManyToMany, PageWithRichText,
-    PageWithStreamField, SectionedPage, SimplePage, SponsoredPage
+    PageWithStreamField, RedirectPage, SectionedPage, SimplePage, SponsoredPage
 )
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
@@ -1008,3 +1008,135 @@ class TestImport(TestCase):
         self.assertEqual(updated_page.categories.get(name='Cars').colour, "red")
         # The 'Environment' category should have been created
         self.assertEqual(updated_page.categories.get(name='Environment').colour, "green")
+
+    def test_skip_import_if_hard_dependency_on_non_imported_page(self):
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 20],
+                ["wagtailcore.page", 21],
+                ["wagtailcore.page", 23],
+                ["wagtailcore.page", 24],
+                ["wagtailcore.page", 25],
+                ["wagtailcore.page", 26],
+                ["wagtailcore.page", 27]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 20, "20202020-2020-2020-2020-202020202020"],
+                ["wagtailcore.page", 21, "21212121-2121-2121-2121-212121212121"],
+                ["wagtailcore.page", 23, "23232323-2323-2323-2323-232323232323"],
+                ["wagtailcore.page", 24, "24242424-2424-2424-2424-242424242424"],
+                ["wagtailcore.page", 25, "25252525-2525-2525-2525-252525252525"],
+                ["wagtailcore.page", 26, "26262626-2626-2626-2626-262626262626"],
+                ["wagtailcore.page", 27, "27272727-2727-2727-2727-272727272727"],
+                ["wagtailcore.page", 30, "00017017-5555-5555-5555-555555555555"],
+                ["wagtailcore.page", 31, "31313131-3131-3131-3131-313131313131"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.simplepage",
+                    "pk": 20,
+                    "parent_id": 12,
+                    "fields": {
+                        "title": "hard dependency test",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "hard-dependency-test",
+                        "intro": "Testing hard dependencies on pages outside the imported root"
+                    }
+                },
+                {
+                    "model": "tests.redirectpage",
+                    "pk": 21,
+                    "parent_id": 20,
+                    "fields": {
+                        "title": "redirect to oil page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "redirect-to-oil-page",
+                        "redirect_to": 30
+                    }
+                },
+                {
+                    "model": "tests.redirectpage",
+                    "pk": 23,
+                    "parent_id": 20,
+                    "fields": {
+                        "title": "redirect to unimported page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "redirect-to-unimported-page",
+                        "redirect_to": 31
+                    }
+                },
+                {
+                    "model": "tests.redirectpage",
+                    "pk": 24,
+                    "parent_id": 20,
+                    "fields": {
+                        "title": "redirect to redirect to oil page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "redirect-to-redirect-to-oil-page",
+                        "redirect_to": 21
+                    }
+                },
+                {
+                    "model": "tests.redirectpage",
+                    "pk": 25,
+                    "parent_id": 20,
+                    "fields": {
+                        "title": "redirect to redirect to unimported page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "redirect-to-redirect-to-unimported-page",
+                        "redirect_to": 23
+                    }
+                },
+                {
+                    "model": "tests.redirectpage",
+                    "pk": 26,
+                    "parent_id": 20,
+                    "fields": {
+                        "title": "pork redirecting to lamb",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "pork-redirecting-to-lamb",
+                        "redirect_to": 27
+                    }
+                },
+                {
+                    "model": "tests.redirectpage",
+                    "pk": 27,
+                    "parent_id": 20,
+                    "fields": {
+                        "title": "lamb redirecting to pork",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "lamb-redirecting-to-pork",
+                        "redirect_to": 26
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(20, 2)
+        importer.add_json(data)
+        importer.run()
+
+        # A non-nullable FK to an existing page outside the imported root is fine
+        redirect_to_oil_page = RedirectPage.objects.get(slug='redirect-to-oil-page')
+        self.assertEqual(redirect_to_oil_page.redirect_to.slug, 'oil-is-great')
+
+        # A non-nullable FK to a non-existing page outside the imported root will prevent import
+        self.assertFalse(RedirectPage.objects.filter(slug='redirect-to-unimported-page').exists())
+
+        # We can also handle FKs to pages being created in the import
+        redirect_to_redirect_to_oil_page = RedirectPage.objects.get(slug='redirect-to-redirect-to-oil-page')
+        self.assertEqual(redirect_to_redirect_to_oil_page.redirect_to.slug, 'redirect-to-oil-page')
+
+        # Failure to create a page will also propagate to pages with a hard dependency on it
+        self.assertFalse(RedirectPage.objects.filter(slug='redirect-to-redirect-to-unimported-page').exists())
+
+        # Circular references will be caught and pages not created
+        self.assertFalse(RedirectPage.objects.filter(slug='pork-redirecting-to-lamb').exists())
+        self.assertFalse(RedirectPage.objects.filter(slug='lamb-redirecting-to-pork').exists())

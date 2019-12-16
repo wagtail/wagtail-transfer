@@ -59,3 +59,7 @@ class ModelWithManyToMany(models.Model):
 
 class Avatar(models.Model):
     image = models.ImageField(upload_to='avatars')
+
+
+class RedirectPage(Page):
+    redirect_to = models.ForeignKey(Page, blank=False, null=False, on_delete=models.PROTECT, related_name='+')
