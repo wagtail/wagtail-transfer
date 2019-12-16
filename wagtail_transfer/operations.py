@@ -474,10 +474,19 @@ class ImportPlanner:
 
         for dep_model, dep_source_id, dep_is_hard in operation.dependencies:
             # look up the resolution for this dependency (= an Operation or None)
-            resolution = self.resolutions[(dep_model, dep_source_id)]
+            try:
+                resolution = self.resolutions[(dep_model, dep_source_id)]
+            except KeyError:
+                # At this point this should only happen for soft dependencies, as we should have
+                # stripped out unsatisfiable hard dependencies via _check_satisfiable
+                assert not dep_is_hard
+
+                # So, given that this is a soft dependency, carry on regardless
+                continue
+
             if resolution is None:
                 # dependency is already satisfied with no further action
-                pass
+                continue
             else:
                 self._add_to_operation_order(resolution, operation_order)
 
