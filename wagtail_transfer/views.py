@@ -161,7 +161,10 @@ def do_import(request):
 
     response = requests.get(f"{base_url}api/pages/{request.POST['source_page_id']}/", params={'digest': digest})
 
-    importer = ImportPlanner(request.POST['source_page_id'], request.POST['dest_page_id'])
+    dest_page_id = request.POST['dest_page_id']
+    if not dest_page_id:
+        dest_page_id = None
+    importer = ImportPlanner(request.POST['source_page_id'], dest_page_id)
     importer.add_json(response.content)
 
     while importer.missing_object_data:
@@ -185,4 +188,21 @@ def do_import(request):
 
     importer.run()
 
-    return redirect('wagtailadmin_explore', request.POST['dest_page_id'])
+    if dest_page_id:
+        return redirect('wagtailadmin_explore', dest_page_id)
+    else:
+        return redirect('wagtailadmin_explore', Page.objects.first().id)
+
+
+def check_page_existence_for_uid(request):
+    """
+    Check whether a page with the specified UID exists - used for checking whether a page has already been imported
+    to the destination site
+    """
+    uid = request.GET.get('uid', '')
+    locator = get_locator_for_model(Page)
+    page_exists = True if locator.find(uid) else False
+
+    return JsonResponse({
+        'page_exists': page_exists,
+    }, json_dumps_params={'indent': 2})

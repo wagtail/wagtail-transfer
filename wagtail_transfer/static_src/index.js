@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .forEach(element => {
       const localApiBaseUrl = element.dataset.localApiBaseUrl;
       ('/admin/api/v2beta/pages/');
+      const localCheckUIDUrl = element.dataset.localCheckUidUrl;
       const sources = JSON.parse(element.dataset.sources);
       const action = element.dataset.action;
       const csrfToken = element.dataset.csrfToken;
@@ -51,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addField('csrfmiddlewaretoken', csrfToken);
         addField('source', source.value);
         addField('source_page_id', sourcePage.id);
-        addField('dest_page_id', destPage.id);
+        addField('dest_page_id', destPage ? destPage.id : null);
 
         document.body.appendChild(formElement);
 
@@ -63,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
           localApiBaseUrl={localApiBaseUrl}
           sources={sources}
           onSubmit={onSubmit}
+          localCheckUIDUrl={localCheckUIDUrl}
         />,
         element
       );

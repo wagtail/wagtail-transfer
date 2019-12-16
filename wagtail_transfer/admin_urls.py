@@ -13,4 +13,5 @@ urlpatterns = [
     url(r'^import/$', views.do_import, name='import'),
     url(r'^api/chooser-local/', (chooser_api.urls[0], 'page_chooser_api', 'page_chooser_api')),
     url(r'^api/chooser-proxy/(\w+)/([\w\-/]*)$', views.chooser_api_proxy, name='chooser_api_proxy'),
+    url(r'^api/check_uid/$', views.check_page_existence_for_uid, name='check_uid'),
 ]
