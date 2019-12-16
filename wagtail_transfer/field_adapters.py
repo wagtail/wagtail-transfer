@@ -40,10 +40,16 @@ class FieldAdapter:
 
     def get_dependencies(self, value):
         """
-        A set of (base_model_class, id) pairs for objects that must exist at the destination before
-        populate_field can proceed with the given value. This differs from get_object_references in
-        that references inside related child objects do not need to be considered, as they do not
-        block the creation/update of the parent object.
+        A set of (base_model_class, id, is_hard) tuples for objects that must exist at the
+        destination before populate_field can proceed with the given value.
+
+        is_hard is a boolean - if True, then the object MUST exist in order for populate_field to
+            succeed; if False, then the operation can still complete without it (albeit possibly
+            with broken links).
+
+        This differs from get_object_references in that references inside related child objects
+        do not need to be considered, as they do not block the creation/update of the parent
+        object.
         """
         return set()
 
@@ -79,8 +85,13 @@ class ForeignKeyAdapter(FieldAdapter):
     def get_dependencies(self, value):
         if value is None:
             return set()
+        elif self.field.blank and self.field.null:
+            # field is nullable, so it's a soft dependency; we can leave the field empty in the
+            # case that the target object cannot be created
+            return {(self.related_base_model, value, False)}
         else:
-            return {(self.related_base_model, value)}
+            # this is a hard dependency
+            return {(self.related_base_model, value, True)}
 
     def update_object_references(self, value, destination_ids_by_source):
         return destination_ids_by_source.get((self.related_base_model, value))
@@ -119,7 +130,10 @@ class RichTextAdapter(FieldAdapter):
         return get_reference_handler().get_objects(self.field.value_from_object(instance))
 
     def get_dependencies(self, value):
-        return get_reference_handler().get_objects(value)
+        return {
+            (model, id, False)  # references in rich text are soft dependencies
+            for model, id in get_reference_handler().get_objects(value)
+        }
 
     def update_object_references(self, value, destination_ids_by_source):
         return get_reference_handler().update_ids(value, destination_ids_by_source)
@@ -136,7 +150,10 @@ class StreamFieldAdapter(FieldAdapter):
         return get_object_references(self.stream_block, stream)
 
     def get_dependencies(self, value):
-        return get_object_references(self.stream_block, json.loads(value))
+        return {
+            (model, id, False)  # references in rich text are soft dependencies
+            for model, id in get_object_references(self.stream_block, json.loads(value))
+        }
 
     def update_object_references(self, value, destination_ids_by_source):
         return json.dumps(update_object_ids(self.stream_block, json.loads(value), destination_ids_by_source))
@@ -189,7 +206,7 @@ class ManyToManyFieldAdapter(FieldAdapter):
         return refs
 
     def get_dependencies(self, value):
-        return {(self.related_base_model, id) for id in value}
+        return {(self.related_base_model, id, False) for id in value}
 
     def serialize(self, instance):
         pks = list(self._get_pks(instance))

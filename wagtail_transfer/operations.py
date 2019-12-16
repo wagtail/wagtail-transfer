@@ -368,7 +368,7 @@ class ImportPlanner:
         self.task_resolutions[task] = operation
 
         if operation is not None:
-            for model, source_id in operation.dependencies:
+            for model, source_id, is_hard_dep in operation.dependencies:
                 self._add_objective(
                     Objective(model, source_id, self.context, must_update=(model._meta.label_lower in UPDATE_RELATED_MODELS))
                 )
@@ -406,9 +406,9 @@ class ImportPlanner:
             # already in list - no need to add
             return
 
-        for dependency in operation.dependencies:
+        for dep_model, dep_source_id, dep_is_hard in operation.dependencies:
             # look up the resolution for this dependency (= an Operation or None)
-            resolution = self.resolutions[dependency]
+            resolution = self.resolutions[(dep_model, dep_source_id)]
             if resolution is None:
                 # dependency is already satisfied with no further action
                 pass
@@ -432,7 +432,13 @@ class Operation:
 
     @property
     def dependencies(self):
-        """A set of (model, source_id) tuples that must exist at the destination before we can import this page."""
+        """
+        A set of (model, source_id, is_hard) tuples that should exist at the destination before we
+        can import this page.
+        is_hard is a boolean - if True, then the object MUST exist in order for this operation to
+            succeed; if False, then the operation can still complete without it (albeit possibly
+            with broken links).
+        """
         return set()
 
 
@@ -539,7 +545,7 @@ class CreateTreeModel(CreateModel):
         if self.destination_parent_id is None:
             # need to ensure parent page is imported before this one
             deps.add(
-                (get_base_model(self.model), self.object_data['parent_id']),
+                (get_base_model(self.model), self.object_data['parent_id'], True),
             )
 
         return deps
