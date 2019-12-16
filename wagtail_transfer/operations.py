@@ -409,7 +409,7 @@ class ImportPlanner:
         # arrange operations into an order that satisfies dependencies
         operation_order = []
         for operation in satisfiable_operations:
-            self._add_to_operation_order(operation, operation_order)
+            self._add_to_operation_order(operation, operation_order, [operation])
 
         # run operations in order
         with transaction.atomic():
@@ -467,7 +467,10 @@ class ImportPlanner:
         # We've got through all the dependencies without anything failing. Yay!
         return True
 
-    def _add_to_operation_order(self, operation, operation_order):
+    def _add_to_operation_order(self, operation, operation_order, path):
+        # path is the sequence of dependencies we've followed so far, starting from the top-level
+        # operation picked from satisfiable_operations in `run`, to find one we can add
+
         if operation in operation_order:
             # already in list - no need to add
             return
@@ -487,8 +490,11 @@ class ImportPlanner:
             if resolution is None:
                 # dependency is already satisfied with no further action
                 continue
+            elif resolution in path:
+                # we have a circular dependency; we have to break it somewhere, so break it here
+                continue
             else:
-                self._add_to_operation_order(resolution, operation_order)
+                self._add_to_operation_order(resolution, operation_order, path + [resolution])
 
         operation_order.append(operation)
 

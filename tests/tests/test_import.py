@@ -1138,3 +1138,70 @@ class TestImport(TestCase):
         # Circular references will be caught and pages not created
         self.assertFalse(RedirectPage.objects.filter(slug='pork-redirecting-to-lamb').exists())
         self.assertFalse(RedirectPage.objects.filter(slug='lamb-redirecting-to-pork').exists())
+
+    def test_circular_references_in_rich_text(self):
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 20],
+                ["wagtailcore.page", 21],
+                ["wagtailcore.page", 23]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 20, "20202020-2020-2020-2020-202020202020"],
+                ["wagtailcore.page", 21, "21212121-2121-2121-2121-212121212121"],
+                ["wagtailcore.page", 23, "23232323-2323-2323-2323-232323232323"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.simplepage",
+                    "pk": 20,
+                    "parent_id": 12,
+                    "fields": {
+                        "title": "circular dependency test",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "circular-dependency-test",
+                        "intro": "Testing circular dependencies in rich text links"
+                    }
+                },
+                {
+                    "model": "tests.pagewithrichtext",
+                    "pk": 21,
+                    "parent_id": 20,
+                    "fields": {
+                        "title": "Bill's page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "bill",
+                        "body": "<p>Have you met my friend <a id=\\"23\\" linktype=\\"page\\">Ben</a>?</p>"
+                    }
+                },
+                {
+                    "model": "tests.pagewithrichtext",
+                    "pk": 23,
+                    "parent_id": 20,
+                    "fields": {
+                        "title": "Ben's page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "ben",
+                        "body": "<p>Have you met my friend <a id=\\"21\\" linktype=\\"page\\">Bill</a>?</p>"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(20, 2)
+        importer.add_json(data)
+        importer.run()
+
+        # Both pages should have been created
+        bill_page = PageWithRichText.objects.get(slug='bill')
+        ben_page = PageWithRichText.objects.get(slug='ben')
+
+        # At least one of them (i.e. the second one to be created) should have a valid link to the other
+        self.assertTrue(
+            bill_page.body == """<p>Have you met my friend <a id="%d" linktype="page">Ben</a>?</p>""" % ben_page.id
+            or
+            ben_page.body == """<p>Have you met my friend <a id="%d" linktype="page">Bill</a>?</p>""" % bill_page.id
+        )
