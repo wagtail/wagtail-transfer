@@ -1,5 +1,6 @@
 import os.path
 import shutil
+import unittest
 from unittest import mock
 
 from django.conf import settings
@@ -401,6 +402,45 @@ class TestImport(TestCase):
         self.assertEqual(page.body, '<p>But I have a <a id="1" linktype="page">link</a></p>')
 
         # TODO: this should include an embed type as well once document/image import is added
+
+    @unittest.expectedFailure
+    def test_do_not_import_pages_outside_of_selected_root(self):
+        # Source page 13 is a page we don't have at the destination, but it's not in ids_for_import
+        # (i.e. it's outside of the selected import root), so we shouldn't import it, and should
+        # leave references in rich text unchanged
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 15]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 12, "11111111-1111-1111-1111-111111111111"],
+                ["wagtailcore.page", 13, "13131313-1313-1313-1313-131313131313"],
+                ["wagtailcore.page", 15, "01010101-0005-8765-7889-987889889898"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.pagewithrichtext",
+                    "pk": 15,
+                    "parent_id": 12,
+                    "fields": {
+                        "title": "Imported page with rich text",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "imported-rich-text-page",
+                        "body": "<p>But I have a <a id=\\"13\\" linktype=\\"page\\">link</a></p>"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(1, None)
+        importer.add_json(data)
+        importer.run()
+
+        page = PageWithRichText.objects.get(slug="imported-rich-text-page")
+
+        # tests that the page link id is unchanged
+        self.assertEqual(page.body, '<p>But I have a <a id="13" linktype="page">link</a></p>')
 
     def test_import_page_with_streamfield_page_links(self):
         data = """{

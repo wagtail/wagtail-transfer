@@ -13,11 +13,21 @@ from .locators import get_locator_for_model
 from .models import get_base_model, get_base_model_for_path, get_model_for_path
 
 
+# Models which should be updated to their latest version when encountered in object references
 default_update_related_models = ['wagtailimages.image']
 
 UPDATE_RELATED_MODELS = [
     model_label.lower()
     for model_label in getattr(settings, 'WAGTAILTRANSFER_UPDATE_RELATED_MODELS', default_update_related_models)
+]
+
+
+# Models which should NOT be created in response to being encountered in object references
+default_no_follow_models = ['wagtailcore.page']
+
+NO_FOLLOW_MODELS = [
+    model_label.lower()
+    for model_label in getattr(settings, 'WAGTAILTRANSFER_NO_FOLLOW_MODELS', default_no_follow_models)
 ]
 
 
@@ -150,6 +160,11 @@ class ImportPlanner:
         # and prevent us from running the same database operation multiple times as a result
         self.task_resolutions = {}
 
+        # Set of (model, source_id) tuples for items that have been explicitly selected for import
+        # (i.e. named in the 'ids_for_import' section of the API response), as opposed to pulled in
+        # through related object references
+        self.base_import_ids = set()
+
     def add_json(self, json_data):
         """
         Add JSON data to the import plan. The data is a dict consisting of:
@@ -182,10 +197,12 @@ class ImportPlanner:
         # retry tasks that were previously postponed due to missing object data
         self._retry_tasks()
 
-        # for each ID in the import list, add an objective to specify that we want an up-to-date
-        # copy of that object on the destination site
+        # for each ID in the import list, add to base_import_ids as an object explicitly selected
+        # for import, and add an objective to specify that we want an up-to-date copy of that
+        # object on the destination site
         for model_path, source_id in data['ids_for_import']:
             model = get_base_model_for_path(model_path)
+            self.base_import_ids.add((model, source_id))
             objective = Objective(model, source_id, self.context, must_update=True)
 
             # add to the set of objectives that need handling
@@ -211,9 +228,15 @@ class ImportPlanner:
 
     def _handle_objective(self, objective):
         if not objective.exists_at_destination:
-            # object does not exist locally; need to create it
-            task = ('create', objective.model, objective.source_id)
-            self._handle_task(task)
+            # object does not exist locally - create it if we're allowed to do so, i.e.
+            # it is in the set of objects explicitly selected for import, or it is a related object
+            # that we have not been blocked from following by NO_FOLLOW_MODELS
+            if (
+                objective.model._meta.label_lower not in NO_FOLLOW_MODELS
+                or (objective.model, objective.source_id) in self.base_import_ids
+            ):
+                task = ('create', objective.model, objective.source_id)
+                self._handle_task(task)
         else:
             # object already exists at the destination, so any objects referencing it can go ahead
             # without being blocked by this task
