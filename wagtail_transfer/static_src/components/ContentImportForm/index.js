@@ -49,11 +49,16 @@ function SubmitButton({ onClick, disabled, numPages }) {
 export default function ImportContentForm({
   localApiBaseUrl,
   sources,
-  onSubmit
+  onSubmit,
+  localCheckUIDUrl
 }) {
   const [source, setSource] = React.useState(null);
   const [sourcePage, setSourcePage] = React.useState(null);
   const [destPage, setDestPage] = React.useState(null);
+  const [
+    alreadyExistsAtDestination,
+    setAlreadyExistsAtDestination
+  ] = React.useState(false);
 
   React.useEffect(() => {
     // Reset fields when prior fields are unset
@@ -78,6 +83,7 @@ export default function ImportContentForm({
     }
 
     if (sourcePage) {
+      console.log(sourcePage);
       const fetchNumPages = async () => {
         const api = new PagesAPI(source ? source.page_chooser_api : null);
         const page = await api.getPage(sourcePage.id, {
@@ -88,6 +94,24 @@ export default function ImportContentForm({
       };
 
       fetchNumPages();
+    }
+  }, [sourcePage]);
+
+  React.useEffect(() => {
+    // Fetch whether the page has already been imported whenever sourcePage is changed
+
+    if (sourcePage) {
+      const fetchPageExistence = async () => {
+        if (sourcePage.meta.uid) {
+          let response = await fetch(
+            `${localCheckUIDUrl}?uid=${sourcePage.meta.uid}`
+          );
+          let json = await response.json();
+          setAlreadyExistsAtDestination(json.page_exists);
+        }
+      };
+
+      fetchPageExistence();
     }
   }, [sourcePage]);
 
@@ -115,7 +139,7 @@ export default function ImportContentForm({
               value={sourcePage}
               onChange={setSourcePage}
               unchosenText="All child pages will be imported"
-              chosenText={`This page has ${numPages-1} child pages.`}
+              chosenText={`This page has ${numPages - 1} child pages.`}
             />
           ) : (
             ''
@@ -124,9 +148,13 @@ export default function ImportContentForm({
 
         <li className="transfer numbered">
           <div class="transfer list-container">
-            <h2>Select destination parent page</h2>
+            <h2>
+              {!alreadyExistsAtDestination
+                ? 'Select destination parent page'
+                : 'This page already exists at the destination, and will be updated.'}
+            </h2>
           </div>
-          {sourcePage ? (
+          {sourcePage && !alreadyExistsAtDestination ? (
             <PageChooserWidget
               apiBaseUrl={localApiBaseUrl}
               value={destPage}
@@ -140,7 +168,7 @@ export default function ImportContentForm({
           <div>
             <SubmitButton
               onClick={onClickSubmit}
-              disabled={!destPage}
+              disabled={!destPage && !alreadyExistsAtDestination}
               numPages={numPages}
             />
           </div>

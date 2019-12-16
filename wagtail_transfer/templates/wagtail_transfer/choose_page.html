@@ -19,6 +19,6 @@
     {% include "wagtailadmin/shared/header.html" with title=title_str icon="doc-empty-inverse" %}
 
     <div class="nice-padding">
-        <div data-wagtail-component="content-import-form" data-local-api-base-url="{% url 'wagtail_transfer_admin:page_chooser_api:pages:listing' %}" data-sources="{{ sources_data }}" data-action="{% url 'wagtail_transfer_admin:import' %}" data-csrf-token="{{ csrf_token }}"></div>
+        <div data-wagtail-component="content-import-form" data-local-api-base-url="{% url 'wagtail_transfer_admin:page_chooser_api:pages:listing' %}" data-local-check-uid-url="{% url 'wagtail_transfer_admin:check_uid' %}" data-sources="{{ sources_data }}" data-action="{% url 'wagtail_transfer_admin:import' %}" data-csrf-token="{{ csrf_token }}"></div>
     </div>
 {% endblock %}
