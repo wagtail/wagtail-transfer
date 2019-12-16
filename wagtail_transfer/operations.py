@@ -6,14 +6,11 @@ from django.core.exceptions import ImproperlyConfigured
 from django.utils.functional import cached_property
 from modelcluster.models import ClusterableModel, get_all_child_relations
 from treebeard.mp_tree import MP_Node
-from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Page
 
 from .field_adapters import get_field_adapter
 from .locators import get_locator_for_model
-from .richtext import get_reference_handler
 from .models import get_base_model, get_base_model_for_path, get_model_for_path
-from .streamfield import get_object_references
 
 
 default_update_related_models = ['wagtailimages.image']
@@ -412,8 +409,8 @@ class Operation:
 
     @property
     def dependencies(self):
-        """A list of (model, source_id) tuples that must exist at the destination before we can import this page."""
-        return []
+        """A set of (model, source_id) tuples that must exist at the destination before we can import this page."""
+        return set()
 
 
 class SaveOperationMixin:
@@ -471,35 +468,13 @@ class SaveOperationMixin:
 
     @cached_property
     def dependencies(self):
-        # A list of objectives that must be satisfied before we can import this page
+        # the set of objects that must be created before we can import this object
         deps = super().dependencies
 
         for field in self.model._meta.get_fields():
-            if isinstance(field, models.ForeignKey):
+            if isinstance(field, models.Field):
                 val = self.object_data['fields'].get(field.name)
-                if val is not None:
-                    deps.append(
-                        (get_base_model(field.related_model), val)
-                    )
-            elif isinstance(field, RichTextField):
-                objects = get_reference_handler().get_objects(self.object_data['fields'].get(field.name))
-                for model, id in objects:
-                    deps.append(
-                        (model, id)
-                    )
-
-            elif isinstance(field, StreamField):
-                for model, id in get_object_references(field.stream_block, json.loads(self.object_data['fields'].get(field.name))):
-                    deps.append(
-                        (model, id)
-                    )
-
-            elif isinstance(field, models.ManyToManyField):
-                model = get_base_model(field.related_model)
-                for id in self.object_data['fields'].get(field.name):
-                    deps.append(
-                        (model, id)
-                    )
+                deps.update(get_field_adapter(field).get_dependencies(val))
 
         return deps
 
@@ -540,7 +515,7 @@ class CreateTreeModel(CreateModel):
         deps = super().dependencies
         if self.destination_parent_id is None:
             # need to ensure parent page is imported before this one
-            deps.append(
+            deps.add(
                 (get_base_model(self.model), self.object_data['parent_id']),
             )
 

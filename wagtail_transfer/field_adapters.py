@@ -38,6 +38,15 @@ class FieldAdapter:
         """
         return set()
 
+    def get_dependencies(self, value):
+        """
+        A set of (base_model_class, id) pairs for objects that must exist at the destination before
+        populate_field can proceed with the given value. This differs from get_object_references in
+        that references inside related child objects do not need to be considered, as they do not
+        block the creation/update of the parent object.
+        """
+        return set()
+
     def update_object_references(self, value, destination_ids_by_source):
         """
         Return a modified version of value with object references replaced by their corresponding
@@ -67,6 +76,12 @@ class ForeignKeyAdapter(FieldAdapter):
         else:
             return {(self.related_base_model, pk)}
 
+    def get_dependencies(self, value):
+        if value is None:
+            return set()
+        else:
+            return {(self.related_base_model, value)}
+
     def update_object_references(self, value, destination_ids_by_source):
         return destination_ids_by_source.get((self.related_base_model, value))
 
@@ -95,10 +110,16 @@ class ManyToOneRelAdapter(FieldAdapter):
             refs.update(self.related_model_serializer.get_object_references(obj))
         return refs
 
+    def populate_field(self, instance, value, context):
+        raise Exception('populate_field is not supported on many-to-one relations')
+
 
 class RichTextAdapter(FieldAdapter):
     def get_object_references(self, instance):
         return get_reference_handler().get_objects(self.field.value_from_object(instance))
+
+    def get_dependencies(self, value):
+        return get_reference_handler().get_objects(value)
 
     def update_object_references(self, value, destination_ids_by_source):
         return get_reference_handler().update_ids(value, destination_ids_by_source)
@@ -113,6 +134,9 @@ class StreamFieldAdapter(FieldAdapter):
         # get the list of dicts representation of the streamfield json
         stream = self.stream_block.get_prep_value(self.field.value_from_object(instance))
         return get_object_references(self.stream_block, stream)
+
+    def get_dependencies(self, value):
+        return get_object_references(self.stream_block, json.loads(value))
 
     def update_object_references(self, value, destination_ids_by_source):
         return json.dumps(update_object_ids(self.stream_block, json.loads(value), destination_ids_by_source))
@@ -163,6 +187,9 @@ class ManyToManyFieldAdapter(FieldAdapter):
         for pk in self._get_pks(instance):
             refs.add((self.related_base_model, pk))
         return refs
+
+    def get_dependencies(self, value):
+        return {(self.related_base_model, id) for id in value}
 
     def serialize(self, instance):
         pks = list(self._get_pks(instance))
