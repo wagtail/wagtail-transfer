@@ -48,18 +48,29 @@ class IDMappingLocator:
 
         return mapping.content_object
 
-    def get_uid_for_local_id(self, id):
+    def get_uid_for_local_id(self, id, create=True):
         global UUID_SEQUENCE
 
-        """Get UID for the instance with the given ID (assigning one if one doesn't exist already)"""
-        id_mapping, created = IDMapping.objects.get_or_create(
-            content_type=self.content_type,
-            local_id=id,
-            defaults={'uid': uuid.uuid1(clock_seq=UUID_SEQUENCE)}
-        )
-        UUID_SEQUENCE += 1
+        if create:
+            """Get UID for the instance with the given ID (assigning one if one doesn't exist already)"""
+            id_mapping, created = IDMapping.objects.get_or_create(
+                content_type=self.content_type,
+                local_id=id,
+                defaults={'uid': uuid.uuid1(clock_seq=UUID_SEQUENCE)}
+            )
+            UUID_SEQUENCE += 1
 
-        return id_mapping.uid
+            return id_mapping.uid
+        else:
+            """Get UID for the instance with the given ID (returning None if one doesn't exist)"""
+            try:
+                id_mapping = IDMapping.objects.get(
+                    content_type=self.content_type,
+                    local_id=id
+                )
+                return id_mapping.uid
+            except IDMapping.DoesNotExist:
+                return None
 
     def attach_uid(self, instance, uid):
         """
@@ -95,7 +106,7 @@ class FieldLocator:
         self.model = model
         self.fields = fields
 
-    def get_uid_for_local_id(self, id):
+    def get_uid_for_local_id(self, id, **kwargs):
         # For field-based lookups, the UID is a tuple of field values
         return self.model.objects.values_list(*self.fields).get(pk=id)
 

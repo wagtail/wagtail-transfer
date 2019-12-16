@@ -1,5 +1,6 @@
 from collections import defaultdict
 import json
+from rest_framework.fields import Field
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -15,7 +16,9 @@ from wagtail.core.models import Page
 from .auth import check_digest, digest_for_source
 from .locators import get_locator_for_model
 from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
-from .vendor.wagtail_api_v2.router import WagtailAPIRouter
+from .vendor.wagtail_admin_api.serializers import AdminPageSerializer
+from .locators import get_locator_for_model
+
 from .models import get_model_for_path
 from .serializers import get_model_serializer
 
@@ -97,8 +100,29 @@ def objects_for_export(request):
     }, json_dumps_params={'indent': 2})
 
 
+class UIDField(Field):
+    """
+    Serializes UID for the Page Chooser API
+    """
+    def get_attribute(self, instance):
+        return instance
+
+    def to_representation(self, page):
+        return get_locator_for_model(Page).get_uid_for_local_id(page.id, create=False)
+
+
+class TransferPageChooserSerializer(AdminPageSerializer):
+    uid = UIDField(read_only=True)
+
+
 class PageChooserAPIViewSet(PagesAdminAPIViewSet):
-    pass
+    base_serializer_class = TransferPageChooserSerializer
+    meta_fields = PagesAdminAPIViewSet.meta_fields + [
+        'uid'
+    ]
+    listing_default_fields = PagesAdminAPIViewSet.listing_default_fields + [
+        'uid'
+    ]
 
 
 def chooser_api_proxy(request, source_name, path):
