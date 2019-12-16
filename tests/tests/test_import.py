@@ -1,6 +1,5 @@
 import os.path
 import shutil
-import unittest
 from unittest import mock
 
 from django.conf import settings
@@ -403,7 +402,6 @@ class TestImport(TestCase):
 
         # TODO: this should include an embed type as well once document/image import is added
 
-    @unittest.expectedFailure
     def test_do_not_import_pages_outside_of_selected_root(self):
         # Source page 13 is a page we don't have at the destination, but it's not in ids_for_import
         # (i.e. it's outside of the selected import root), so we shouldn't import it, and should
