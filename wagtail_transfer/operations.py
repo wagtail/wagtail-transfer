@@ -142,6 +142,9 @@ class ImportPlanner:
         self.postponed_tasks = set()
         # objects we need to fetch to satisfy postponed_tasks, expressed as (model_class, source_id)
         self.missing_object_data = set()
+        # objects which we have already requested and not got back, so they must be missing on the
+        # source too
+        self.really_missing_object_data = set()
 
         # set of operations to be performed in this import.
         # An operation is an object with a `run` method which accomplishes the task.
@@ -283,9 +286,19 @@ class ImportPlanner:
         try:
             object_data = self.object_data_by_source[(model, source_id)]
         except KeyError:
-            # need to postpone this until we have the object data
-            self.postponed_tasks.add(task)
-            self.missing_object_data.add((model, source_id))
+            # Cannot complete this task during this pass; request the missing object data,
+            # unless we've already tried that
+            if (model, source_id) in self.really_missing_object_data:
+                # object data apparently doesn't exist on the source site either, so give up on
+                # this object entirely
+                if action == 'create':
+                    self.failed_creations.add((model, source_id))
+
+            else:
+                # need to postpone this until we have the object data
+                self.postponed_tasks.add(task)
+                self.missing_object_data.add((model, source_id))
+
             return
 
         # retrieve the specific model for this object
@@ -389,7 +402,13 @@ class ImportPlanner:
         previous_postponed_tasks = self.postponed_tasks
         self.postponed_tasks = set()
 
-        # FIXME: move this to the place where we make the subsequent API fetch
+        for key in self.missing_object_data:
+            # The latest JSON packet should have populated object_data_by_source with any
+            # previously missing objects, if they exist at the source at all - so any that are
+            # still missing must also be missing at the source
+            if key not in self.object_data_by_source:
+                self.really_missing_object_data.add(key)
+
         self.missing_object_data.clear()
 
         for task in previous_postponed_tasks:
