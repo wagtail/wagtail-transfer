@@ -157,7 +157,7 @@ export default function ImportContentForm({
                 : 'This page already exists at the destination, and will be updated.'}
             </h2>
           </div>
-          {sourcePage && !alreadyExistsAtDestination ? (
+          {sourcePage && alreadyExistsAtDestination == null ? (
             <PageChooserWidget
               apiBaseUrl={localApiBaseUrl}
               value={destPage}
