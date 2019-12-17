@@ -1,6 +1,6 @@
 from collections import defaultdict
 import json
-from rest_framework.fields import Field
+from rest_framework.fields import ReadOnlyField
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -100,15 +100,12 @@ def objects_for_export(request):
     }, json_dumps_params={'indent': 2})
 
 
-class UIDField(Field):
+class UIDField(ReadOnlyField):
     """
     Serializes UID for the Page Chooser API
     """
     def get_attribute(self, instance):
-        return instance
-
-    def to_representation(self, page):
-        return get_locator_for_model(Page).get_uid_for_local_id(page.id, create=False)
+        return get_locator_for_model(Page).get_uid_for_local_id(instance.id, create=False)
 
 
 class TransferPageChooserSerializer(AdminPageSerializer):
