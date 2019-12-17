@@ -63,3 +63,7 @@ class Avatar(models.Model):
 
 class RedirectPage(Page):
     redirect_to = models.ForeignKey(Page, blank=False, null=False, on_delete=models.PROTECT, related_name='+')
+
+
+class PageWithRelatedPages(Page):
+    related_pages = models.ManyToManyField(Page, related_name='+')
