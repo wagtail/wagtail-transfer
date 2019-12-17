@@ -3,10 +3,6 @@ import json
 from rest_framework import status
 from rest_framework.fields import ReadOnlyField
 
-def empty_view(self):
-    content = {'please move along': 'nothing to see here'}
-    return Response(content, status=status.HTTP_404_NOT_FOUND)
-
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.http import HttpResponse, JsonResponse, Http404
