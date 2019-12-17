@@ -58,7 +58,7 @@ export default function ImportContentForm({
   const [
     alreadyExistsAtDestination,
     setAlreadyExistsAtDestination
-  ] = React.useState(false);
+  ] = React.useState(null);
 
   React.useEffect(() => {
     // Reset fields when prior fields are unset
@@ -83,7 +83,6 @@ export default function ImportContentForm({
     }
 
     if (sourcePage) {
-      console.log(sourcePage);
       const fetchNumPages = async () => {
         const api = new PagesAPI(source ? source.page_chooser_api : null);
         const page = await api.getPage(sourcePage.id, {
@@ -99,6 +98,10 @@ export default function ImportContentForm({
 
   React.useEffect(() => {
     // Fetch whether the page has already been imported whenever sourcePage is changed
+
+    if (alreadyExistsAtDestination !== null) {
+      setAlreadyExistsAtDestination(null);
+    }
 
     if (sourcePage) {
       const fetchPageExistence = async () => {
