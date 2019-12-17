@@ -6,14 +6,14 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.images import ImageFile
 from django.test import TestCase
-from wagtail.core.models import Collection
+from wagtail.core.models import Collection, Page
 from wagtail.images.models import Image
 
 from wagtail_transfer.models import IDMapping
 from wagtail_transfer.operations import ImportPlanner
 from tests.models import (
-    Advert, Author, ModelWithManyToMany, PageWithParentalManyToMany, PageWithRichText,
-    PageWithStreamField, RedirectPage, SectionedPage, SimplePage, SponsoredPage
+    Advert, Author, ModelWithManyToMany, PageWithParentalManyToMany, PageWithRelatedPages,
+    PageWithRichText, PageWithStreamField, RedirectPage, SectionedPage, SimplePage, SponsoredPage
 )
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
@@ -1205,3 +1205,69 @@ class TestImport(TestCase):
             or
             ben_page.body == """<p>Have you met my friend <a id="%d" linktype="page">Bill</a>?</p>""" % bill_page.id
         )
+
+    def test_omitting_references_in_m2m_relations(self):
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 20],
+                ["wagtailcore.page", 21],
+                ["wagtailcore.page", 23]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 20, "20202020-2020-2020-2020-202020202020"],
+                ["wagtailcore.page", 21, "21212121-2121-2121-2121-212121212121"],
+                ["wagtailcore.page", 23, "23232323-2323-2323-2323-232323232323"],
+                ["wagtailcore.page", 30, "00017017-5555-5555-5555-555555555555"],
+                ["wagtailcore.page", 31, "31313131-3131-3131-3131-313131313131"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.simplepage",
+                    "pk": 20,
+                    "parent_id": 12,
+                    "fields": {
+                        "title": "m2m reference test",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "m2m-reference-test",
+                        "intro": "Testing references and dependencies on m2m relations"
+                    }
+                },
+                {
+                    "model": "tests.simplepage",
+                    "pk": 21,
+                    "parent_id": 20,
+                    "fields": {
+                        "title": "vinegar",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "vinegar",
+                        "intro": "it's pickling time"
+                    }
+                },
+                {
+                    "model": "tests.pagewithrelatedpages",
+                    "pk": 23,
+                    "parent_id": 20,
+                    "fields": {
+                        "title": "salad dressing",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "salad-dressing",
+                        "related_pages": [21,30,31]
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(20, 2)
+        importer.add_json(data)
+        importer.run()
+
+        salad_dressing_page = PageWithRelatedPages.objects.get(slug='salad-dressing')
+        oil_page = Page.objects.get(slug='oil-is-great')
+        vinegar_page = Page.objects.get(slug='vinegar')
+
+        # salad_dressing_page's related_pages should include the oil (id=30) and vinegar (id=21)
+        # pages, but not the missing and not-to-be-imported page id=31
+        self.assertEqual(set(salad_dressing_page.related_pages.all()), set([oil_page, vinegar_page]))

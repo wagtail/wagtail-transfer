@@ -583,9 +583,17 @@ class SaveOperationMixin:
                 except KeyError:
                     continue
                 target_model = get_base_model(field.related_model)
+
                 # translate list of source site ids to destination site ids
-                value = [context.destination_ids_by_source[(target_model, pk)] for pk in value]
-                getattr(self.instance, field.get_attname()).set(value)
+                new_value = []
+                for pk in value:
+                    try:
+                        new_pk = context.destination_ids_by_source[(target_model, pk)]
+                    except KeyError:
+                        continue
+                    new_value.append(new_pk)
+
+                getattr(self.instance, field.get_attname()).set(new_value)
                 save_needed = True
         if save_needed:
             # _save() for creating a page may attempt to re-add it as a child, so the instance (assumed to be already
