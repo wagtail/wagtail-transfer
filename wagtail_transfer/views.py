@@ -158,9 +158,7 @@ def do_import(request):
 
     response = requests.get(f"{base_url}api/pages/{request.POST['source_page_id']}/", params={'digest': digest})
 
-    dest_page_id = request.POST['dest_page_id']
-    if not dest_page_id:
-        dest_page_id = None
+    dest_page_id = request.POST['dest_page_id'] or None
     importer = ImportPlanner(request.POST['source_page_id'], dest_page_id)
     importer.add_json(response.content)
 
@@ -188,7 +186,7 @@ def do_import(request):
     if dest_page_id:
         return redirect('wagtailadmin_explore', dest_page_id)
     else:
-        return redirect('wagtailadmin_explore', Page.objects.first().id)
+        return redirect('wagtailadmin_explore_root')
 
 
 def check_page_existence_for_uid(request):
