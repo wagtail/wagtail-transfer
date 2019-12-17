@@ -51,7 +51,7 @@ def pages_for_export(request, root_page_id):
 
     mappings = []
     for model, pk in object_references:
-        uid = get_locator_for_model(model).get_uid_for_local_id(pk)
+        uid = get_locator_for_model(model).get_or_create_uid_for_local_id(pk)
         mappings.append(
             [model._meta.label_lower, pk, uid]
         )
@@ -93,7 +93,7 @@ def objects_for_export(request):
 
     mappings = []
     for model, pk in object_references:
-        uid = get_locator_for_model(model).get_uid_for_local_id(pk)
+        uid = get_locator_for_model(model).get_or_create_uid_for_local_id(pk)
         mappings.append(
             [model._meta.label_lower, pk, uid]
         )
@@ -110,7 +110,7 @@ class UIDField(ReadOnlyField):
     Serializes UID for the Page Chooser API
     """
     def get_attribute(self, instance):
-        return get_locator_for_model(Page).get_uid_for_local_id(instance.id, create=False)
+        return get_locator_for_model(Page).get_uid_for_local_id(instance.id)
 
 
 class TransferPageChooserSerializer(AdminPageSerializer):
