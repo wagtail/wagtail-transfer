@@ -1,6 +1,11 @@
 from collections import defaultdict
 import json
+from rest_framework import status
 from rest_framework.fields import ReadOnlyField
+
+def empty_view(self):
+    content = {'please move along': 'nothing to see here'}
+    return Response(content, status=status.HTTP_404_NOT_FOUND)
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -196,8 +201,6 @@ def check_page_existence_for_uid(request):
     """
     uid = request.GET.get('uid', '')
     locator = get_locator_for_model(Page)
-    page_exists = True if locator.find(uid) else False
-
-    return JsonResponse({
-        'page_exists': page_exists,
-    }, json_dumps_params={'indent': 2})
+    page_exists = bool(locator.find(uid))
+    result = status.HTTP_200_OK if page_exists else status.HTTP_404_NOT_FOUND
+    return HttpResponse('', status=result)
