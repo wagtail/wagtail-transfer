@@ -106,8 +106,8 @@ export default function ImportContentForm({
           let response = await fetch(
             `${localCheckUIDUrl}?uid=${sourcePage.meta.uid}`
           );
-          let json = await response.json();
-          setAlreadyExistsAtDestination(json.page_exists);
+          const pageExists = (response.ok) ? true : false;
+          setAlreadyExistsAtDestination(pageExists);
         }
       };
 
