@@ -57,7 +57,7 @@ The following settings are additionally recognised:
 
 * `WAGTAILTRANSFER_NO_FOLLOW_MODELS = ['wagtailcore.page', 'organisations.Company']`
 
-  Specifies a list of models that should not be imported by association when they are referenced from imported content.
+  Specifies a list of models that should not be imported by association when they are referenced from imported content. Defaults to `['wagtailcore.page']`.
 
   By default, objects referenced within imported content will be recursively imported to ensure that those references are still valid on the destination site. However, this is not always desirable - for example, if this happened for the Page model, this would imply that any pages linked from an imported page would get imported as well, along with any pages linked from _those_ pages, and so on, leading to an unpredictable number of extra pages being added anywhere in the page tree as a side-effect of the import. Models listed in `WAGTAILTRANSFER_NO_FOLLOW_MODELS` will thus be skipped in this process, leaving the reference unresolved. The effect this has on the referencing page will vary according to the kind of relation: nullable foreign keys, one-to-many and many-to-many relations will simply omit the missing object; references in rich text and StreamField will become broken links (just as linking a page and then deleting it would); while non-nullable foreign keys will prevent the object from being created at all (meaning that any objects referencing _that_ object will end up with unresolved references, to be handled by the same set of rules).
 
