@@ -104,16 +104,18 @@ export default function ImportContentForm({
     }
 
     if (sourcePage) {
+      let pageExists = null;
       const fetchPageExistence = async () => {
         if (sourcePage.meta.uid) {
           let response = await fetch(
             `${localCheckUIDUrl}?uid=${sourcePage.meta.uid}`
           );
-          const pageExists = (response.ok) ? true : false;
-          setAlreadyExistsAtDestination(pageExists);
+          pageExists = response.ok ? true : false;
+        } else {
+          pageExists = false;
         }
+        setAlreadyExistsAtDestination(pageExists);
       };
-
       fetchPageExistence();
     }
   }, [sourcePage]);
@@ -157,7 +159,7 @@ export default function ImportContentForm({
                 : 'This page already exists at the destination, and will be updated.'}
             </h2>
           </div>
-          {sourcePage && alreadyExistsAtDestination == null ? (
+          {sourcePage && alreadyExistsAtDestination === false ? (
             <PageChooserWidget
               apiBaseUrl={localApiBaseUrl}
               value={destPage}
