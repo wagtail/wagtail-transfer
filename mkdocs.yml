@@ -10,4 +10,7 @@ markdown_extensions:
   - codehilite
 nav:
   - Home: index.md
+  - Setup: setup.md
   - Basic Usage: basic_usage.md
+  - How It Works: how_it_works.md
+  - Settings Reference: settings.md
