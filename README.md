@@ -7,7 +7,7 @@ RFC: https://github.com/wagtail/rfcs/pull/42
 
 ## Installation
 
-* Check out this repository and run `pip install -e .` from the root
+* Install the package with `pip install wagtail-transfer`
 * Add `'wagtail_transfer'` to your project's `INSTALLED_APPS`
 * In your project's top-level urls.py, add:
 

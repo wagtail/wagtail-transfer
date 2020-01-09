@@ -22,7 +22,7 @@ setup(
     license='BSD',
     long_description="An extension for Wagtail allowing content to be transferred between multiple instances of a Wagtail project",
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
