@@ -670,6 +670,10 @@ class CreateTreeModel(CreateModel):
         # Add the page to the database as a child of parent
         parent.add_child(instance=self.instance)
 
+        if isinstance(self.instance, Page):
+            # Also save this as a revision, so that it exists in revision history
+            self.instance.save_revision(changed=False)
+
 
 class UpdateModel(SaveOperationMixin, Operation):
     def __init__(self, instance, object_data):
@@ -681,6 +685,15 @@ class UpdateModel(SaveOperationMixin, Operation):
         self._populate_fields(context)
         self._save(context)
         self._populate_many_to_many_fields(context)
+
+    def _save(self, context):
+        super()._save(context)
+        if isinstance(self.instance, Page):
+            # Also save this as a revision, so that:
+            # * the edit-page view will pick up this imported version rather than any currently-existing drafts
+            # * it exists in revision history
+            # * the Page.draft_title field (as used in page listings in the admin) is updated to match the real title
+            self.instance.save_revision(changed=False)
 
 
 class DeleteModel(Operation):
