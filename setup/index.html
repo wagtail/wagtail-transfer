@@ -272,10 +272,7 @@
                 <h1 id="setup">Setup</h1>
 <ol>
 <li>
-<p>Clone the <a href="https://github.com/wagtail/wagtail-transfer">Wagtail Transfer repository</a>. </p>
-</li>
-<li>
-<p>In the terminal, navigate to the root of the cloned repository and run <code>pip install -e</code> .</p>
+<p>Install the wagtail-transfer package with <code>pip install wagtail-transfer</code>.</p>
 </li>
 <li>
 <p>Add <code>wagtail_transfer</code> to your project's <code>INSTALLED_APPS</code>.</p>
@@ -294,7 +291,7 @@
 <p>to the <code>urlpatterns</code> list above <code>include(wagtail_urls)</code>.</p>
 </li>
 <li>
-<p>Add the settings <code>WAGTAILTRANSFER_SOURCES</code> and <code>WAGTAILTRANSFER_SECRET_KEY</code> to your project settings. 
+<p>Add the settings <code>WAGTAILTRANSFER_SOURCES</code> and <code>WAGTAILTRANSFER_SECRET_KEY</code> to your project settings.
     These are formatted as:</p>
 <div class="codehilite"><pre><span></span><span class="n">WAGTAILTRANSFER_SOURCES</span> <span class="o">=</span> <span class="err">{</span>
     <span class="s1">&#39;staging&#39;</span><span class="p">:</span> <span class="err">{</span>
