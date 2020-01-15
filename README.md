@@ -6,6 +6,8 @@ An extension for Wagtail allowing content to be transferred between multiple ins
 
 RFC: https://github.com/wagtail/rfcs/pull/42
 
+Developed by [Torchbox](https://torchbox.com/) and sponsored by [The Motley Fool](https://www.fool.com/).
+
 
 ## Installation
 
