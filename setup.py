@@ -9,14 +9,20 @@ setup(
     author='Matthew Westcott',
     author_email='matthew.westcott@torchbox.com',
     url='https://github.com/wagtail/wagtail-transfer',
-    packages=find_packages(),
+    packages=find_packages(exclude=('tests',)),
     include_package_data=True,
     install_requires=[
     ],
+    extras_require={
+        'docs': [
+            'mkdocs>=1.0,<1.1',
+            'mkdocs-material>=4.6,<4.7',
+        ],
+    },
     license='BSD',
     long_description="An extension for Wagtail allowing content to be transferred between multiple instances of a Wagtail project",
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
         'Environment :: Web Environment',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',

@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.conf.urls import url, include
+from django.contrib.staticfiles.templatetags.staticfiles import static
 from django.urls import reverse
+from django.utils.html import format_html
 
 from wagtail.admin.menu import MenuItem
 from wagtail.core import hooks
@@ -22,4 +24,4 @@ class WagtailTransferMenuItem(MenuItem):
 
 @hooks.register('register_admin_menu_item')
 def register_admin_menu_item():
-    return WagtailTransferMenuItem('Import pages', reverse('wagtail_transfer_admin:choose_page'), order=10000)
+    return WagtailTransferMenuItem('Import pages', reverse('wagtail_transfer_admin:choose_page'), classnames='icon icon-doc-empty-inverse', order=10000)

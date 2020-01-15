@@ -1,6 +1,7 @@
 from collections import defaultdict
-import uuid
 import json
+from rest_framework import status
+from rest_framework.fields import ReadOnlyField
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -14,9 +15,12 @@ import requests
 from wagtail.core.models import Page
 
 from .auth import check_digest, digest_for_source
+from .locators import get_locator_for_model
 from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
-from .vendor.wagtail_api_v2.router import WagtailAPIRouter
-from .models import get_model_for_path, IDMapping
+from .vendor.wagtail_admin_api.serializers import AdminPageSerializer
+from .locators import get_locator_for_model
+
+from .models import get_model_for_path
 from .serializers import get_model_serializer
 
 from .operations import ImportPlanner
@@ -42,14 +46,10 @@ def pages_for_export(request, root_page_id):
         object_references.update(serializer.get_object_references(page))
 
     mappings = []
-    for i, (model, pk) in enumerate(object_references):
-        id_mapping, created = IDMapping.objects.get_or_create(
-            content_type=ContentType.objects.get_for_model(model),
-            local_id=pk,
-            defaults={'uid': uuid.uuid1(clock_seq=i)}
-        )
+    for model, pk in object_references:
+        uid = get_locator_for_model(model).get_uid_for_local_id(pk)
         mappings.append(
-            [model._meta.label_lower, pk, id_mapping.uid]
+            [model._meta.label_lower, pk, uid]
         )
 
     return JsonResponse({
@@ -88,14 +88,10 @@ def objects_for_export(request):
             object_references.update(serializer.get_object_references(obj))
 
     mappings = []
-    for i, (model, pk) in enumerate(object_references):
-        id_mapping, created = IDMapping.objects.get_or_create(
-            content_type=ContentType.objects.get_for_model(model),
-            local_id=pk,
-            defaults={'uid': uuid.uuid1(clock_seq=i)}
-        )
+    for model, pk in object_references:
+        uid = get_locator_for_model(model).get_uid_for_local_id(pk)
         mappings.append(
-            [model._meta.label_lower, pk, id_mapping.uid]
+            [model._meta.label_lower, pk, uid]
         )
 
     return JsonResponse({
@@ -105,8 +101,26 @@ def objects_for_export(request):
     }, json_dumps_params={'indent': 2})
 
 
+class UIDField(ReadOnlyField):
+    """
+    Serializes UID for the Page Chooser API
+    """
+    def get_attribute(self, instance):
+        return get_locator_for_model(Page).get_uid_for_local_id(instance.id, create=False)
+
+
+class TransferPageChooserSerializer(AdminPageSerializer):
+    uid = UIDField(read_only=True)
+
+
 class PageChooserAPIViewSet(PagesAdminAPIViewSet):
-    pass
+    base_serializer_class = TransferPageChooserSerializer
+    meta_fields = PagesAdminAPIViewSet.meta_fields + [
+        'uid'
+    ]
+    listing_default_fields = PagesAdminAPIViewSet.listing_default_fields + [
+        'uid'
+    ]
 
 
 def chooser_api_proxy(request, source_name, path):
@@ -145,7 +159,8 @@ def do_import(request):
 
     response = requests.get(f"{base_url}api/pages/{request.POST['source_page_id']}/", params={'digest': digest})
 
-    importer = ImportPlanner(request.POST['source_page_id'], request.POST['dest_page_id'])
+    dest_page_id = request.POST['dest_page_id'] or None
+    importer = ImportPlanner(request.POST['source_page_id'], dest_page_id)
     importer.add_json(response.content)
 
     while importer.missing_object_data:
@@ -169,4 +184,19 @@ def do_import(request):
 
     importer.run()
 
-    return redirect('wagtailadmin_explore', request.POST['dest_page_id'])
+    if dest_page_id:
+        return redirect('wagtailadmin_explore', dest_page_id)
+    else:
+        return redirect('wagtailadmin_explore_root')
+
+
+def check_page_existence_for_uid(request):
+    """
+    Check whether a page with the specified UID exists - used for checking whether a page has already been imported
+    to the destination site
+    """
+    uid = request.GET.get('uid', '')
+    locator = get_locator_for_model(Page)
+    page_exists = bool(locator.find(uid))
+    result = status.HTTP_200_OK if page_exists else status.HTTP_404_NOT_FOUND
+    return HttpResponse('', status=result)

@@ -1,12 +1,10 @@
 #Setup
 
-1. Clone the [Wagtail Transfer repository](https://github.com/wagtail/wagtail-transfer). 
+1. Install the wagtail-transfer package with `pip install wagtail-transfer`.
 
-2. In the terminal, navigate to the root of the cloned repository and run `pip install -e` .
+2. Add `wagtail_transfer` to your project's `INSTALLED_APPS`.
 
-3. Add `wagtail_transfer` to your project's `INSTALLED_APPS`.
-
-4. In your project's top-level urls.py, add:
+3. In your project's top-level urls.py, add:
 
         from wagtail_transfer import urls as wagtailtransfer_urls
     
@@ -16,7 +14,8 @@
     
     to the `urlpatterns` list above `include(wagtail_urls)`.
     
-5. Add the settings `WAGTAILTRANSFER_SOURCES` and `WAGTAILTRANSFER_SECRET_KEY` to your project settings. 
+4. Add the settings `WAGTAILTRANSFER_SOURCES` and `WAGTAILTRANSFER_SECRET_KEY` to your project settings.
+
     These are formatted as:
 
         WAGTAILTRANSFER_SOURCES = {

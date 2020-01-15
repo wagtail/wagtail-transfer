@@ -14,9 +14,21 @@ class Advert(models.Model):
     slogan = models.CharField(max_length=255)
 
 
+class Author(models.Model):
+    name = models.CharField(max_length=255)
+    bio = models.TextField()
+
+
+class Category(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+    colour = models.CharField(max_length=255, blank=True, null=True)
+
+
 class SponsoredPage(Page):
     advert = models.ForeignKey(Advert, blank=True, null=True, on_delete=models.SET_NULL)
+    author = models.ForeignKey(Author, blank=True, null=True, on_delete=models.SET_NULL)
     intro = models.TextField()
+    categories = ParentalManyToManyField(Category)
 
 
 class SectionedPage(Page):
@@ -43,3 +55,15 @@ class PageWithParentalManyToMany(Page):
 
 class ModelWithManyToMany(models.Model):
     ads = models.ManyToManyField(Advert)
+
+
+class Avatar(models.Model):
+    image = models.ImageField(upload_to='avatars')
+
+
+class RedirectPage(Page):
+    redirect_to = models.ForeignKey(Page, blank=False, null=False, on_delete=models.PROTECT, related_name='+')
+
+
+class PageWithRelatedPages(Page):
+    related_pages = models.ManyToManyField(Page, related_name='+')

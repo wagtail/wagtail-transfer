@@ -1,14 +1,30 @@
 import json
+import os.path
+import shutil
 import uuid
 from unittest import mock
 
+from django.conf import settings
+from django.core.files import File
+from django.core.files.images import ImageFile
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase
 from wagtail.core.models import Page, Collection
+from wagtail.images.models import Image
+from wagtail.documents.models import Document
 
 from wagtail_transfer.auth import digest_for_source
 from wagtail_transfer.models import IDMapping
-from tests.models import Advert, ModelWithManyToMany, PageWithRichText, SectionedPage, PageWithStreamField, PageWithParentalManyToMany
+from tests.models import (
+    Advert, Avatar, Category, ModelWithManyToMany, PageWithRichText, SectionedPage, SponsoredPage,
+    PageWithStreamField, PageWithParentalManyToMany
+)
+
+
+# We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
+# ever run these tests with non-test settings for any reason
+TEST_MEDIA_DIR = os.path.join(os.path.join(settings.BASE_DIR, 'test-media'))
+FIXTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fixtures')
 
 
 class TestPagesApi(TestCase):
@@ -102,6 +118,22 @@ class TestPagesApi(TestCase):
 
         self.assertIn(['wagtailcore.page', 1, '11111111-1111-1111-1111-111111111111'], data['mappings'])
 
+    def test_rich_text_with_dead_page_link(self):
+        page = PageWithRichText(title="You won't believe how rich this cake was!", body='<p>But I have a <a id="999" linktype="page">link</a></p>')
+
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        response = self.get(page.id)
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertTrue(any(
+            model == 'wagtailcore.page' and id == 999
+            for model, id, uid in data['mappings']
+        ))
+
     def test_streamfield_with_page_links(self):
         # Check that page links in a complex nested StreamField - with StreamBlock, StructBlock, and ListBlock -
         # are all picked up in mappings
@@ -159,6 +191,25 @@ class TestPagesApi(TestCase):
 
         self.assertIn(['wagtailcore.page', 1, '11111111-1111-1111-1111-111111111111'], data['mappings'])
 
+    def test_streamfield_with_dead_page_link(self):
+        page = PageWithStreamField(
+            title="I have a streamfield",
+            body=json.dumps([
+                {'type': 'link_block', 'value': {'page': 999, 'text': 'Test'}, 'id': 'fc3b0d3d-d316-4271-9e31-84919558188a'},
+            ])
+        )
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        digest = digest_for_source('local', str(page.id))
+        response = self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s' % (page.id, digest))
+
+        data = json.loads(response.content)
+        self.assertTrue(any(
+            model == 'wagtailcore.page' and id == 999
+            for model, id, uid in data['mappings']
+        ))
+
     def test_parental_many_to_many(self):
         page = PageWithParentalManyToMany(title="This page has lots of ads!")
         advert_2 = Advert.objects.get(id=2)
@@ -177,9 +228,29 @@ class TestPagesApi(TestCase):
         self.assertIn(['tests.advert', 3, "adadadad-3333-3333-3333-333333333333"], data['mappings'])
         self.assertEqual({2, 3}, set(data['objects'][0]['fields']['ads']))
 
+    def test_related_model_with_field_lookup(self):
+        page = SponsoredPage.objects.get(id=5)
+        page.categories.add(Category.objects.get(name='Cars'))
+        page.save()
+
+        response = self.get(5)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        mappings = data['mappings']
+
+        # Category objects in the mappings section should be identified by name, not UUID
+        self.assertIn(['tests.category', 1, ['Cars']], mappings)
+
 
 class TestObjectsApi(TestCase):
     fixtures = ['test.json']
+
+    def setUp(self):
+        shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
+
+    def tearDown(self):
+        shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
 
     def test_incorrect_digest(self):
         request_body = json.dumps({
@@ -191,15 +262,17 @@ class TestObjectsApi(TestCase):
         )
         self.assertEqual(response.status_code, 403)
 
+    def get(self, request_body):
+        request_json = json.dumps(request_body)
+        digest = digest_for_source('local', request_json)
+        return self.client.post(
+            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_json, content_type='application/json'
+        )
+
     def test_objects_api(self):
-        request_body = json.dumps({
+        response = self.get({
             'tests.advert': [1]
         })
-        digest = digest_for_source('local', request_body)
-
-        response = self.client.post(
-            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_body, content_type='application/json'
-        )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
@@ -219,14 +292,9 @@ class TestObjectsApi(TestCase):
             uid=collection_uid,
         )
 
-        request_body = json.dumps({
+        response = self.get({
             'wagtailcore.collection': [collection.id]
         })
-        digest = digest_for_source('local', request_body)
-
-        response = self.client.post(
-            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_body, content_type='application/json'
-        )
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
@@ -243,21 +311,81 @@ class TestObjectsApi(TestCase):
         ad_holder.ads.set([advert_2, advert_3])
         ad_holder.save()
 
-        request_body = json.dumps({
+        response = self.get({
             'tests.modelwithmanytomany': [1]
         })
-        digest = digest_for_source('local', request_body)
-
-        response = self.client.post(
-            '/wagtail-transfer/api/objects/?digest=%s' % digest, request_body, content_type='application/json'
-        )
-
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.content)
 
         self.assertIn(['tests.advert', 2, "adadadad-2222-2222-2222-222222222222"], data['mappings'])
         self.assertIn(['tests.advert', 3, "adadadad-3333-3333-3333-333333333333"], data['mappings'])
         self.assertEqual({2, 3}, set(data['objects'][0]['fields']['ads']))
+
+    def test_model_with_field_lookup(self):
+        response = self.get({
+            'tests.category': [1]
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        # Category objects in the mappings section should be identified by name, not UUID
+        self.assertIn(['tests.category', 1, ['Cars']], data['mappings'])
+
+    def test_image(self):
+        with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
+            image = Image.objects.create(
+                title="Wagtail",
+                file=ImageFile(f, name='wagtail.jpg')
+            )
+
+        response = self.get({
+            'wagtailimages.image': [image.pk]
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertEqual(len(data['objects']), 1)
+        obj = data['objects'][0]
+        self.assertEqual(obj['fields']['file']['download_url'], 'http://example.com/media/original_images/wagtail.jpg')
+        self.assertEqual(obj['fields']['file']['size'], 1160)
+        self.assertEqual(obj['fields']['file']['hash'], '45c5db99aea04378498883b008ee07528f5ae416')
+
+    def test_document(self):
+        with open(os.path.join(FIXTURES_DIR, 'document.txt'), 'rb') as f:
+            document = Document.objects.create(
+                title="Test document",
+                file=File(f, name='document.txt')
+            )
+
+        response = self.get({
+            'wagtaildocs.document': [document.pk]
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertEqual(len(data['objects']), 1)
+        obj = data['objects'][0]
+        self.assertEqual(obj['fields']['file']['download_url'], 'http://example.com/media/documents/document.txt')
+        self.assertEqual(obj['fields']['file']['size'], 33)
+        self.assertEqual(obj['fields']['file']['hash'], '9b90daf19b6e1e8a4852c64f9ea7fec5bcc5f7fb')
+
+    def test_custom_model_with_file_field(self):
+        with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
+            avatar = Avatar.objects.create(
+                image=ImageFile(f, name='wagtail.jpg')
+            )
+
+        response = self.get({
+            'tests.avatar': [avatar.pk]
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertEqual(len(data['objects']), 1)
+        obj = data['objects'][0]
+        self.assertEqual(obj['fields']['image']['download_url'], 'http://example.com/media/avatars/wagtail.jpg')
+        self.assertEqual(obj['fields']['image']['size'], 1160)
+        self.assertEqual(obj['fields']['image']['hash'], '45c5db99aea04378498883b008ee07528f5ae416')
 
 
 @mock.patch('requests.get')
