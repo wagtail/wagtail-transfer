@@ -1,4 +1,6 @@
-# wagtail-transfer
+# Wagtail Transfer
+
+<img alt="Wagtail Transfer logo with two facing wagtails" src="docs/img/wagtail_transfer_logo.svg" height="25%" width="25%">
 
 An extension for Wagtail allowing content to be transferred between multiple instances of a Wagtail project
 

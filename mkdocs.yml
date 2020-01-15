@@ -1,8 +1,8 @@
 site_name: Wagtail Transfer Documentation
 theme:
   name: 'material'
-  logo:
-    icon: 'import_export'
+  favicon: 'img/wagtail_transfer_logo.svg'
+  logo: 'img/wagtail_transfer_logo.svg'
   palette:
     primary: 'teal'
     accent: 'indigo'
