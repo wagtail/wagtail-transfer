@@ -52,7 +52,7 @@ export default function ImportContentForm({
   onSubmit,
   localCheckUIDUrl
 }) {
-  const [source, setSource] = React.useState(null);
+  const [source, setSource] = React.useState(sources.length == 1 ? sources[0] : null);
   const [sourcePage, setSourcePage] = React.useState(null);
   const [destPage, setDestPage] = React.useState(null);
   const [
