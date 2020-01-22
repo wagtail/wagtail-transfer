@@ -12,7 +12,7 @@ from wagtail.images.models import Image
 from wagtail_transfer.models import IDMapping
 from wagtail_transfer.operations import ImportPlanner
 from tests.models import (
-    Advert, Author, ModelWithManyToMany, PageWithParentalManyToMany, PageWithRelatedPages,
+    Advert, Author, Avatar, ModelWithManyToMany, PageWithParentalManyToMany, PageWithRelatedPages,
     PageWithRichText, PageWithStreamField, RedirectPage, SectionedPage, SimplePage, SponsoredPage
 )
 
@@ -1287,3 +1287,39 @@ class TestImport(TestCase):
         # salad_dressing_page's related_pages should include the oil (id=30) and vinegar (id=21)
         # pages, but not the missing and not-to-be-imported page id=31
         self.assertEqual(set(salad_dressing_page.related_pages.all()), set([oil_page, vinegar_page]))
+
+    @mock.patch('requests.get')
+    def test_import_custom_file_field(self, get):
+        get.return_value.status_code = 200
+        get.return_value.content = b'my test image file contents'
+
+        data = """{
+            "ids_for_import": [
+                ["tests.avatar", 123]
+            ],
+            "mappings": [
+                ["tests.avatar", 123, "01230123-0000-0000-0000-000000000000"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.avatar",
+                    "pk": 123,
+                    "fields": {
+                        "image": {
+                            "download_url": "https://wagtail.io/media/original_images/muddy_waters.jpg",
+                            "size": 18521,
+                            "hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada"
+                        }
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(1, None)
+        importer.add_json(data)
+        importer.run()
+
+        # Check the db record and file was imported
+        get.assert_called()
+        avatar = Avatar.objects.get()
+        self.assertEqual(avatar.image.read(), b'my test image file contents')

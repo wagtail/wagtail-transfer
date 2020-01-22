@@ -181,7 +181,7 @@ class FileAdapter(FieldAdapter):
 
             # Get the local filename
             name = pathlib.PurePosixPath(urlparse(value['download_url']).path).name
-            local_filename = self.field.upload_to(instance, name)
+            local_filename = self.field.generate_filename(instance, name)
 
             _file = File(local_filename, value['size'], value['hash'], value['download_url'])
             imported_file = _file.transfer()
