@@ -17,6 +17,7 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('model_name', help="Model (as app_label.model_name) to populate table entries for, e.g. wagtailcore.Page")
+        parser.add_argument('--range', help="Range of IDs to create mappings for (e.g. 1-1000)")
 
     def handle(self, *args, **options):
         model_name = options['model_name'].lower()
@@ -33,11 +34,17 @@ class Command(BaseCommand):
         content_type = ContentType.objects.get_for_model(model)
         # find IDs of instances of this model that already exist in the IDMapping table
         mapped_ids = IDMapping.objects.filter(content_type=content_type).values_list('local_id', flat=True)
+
         # these will be returned as strings, so convert to the pk field's native type
         mapped_ids = [model._meta.pk.to_python(id) for id in mapped_ids]
 
         # find IDs of instances not in this set
         unmapped_ids = model.objects.exclude(pk__in=mapped_ids).values_list('pk', flat=True)
+
+        # apply ID range filter if passed
+        if options['range']:
+            min_id, max_id = options['range'].split('-')
+            unmapped_ids = unmapped_ids.filter(pk__gte=min_id, pk__lte=max_id)
 
         created_count = 0
 
