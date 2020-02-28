@@ -13,4 +13,5 @@ nav:
   - Setup: setup.md
   - Basic Usage: basic_usage.md
   - How It Works: how_it_works.md
+  - Management commands: management_commands.md
   - Settings Reference: settings.md
