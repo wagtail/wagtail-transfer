@@ -70,9 +70,15 @@ Note that these settings do not accept models that are defined as subclasses thr
 
 ## Management commands
 
-    ./manage.py preseed_transfer_table [--range=MIN-MAX] model_name
+    ./manage.py preseed_transfer_table [--range=MIN-MAX] model_or_app [model_or_app ...]
 
-Populates the table of UUIDs with known predictable values for the given model and ID range. Effectively, running this command informs wagtail-transfer that all objects in the given set can be trusted not to have IDs that collide with other objects, so that when the same ID is encountered on another site instance, it is known to refer to the same object and will be handled as an update rather than a creation. This is useful in situations where databases have been copied between installations without the involvement of wagtail-transfer.
+Populates the table of UUIDs with known predictable values for the given model(s) and ID range. Effectively, running this command informs wagtail-transfer that all objects in the given set can be trusted not to have IDs that collide with other objects, so that when the same ID is encountered on another site instance, it is known to refer to the same object and will be handled as an update rather than a creation. This is useful in situations where databases have been copied between installations without the involvement of wagtail-transfer.
+
+`model_or_app` can be either an individual model name such as `wagtailcore.page` or an app label such as `wagtaildocs`; in the latter case, all models in the app will be assigned UUIDs. Note that when multi-table inheritance is in use, only the base model is assigned a UUID; for page models, this means that `preseed_transfer_table` only needs to run on `wagtailcore.page`, not specific page types. However, related models linked through `ParentalKey` and `InlinePanel` do still need their own UUIDs.
+
+The following command should be sufficient to cover all of the relevant models that are provided as standard by Django and Wagtail:
+
+    ./manage.py preseed_transfer_table auth wagtailcore wagtailimages.image wagtaildocs
 
 ### Example 1: launching a site with wagtail-transfer in place
 
@@ -94,4 +100,3 @@ Suppose a site has been developed and populated with content on a staging enviro
  * On both instances, run: `./manage.py preseed_transfer_table wagtailcore.page --range=1-199`
 
  The `preseed_transfer_table` command generates consistent UUIDs between the two site instances, so any transfers involving this ID range will recognise the pages as matching, and handle them as updates rather than creations.
- 
