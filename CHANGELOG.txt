@@ -1,0 +1,16 @@
+Changelog
+=========
+
+0.2 (17.03.2020)
+~~~~~~~~~~~~~~~~
+
+ * Add preseed_transfer_table management command
+ * Django 3.0 compatibility (Kalob Taulien)
+ * Fix handling of FileFields with non-callable upload_to parameters
+ * Pre-select source site if there is only one option
+
+
+0.1 (13.01.2020)
+~~~~~~~~~~~~~~~~
+
+ * Initial release
