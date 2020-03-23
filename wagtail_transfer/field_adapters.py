@@ -3,6 +3,7 @@ import json
 import pathlib
 from urllib.parse import urlparse
 
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
@@ -10,7 +11,7 @@ from django.utils.encoding import is_protected_type
 from taggit.managers import TaggableManager
 from wagtail.core.fields import RichTextField, StreamField
 
-from .files import get_file_size, get_file_hash, File
+from .files import get_file_size, get_file_hash, File, FileTransferError
 from .models import get_base_model
 from .richtext import get_reference_handler
 from .streamfield import get_object_references, update_object_ids
@@ -161,8 +162,13 @@ class StreamFieldAdapter(FieldAdapter):
 
 class FileAdapter(FieldAdapter):
     def serialize(self, instance):
+        url = self.field.value_from_object(instance).url
+        if settings.MEDIA_URL.startswith('/'):
+            # Using a relative media url. ie. /media/
+            # Prepend the BASE_URL to turn this into an absolute URL
+            url = settings.BASE_URL.rstrip('/') + url
         return {
-            'download_url': self.field.value_from_object(instance).url,
+            'download_url': url,
             'size': get_file_size(self.field, instance),
             'hash': get_file_hash(self.field, instance),
         }
@@ -184,7 +190,10 @@ class FileAdapter(FieldAdapter):
             local_filename = self.field.generate_filename(instance, name)
 
             _file = File(local_filename, value['size'], value['hash'], value['download_url'])
-            imported_file = _file.transfer()
+            try:
+                imported_file = _file.transfer()
+            except FileTransferError:
+                return None
             context.imported_files_by_source_url[_file.source_url] = imported_file
 
         value = imported_file.file.name

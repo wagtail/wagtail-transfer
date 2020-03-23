@@ -8,7 +8,7 @@ from django.conf import settings
 from django.core.files import File
 from django.core.files.images import ImageFile
 from django.contrib.contenttypes.models import ContentType
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from wagtail.core.models import Page, Collection
 from wagtail.images.models import Image
 from wagtail.documents.models import Document
@@ -366,6 +366,27 @@ class TestObjectsApi(TestCase):
 
         self.assertEqual(len(data['objects']), 1)
         obj = data['objects'][0]
+        self.assertEqual(obj['fields']['file']['download_url'], 'http://media.example.com/media/original_images/wagtail.jpg')
+        self.assertEqual(obj['fields']['file']['size'], 1160)
+        self.assertEqual(obj['fields']['file']['hash'], '45c5db99aea04378498883b008ee07528f5ae416')
+
+    @override_settings(MEDIA_URL='/media/')
+    def test_image_with_local_media_url(self):
+        """File URLs should use BASE_URL to form an absolute URL if MEDIA_URL is relative"""
+        with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
+            image = Image.objects.create(
+                title="Wagtail",
+                file=ImageFile(f, name='wagtail.jpg')
+            )
+
+        response = self.get({
+            'wagtailimages.image': [image.pk]
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertEqual(len(data['objects']), 1)
+        obj = data['objects'][0]
         self.assertEqual(obj['fields']['file']['download_url'], 'http://example.com/media/original_images/wagtail.jpg')
         self.assertEqual(obj['fields']['file']['size'], 1160)
         self.assertEqual(obj['fields']['file']['hash'], '45c5db99aea04378498883b008ee07528f5ae416')
@@ -385,7 +406,7 @@ class TestObjectsApi(TestCase):
 
         self.assertEqual(len(data['objects']), 1)
         obj = data['objects'][0]
-        self.assertEqual(obj['fields']['file']['download_url'], 'http://example.com/media/documents/document.txt')
+        self.assertEqual(obj['fields']['file']['download_url'], 'http://media.example.com/media/documents/document.txt')
         self.assertEqual(obj['fields']['file']['size'], 33)
         self.assertEqual(obj['fields']['file']['hash'], '9b90daf19b6e1e8a4852c64f9ea7fec5bcc5f7fb')
 
@@ -403,7 +424,7 @@ class TestObjectsApi(TestCase):
 
         self.assertEqual(len(data['objects']), 1)
         obj = data['objects'][0]
-        self.assertEqual(obj['fields']['image']['download_url'], 'http://example.com/media/avatars/wagtail.jpg')
+        self.assertEqual(obj['fields']['image']['download_url'], 'http://media.example.com/media/avatars/wagtail.jpg')
         self.assertEqual(obj['fields']['image']['size'], 1160)
         self.assertEqual(obj['fields']['image']['hash'], '45c5db99aea04378498883b008ee07528f5ae416')
 

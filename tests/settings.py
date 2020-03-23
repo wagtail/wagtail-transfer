@@ -114,7 +114,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'test-media')
-MEDIA_URL = 'http://example.com/media/'
+MEDIA_URL = 'http://media.example.com/media/'
 
 SECRET_KEY = 'not needed'
 

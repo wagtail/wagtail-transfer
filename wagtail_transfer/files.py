@@ -107,7 +107,7 @@ class File:
         response = requests.get(self.source_url)
 
         if response.status_code != 200:
-            raise FileTransferError  # TODO
+            raise FileTransferError("Non-200 response from image URL")
 
         return ImportedFile.objects.create(
             file=ContentFile(response.content, name=self.local_filename),
