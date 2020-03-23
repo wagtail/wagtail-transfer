@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2.1 (xx.xx.xxxx)
+~~~~~~~~~~~~~~~~~~
+
+ * Fix error when exporting empty non-required ChooserBlocks (Kalob Taulinen, Jacob Topp-Mugglestone)
+
+
 0.2 (17.03.2020)
 ~~~~~~~~~~~~~~~~
 

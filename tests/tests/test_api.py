@@ -210,6 +210,26 @@ class TestPagesApi(TestCase):
             for model, id, uid in data['mappings']
         ))
 
+    def test_streamfield_with_null_page(self):
+        # We should gracefully handle null values in non-required chooser blocks
+        page = PageWithStreamField(
+            title="I have a streamfield",
+            body=json.dumps([{
+                'type': 'link_block',
+                'value': {'page': None, 'text': 'Empty test'},
+                'id': 'fc3b0d3d-d316-4271-9e31-84919558188a'
+            },])
+        )
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        digest = digest_for_source('local', str(page.id))
+        response = self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s' % (page.id, digest))
+
+        data = json.loads(response.content)
+        # result should have only a mapping for the pge we just created
+        self.assertEqual(len(data['mappings']), 1)
+
     def test_parental_many_to_many(self):
         page = PageWithParentalManyToMany(title="This page has lots of ads!")
         advert_2 = Advert.objects.get(id=2)

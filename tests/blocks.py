@@ -4,7 +4,7 @@ from wagtail.core.blocks import (
 
 
 class CaptionedPageLink(StructBlock):
-    page = PageChooserBlock()
+    page = PageChooserBlock(required=False)
     text = CharBlock(max_length=250)
 
 
