@@ -134,6 +134,29 @@ class TestPagesApi(TestCase):
             for model, id, uid in data['mappings']
         ))
 
+    def test_rich_text_with_image_embed(self):
+        with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
+            image = Image.objects.create(
+                title="Wagtail",
+                file=ImageFile(f, name='wagtail.jpg')
+            )
+
+        body = '<p>Here is an image</p><embed embedtype="image" id="%d" alt="A wagtail" format="left" />' % image.pk
+        page = PageWithRichText(title="The cake is a lie.", body=body)
+
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        response = self.get(page.id)
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertTrue(any(
+            model == 'wagtailimages.image' and pk == image.pk
+            for model, pk, uid in data['mappings']
+        ))
+
     def test_streamfield_with_page_links(self):
         # Check that page links in a complex nested StreamField - with StreamBlock, StructBlock, and ListBlock -
         # are all picked up in mappings

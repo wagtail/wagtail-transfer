@@ -5,6 +5,7 @@ Changelog
 ~~~~~~~~~~~~~~~~~~
 
  * Fix error when exporting empty non-required ChooserBlocks (Kalob Taulinen, Jacob Topp-Mugglestone)
+ * Fix handling of embeds in rich text (Kalob Taulinen, Jacob Topp-Mugglestone)
  * Ensure that file URLs are always absolute by falling back on BASE_URL when MEDIA_URL is local (Kalob Taulinen)
 
 

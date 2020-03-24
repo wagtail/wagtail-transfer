@@ -83,6 +83,6 @@ def get_reference_handler():
         link_handlers = features.get_link_types()
         REFERENCE_HANDLER = MultiTypeRichTextReferenceHandler([
             RichTextReferenceHandler(link_handlers, FIND_A_TAG, 'linktype'),
-            RichTextReferenceHandler(embed_handlers, FIND_EMBED_TAG, 'embed')
+            RichTextReferenceHandler(embed_handlers, FIND_EMBED_TAG, 'embedtype')
             ])
     return REFERENCE_HANDLER
