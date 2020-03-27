@@ -39,20 +39,23 @@ class RichTextReferenceHandler:
     def get_objects(self, html):
         # Gets object references
         objects = set()
-        for match in self.tag_matcher.finditer(html):
-            attrs = extract_attrs(match.group(1))
-            try:
-                handler = self.handlers[attrs[self.type_attribute]]
-                objects.add((get_base_model(handler.get_model()), int(attrs['id'])))
-            except KeyError:
-                # If no handler can be found, no object reference can be added.
-                # This might occur when the link is a plain url
-                pass
+        if html:
+            for match in self.tag_matcher.finditer(html):
+                attrs = extract_attrs(match.group(1))
+                try:
+                    handler = self.handlers[attrs[self.type_attribute]]
+                    objects.add((get_base_model(handler.get_model()), int(attrs['id'])))
+                except KeyError:
+                    # If no handler can be found, no object reference can be added.
+                    # This might occur when the link is a plain url
+                    pass
         return objects
 
     def update_ids(self, html, destination_ids_by_source):
         # Update source instance ids to destination instance ids when possible
-        return self.tag_matcher.sub(partial(self.update_tag_id, destination_ids_by_source=destination_ids_by_source), html)
+        if html:
+            return self.tag_matcher.sub(partial(self.update_tag_id, destination_ids_by_source=destination_ids_by_source), html)
+        return ''
 
 
 class MultiTypeRichTextReferenceHandler:
