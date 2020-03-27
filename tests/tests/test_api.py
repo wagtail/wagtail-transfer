@@ -250,8 +250,8 @@ class TestPagesApi(TestCase):
         response = self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s' % (page.id, digest))
 
         data = json.loads(response.content)
-        # result should have only a mapping for the pge we just created
-        self.assertEqual(len(data['mappings']), 1)
+        # result should have a mapping for the page we just created, and its parent
+        self.assertEqual(len(data['mappings']), 2)
 
     def test_parental_many_to_many(self):
         page = PageWithParentalManyToMany(title="This page has lots of ads!")
@@ -326,11 +326,14 @@ class TestObjectsApi(TestCase):
         self.assertEqual(data['mappings'], [['tests.advert', 1, 'adadadad-1111-1111-1111-111111111111']])
 
     def test_objects_api_with_tree_model(self):
-        collection = Collection.objects.get().add_child(instance=Collection(name="Test collection"))
+        root_collection = Collection.objects.get()
+        collection = root_collection.add_child(instance=Collection(name="Test collection"))
         collection_uid = uuid.uuid4()
 
+        collection_content_type = ContentType.objects.get_for_model(Collection)
+
         IDMapping.objects.create(
-            content_type=ContentType.objects.get_for_model(Collection),
+            content_type=collection_content_type,
             local_id=collection.id,
             uid=collection_uid,
         )
@@ -345,7 +348,18 @@ class TestObjectsApi(TestCase):
         self.assertEqual(data['objects'][0]['model'], 'wagtailcore.collection')
         self.assertEqual(data['objects'][0]['fields']['name'], "Test collection")
 
-        self.assertEqual(data['mappings'], [['wagtailcore.collection', collection.id, str(collection_uid)]])
+        # mappings should contain entries for the requested collection and its parent
+        self.assertIn(
+            ['wagtailcore.collection', collection.id, str(collection_uid)],
+            data['mappings']
+        )
+        root_collection_uid = IDMapping.objects.get(
+            content_type=collection_content_type, local_id=root_collection.id
+        ).uid
+        self.assertIn(
+            ['wagtailcore.collection', root_collection.id, str(root_collection_uid)],
+            data['mappings']
+        )
 
     def test_many_to_many(self):
         advert_2 = Advert.objects.get(id=2)

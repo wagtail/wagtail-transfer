@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.2.2 (xx.xx.xxxx)
+~~~~~~~~~~~~~~~~~~
+
+ * Fix missing mappings to parent IDs in the export API for tree-based models
+
+
 0.2.1 (26.03.2020)
 ~~~~~~~~~~~~~~~~~~
 

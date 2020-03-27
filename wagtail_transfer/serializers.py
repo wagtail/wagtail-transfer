@@ -83,6 +83,14 @@ class TreeModelSerializer(ModelSerializer):
 
         return result
 
+    def get_object_references(self, instance):
+        refs = super().get_object_references(instance)
+        if not instance.is_root():
+            # add a reference for the parent ID
+            refs.add(
+                (self.base_model, instance.get_parent().pk)
+            )
+        return refs
 
 class PageSerializer(TreeModelSerializer):
     ignored_fields = TreeModelSerializer.ignored_fields + [
