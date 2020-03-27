@@ -134,6 +134,22 @@ class TestPagesApi(TestCase):
             for model, id, uid in data['mappings']
         ))
 
+    def test_null_rich_text(self):
+        page = PageWithRichText(title="I'm lost for words", body=None)
+
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        response = self.get(page.id)
+
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertTrue(any(
+            obj['pk'] == page.pk
+            for obj in data['objects']
+        ))
+
     def test_rich_text_with_image_embed(self):
         with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
             image = Image.objects.create(

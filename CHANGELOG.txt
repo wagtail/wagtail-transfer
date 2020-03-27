@@ -5,13 +5,14 @@ Changelog
 ~~~~~~~~~~~~~~~~~~
 
  * Fix missing mappings to parent IDs in the export API for tree-based models
+ * Fix handling of null RichTextFields (Kalob Taulien)
 
 
 0.2.1 (26.03.2020)
 ~~~~~~~~~~~~~~~~~~
 
- * Fix error when exporting empty non-required ChooserBlocks (Kalob Taulinen, Jacob Topp-Mugglestone)
- * Fix handling of embeds in rich text (Kalob Taulinen, Jacob Topp-Mugglestone)
+ * Fix error when exporting empty non-required ChooserBlocks (Kalob Taulien, Jacob Topp-Mugglestone)
+ * Fix handling of embeds in rich text (Kalob Taulien, Jacob Topp-Mugglestone)
  * Ensure that file URLs are always absolute by falling back on BASE_URL when MEDIA_URL is local (Kalob Taulinen)
 
 

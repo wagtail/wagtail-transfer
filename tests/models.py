@@ -42,7 +42,7 @@ class SectionedPageSection(Orderable):
 
 
 class PageWithRichText(Page):
-    body = RichTextField(max_length=255)
+    body = RichTextField(max_length=255, blank=True, null=True)
 
 
 class PageWithStreamField(Page):

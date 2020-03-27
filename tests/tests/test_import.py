@@ -418,6 +418,38 @@ class TestImport(TestCase):
 
         # TODO: this should include an embed type as well once document/image import is added
 
+    def test_import_page_with_null_rich_text(self):
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 15]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 12, "11111111-1111-1111-1111-111111111111"],
+                ["wagtailcore.page", 15, "01010101-0005-8765-7889-987889889898"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.pagewithrichtext",
+                    "pk": 15,
+                    "parent_id": 12,
+                    "fields": {
+                        "title": "Imported page with null rich text",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "imported-rich-text-page",
+                        "body": null
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(1, None)
+        importer.add_json(data)
+        importer.run()
+
+        page = PageWithRichText.objects.get(slug="imported-rich-text-page")
+        self.assertEqual(page.body, None)
+
     def test_do_not_import_pages_outside_of_selected_root(self):
         # Source page 13 is a page we don't have at the destination, but it's not in ids_for_import
         # (i.e. it's outside of the selected import root), so we shouldn't import it, and should
