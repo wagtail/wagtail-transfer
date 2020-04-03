@@ -124,7 +124,7 @@ export default function ImportContentForm({
     <div>
       <ol className="transfer numbered">
         <li className="transfer numbered">
-          <div class="transfer list-container">
+          <div className="transfer list-container">
             <h2>Select source site</h2>
           </div>
           <SourceSelectorWidget
@@ -135,7 +135,7 @@ export default function ImportContentForm({
         </li>
 
         <li className="transfer numbered">
-          <div class="transfer list-container">
+          <div className="transfer list-container">
             <h2>Select pages to import</h2>
           </div>
           {source ? (
@@ -152,7 +152,7 @@ export default function ImportContentForm({
         </li>
 
         <li className="transfer numbered">
-          <div class="transfer list-container">
+          <div className="transfer list-container">
             <h2>
               {!alreadyExistsAtDestination
                 ? 'Select destination parent page'
