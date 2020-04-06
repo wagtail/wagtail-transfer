@@ -329,6 +329,20 @@ class PageSerializer(BaseSerializer):
         return super().build_relational_field(field_name, relation_info)
 
 
+class GenericModelSerializer(serializers.ModelSerializer):
+    """Generic Model Serializer. Pass in the keyword `model` to activate it."""
+
+    def __init__(self, *args, **kwargs):
+        if 'model' in kwargs:
+            model = kwargs.pop("model")
+            self.Meta.model = model
+        return super().__init__(*args, **kwargs)
+
+    class Meta:
+        model = None # gets overwritten when class is instantiated
+        fields = '__all__'
+
+
 def get_serializer_class(model, field_names, meta_fields, field_serializer_overrides=None, child_serializer_classes=None, base=BaseSerializer):
     model_ = model
 
