@@ -11,7 +11,6 @@ from rest_framework import status
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ViewSet
-from rest_framework.serializers import ModelSerializer
 
 from wagtail.api import APIField
 from wagtail.core.models import Page
@@ -19,7 +18,7 @@ from wagtail.snippets.models import SNIPPET_MODELS
 
 from .filters import ChildOfFilter, DescendantOfFilter, FieldsFilter, OrderingFilter, SearchFilter
 from .pagination import WagtailPagination
-from .serializers import BaseSerializer, PageSerializer, get_serializer_class
+from .serializers import BaseSerializer, GenericModelSerializer, PageSerializer, get_serializer_class
 from .utils import (
     BadRequestError, filter_page_type, get_object_detail_url, page_models_from_string,
     parse_fields_parameter)
@@ -471,20 +470,6 @@ class PagesAPIViewSet(BaseAPIViewSet):
         context = super().get_serializer_context()
         context['base_queryset'] = self.get_base_queryset()
         return context
-
-
-class GenericModelSerializer(ModelSerializer):
-    """Generic Model Serializer. Pass in the keyword `model` to activate it."""
-
-    def __init__(self, *args, **kwargs):
-        if 'model' in kwargs:
-            model = kwargs.pop("model")
-            self.Meta.model = model
-        return super().__init__(*args, **kwargs)
-
-    class Meta:
-        model = None # gets overwritten when class is instantiated
-        fields = '__all__'
 
 
 class ModelsAPIViewSet(ViewSet):
