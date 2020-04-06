@@ -488,6 +488,13 @@ class GenericModelSerializer(ModelSerializer):
 
 
 class ModelsAPIViewSet(ViewSet):
+    """
+    Like the Pages API, this exposes data for models and model objects.
+
+    List view will return a list of registered Wagtail Snippet models.
+    Detail view will return a list of all the model objects.
+    Note: This is an atypical use of a ViewSet.
+    """
 
     def listing_view(self, request):
         return Response([
@@ -498,8 +505,24 @@ class ModelsAPIViewSet(ViewSet):
         ])
 
     def detail_view(self, request, model_path):
-        app_label, model_name = model_path.split('.')
-        model = apps.get_model(app_label, model_name)
+        """Detail view accepts a model path such as app_name.model_name."""
+        try:
+            app_label, model_name = model_path.split('.')
+        except ValueError:
+            # Split likely failed to unpack two values meaning there wasn't
+            # an app_name and model_name provided.
+            # ie `justamodelname` wouldn't be found by Django, so return 404.
+            raise Http404("not found")
+
+        try:
+            model = apps.get_model(app_label, model_name)
+        except LookupError:
+            raise Http404("not found")
+
+        # Model must be in the SNIPPET_MODELS list
+        if model not in SNIPPET_MODELS:
+            raise Http404("not found")
+
         objects = model.objects.all()
         serializer = GenericModelSerializer(objects, many=True, model=model)
         return Response(serializer.data)
