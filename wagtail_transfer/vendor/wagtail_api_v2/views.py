@@ -1,5 +1,6 @@
 from collections import OrderedDict
 
+from django.apps import apps
 from django.conf.urls import url
 from django.core.exceptions import FieldDoesNotExist
 from django.http import Http404
@@ -9,10 +10,12 @@ from modelcluster.fields import ParentalKey
 from rest_framework import status
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import GenericViewSet, ViewSet
+from rest_framework.serializers import ModelSerializer
 
 from wagtail.api import APIField
 from wagtail.core.models import Page
+from wagtail.snippets.models import SNIPPET_MODELS
 
 from .filters import ChildOfFilter, DescendantOfFilter, FieldsFilter, OrderingFilter, SearchFilter
 from .pagination import WagtailPagination
@@ -468,3 +471,45 @@ class PagesAPIViewSet(BaseAPIViewSet):
         context = super().get_serializer_context()
         context['base_queryset'] = self.get_base_queryset()
         return context
+
+
+class GenericModelSerializer(ModelSerializer):
+    """Generic Model Serializer. Pass in the keyword `model` to activate it."""
+
+    def __init__(self, *args, **kwargs):
+        if 'model' in kwargs:
+            model = kwargs.pop("model")
+            self.Meta.model = model
+        return super().__init__(*args, **kwargs)
+
+    class Meta:
+        model = None # gets overwritten when class is instantiated
+        fields = '__all__'
+
+
+class ModelsAPIViewSet(ViewSet):
+
+    def listing_view(self, request):
+        return Response([
+            {
+                'label': model._meta.label_lower,
+                'name': model._meta.verbose_name.title(),
+            } for model in SNIPPET_MODELS
+        ])
+
+    def detail_view(self, request, model_path):
+        app_label, model_name = model_path.split('.')
+        model = apps.get_model(app_label, model_name)
+        objects = model.objects.all()
+        serializer = GenericModelSerializer(objects, many=True, model=model)
+        return Response(serializer.data)
+
+    @classmethod
+    def get_urlpatterns(cls):
+        """
+        This returns a list of URL patterns for the endpoint
+        """
+        return [
+            url(r'^$', cls.as_view({'get': 'listing_view'}), name='listing'),
+            url(r'^(?P<model_path>[-\w.]+)/$', cls.as_view({'get': 'detail_view'}), name='detail'),
+        ]
