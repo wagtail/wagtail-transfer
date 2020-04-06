@@ -332,6 +332,8 @@ class PageSerializer(BaseSerializer):
 class GenericModelSerializer(serializers.ModelSerializer):
     """Generic Model Serializer. Pass in the keyword `model` to activate it."""
 
+    object_name = serializers.CharField(source='__str__')
+
     def __init__(self, *args, **kwargs):
         if 'model' in kwargs:
             model = kwargs.pop("model")
