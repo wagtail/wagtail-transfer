@@ -4,10 +4,12 @@ import { Provider } from 'react-redux';
 import { createStore, applyMiddleware, compose } from 'redux';
 import thunkMiddleware from 'redux-thunk';
 
-import { PagesAPI } from '../lib/api/admin';
+import { PagesAPI, ModelsAPI } from '../lib/api/admin';
 import PageChooser from './PageChooser';
 import pageChooser from './reducers';
 import { setApi } from './actions';
+
+import ModelChooser from './ModelChooser';
 
 export function createReactPageChooser(
   apiBaseUrl,
@@ -64,3 +66,48 @@ export function createReactPageChooser(
 }
 
 window.createReactPageChooser = createReactPageChooser;
+
+
+export function createReactModelChooser(
+  apiBaseUrl,
+  initialParentPageId,
+  onPageChosen
+) {
+  const modalPlacement = document.createElement('div');
+  document.body.appendChild(modalPlacement);
+
+  const middleware = [thunkMiddleware];
+
+  const store = createStore(
+    pageChooser,
+    {},
+    compose(
+      applyMiddleware(...middleware),
+      // Expose store to Redux DevTools extension.
+      window.devToolsExtension ? window.devToolsExtension() : f => f
+    )
+  );
+
+  store.dispatch(setApi(new ModelsAPI(apiBaseUrl)));
+
+  const onModalClose = () => {
+    ReactDOM.render(<div />, modalPlacement);
+  };
+
+  ReactDOM.render(
+    <Provider store={store}>
+      <ModelChooser
+        onModalClose={onModalClose}
+        onPageChosen={page => {
+          onPageChosen(page);
+          onModalClose();
+        }}
+        initialParentPageId={initialParentPageId}
+        restrictPageTypes={null}
+      />
+    </Provider>,
+    modalPlacement
+  );
+}
+
+window.createReactModelChooser = createReactModelChooser;
