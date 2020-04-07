@@ -55,6 +55,7 @@ export const fetchPagesFailure = createAction('FETCH_FAILURE', message => ({
 }));
 
 export function browse(parentPageID, pageNumber) {
+  console.log("browse()", parentPageID, pageNumber)
   // HACK: Assuming page 1 is the root page
   // eslint-disable-next-line no-param-reassign
   if (parentPageID === 1) {
@@ -123,5 +124,63 @@ export function search(queryString, restrictPageTypes, pageNumber) {
       .catch(error => {
         dispatch(fetchPagesFailure(error.message));
       });
+  };
+}
+
+
+export const fetchModelsStart = createAction('FETCH_START');
+export const fetchModelsSuccess = createAction(
+  'FETCH_SUCCESS',
+  (itemsJson, parentJson) => ({ itemsJson, parentJson })
+);
+export const fetchModelsFailure = createAction('FETCH_FAILURE', message => ({
+  message
+}));
+
+
+export function browseModels(modelPath, pageNumber) {
+  console.log("browseModels()", modelPath, pageNumber)
+  // HACK: Assuming page 1 is the root page
+  // eslint-disable-next-line no-param-reassign
+  if (modelPath === null) {
+    modelPath = '';
+  }
+
+  return (dispatch, getState) => {
+    dispatch(fetchModelsStart());
+
+    console.log("Current gestate() is", getState())
+    const { api } = getState();
+    console.log("api is", api)
+    const query = api.query();
+    console.log("query is", query)
+
+    // HACK: The admin API currently doesn't serve the root page
+    if (modelPath === '') {
+      console.log("Looking for modelPath", modelPath)
+      return query
+        .getModel()
+        .then(models => {
+          console.log("models", models)
+          dispatch(setView('browse', { modelPath, pageNumber }));
+          dispatch(fetchModelsSuccess(models, null));
+        })
+        .catch(error => {
+          dispatch(fetchModelsFailure(error.message));
+        });
+    }
+
+    // TODO: Handle if there is a model path.
+    // return Promise.all([
+    //   query.getPage(pageNumber - 1),
+    //   api.getPage(modelPath, { fields: 'ancestors' })
+    // ])
+    //   .then(([pages, parentPage]) => {
+    //     dispatch(setView('browse', { modelPath, pageNumber }));
+    //     dispatch(fetchPagesSuccess(pages, parentPage));
+    //   })
+    //   .catch(error => {
+    //     dispatch(fetchPagesFailure(error.message));
+    //   });
   };
 }

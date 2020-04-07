@@ -62,3 +62,26 @@ export class PagesAPI {
     return get(url);
   }
 }
+
+
+class ModelsQuery {
+  constructor(api, modelPath) {
+    this.api = api;
+    this.modelPath = `${modelPath}/` ? modelPath : modelPath;
+  }
+
+  getModel() {
+    console.log("getModel()", `${this.api.endpointUrl}${this.modelPath}?models=True`)
+    return get(`${this.api.endpointUrl}${this.modelPath}?models=True`);
+  }
+}
+
+export class ModelsAPI {
+  constructor(endpointUrl) {
+    this.endpointUrl = endpointUrl;
+  }
+
+  query(modelPath = '') {
+    return new ModelsQuery(this, modelPath);
+  }
+}

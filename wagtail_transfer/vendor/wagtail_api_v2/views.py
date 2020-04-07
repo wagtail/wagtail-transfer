@@ -482,12 +482,18 @@ class ModelsAPIViewSet(ViewSet):
     """
 
     def listing_view(self, request):
-        return Response([
-            {
-                'label': model._meta.label_lower,
-                'name': model._meta.verbose_name.title(),
-            } for model in SNIPPET_MODELS
-        ])
+        data = {
+            "meta": {
+                "total_count": len(SNIPPET_MODELS)
+            },
+            "items": [
+                {
+                    'label': model._meta.label_lower,
+                    'name': model._meta.verbose_name.title(),
+                } for model in SNIPPET_MODELS
+            ]
+        }
+        return Response(data)
 
     def detail_view(self, request, model_path):
         """Detail view accepts a model path such as app_name.model_name."""

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import PageChooserWidget from '../PageChooserWidget';
+import ModelChooserWidget from '../ModelChooserWidget';
 import { PagesAPI } from '../../lib/api/admin';
 
 function SourceSelectorWidget({ sources, selectedSource, onChange }) {
@@ -124,7 +125,7 @@ export default function ImportContentForm({
     <div>
       <ol className="transfer numbered">
         <li className="transfer numbered">
-          <div class="transfer list-container">
+          <div className="transfer list-container">
             <h2>Select source site</h2>
           </div>
           <SourceSelectorWidget
@@ -135,24 +136,33 @@ export default function ImportContentForm({
         </li>
 
         <li className="transfer numbered">
-          <div class="transfer list-container">
+          <div className="transfer list-container">
             <h2>Select pages to import</h2>
           </div>
           {source ? (
-            <PageChooserWidget
-              apiBaseUrl={source.page_chooser_api}
-              value={sourcePage}
-              onChange={setSourcePage}
-              unchosenText="All child pages will be imported"
-              chosenText={`This page has ${numPages - 1} child pages.`}
-            />
+            <div>
+              <PageChooserWidget
+                apiBaseUrl={source.page_chooser_api}
+                value={sourcePage}
+                onChange={setSourcePage}
+                unchosenText="All child pages will be imported"
+                chosenText={`This page has ${numPages - 1} child pages.`}
+              />
+              <ModelChooserWidget
+                apiBaseUrl={source.page_chooser_api}
+                value={sourcePage}
+                onChange={setSourcePage}
+                unchosenText="Select a model to import"
+                chosenText="Model selected"
+              />
+            </div>
           ) : (
             ''
           )}
         </li>
 
         <li className="transfer numbered">
-          <div class="transfer list-container">
+          <div className="transfer list-container">
             <h2>
               {!alreadyExistsAtDestination
                 ? 'Select destination parent page'
