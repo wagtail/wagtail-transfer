@@ -129,7 +129,11 @@ def chooser_api_proxy(request, source_name, path):
     if source_config is None:
         raise Http404("Source does not exist")
 
-    base_url = source_config['BASE_URL'] + 'api/chooser/pages/'
+    default_chooser_endpoint = 'pages'
+    if 'models' in request.GET:
+        default_chooser_endpoint = 'models'
+
+    base_url = source_config['BASE_URL'] + 'api/chooser/{}/'.format(default_chooser_endpoint)
 
     response = requests.get(f"{base_url}{path}?{request.GET.urlencode()}", headers={
         'Accept': request.META['HTTP_ACCEPT'],
