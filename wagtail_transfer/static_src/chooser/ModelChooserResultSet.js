@@ -13,7 +13,7 @@ const propTypes = {
   // parentPage: PropTypes.any,
   // pageNumber: PropTypes.number.isRequired,
   // totalPages: PropTypes.number.isRequired,
-  onChangePage: PropTypes.func.isRequired
+  // onChangePage: PropTypes.func.isRequired
 };
 
 const defaultProps = {
@@ -25,9 +25,7 @@ const defaultProps = {
 
 class ModelChooserResultSet extends React.Component {
   pageIsNavigable(page) {
-    const { displayChildNavigation } = this.props;
-
-    return displayChildNavigation;
+    return !('id' in page);
   }
 
   pageIsChoosable(page) {
@@ -43,10 +41,15 @@ class ModelChooserResultSet extends React.Component {
       parentPage,
       // pageNumber,
       // totalPages,
-      onChangePage
+      // onChangePage
     } = this.props;
+
     const results = items.map((page, i) => {
       const onChoose = e => {
+
+        // if('object_name' in page) {
+        // } else {
+        // }
         onPageChosen(page);
         e.preventDefault();
       };
@@ -55,24 +58,21 @@ class ModelChooserResultSet extends React.Component {
         onNavigate(page);
         e.preventDefault();
       };
-      console.log("Page is:", page)
-      console.log("model chooser result set here:", i)
       return (
         <ModelChooserResult
           key={i}
           page={page}
-          isChoosable={this.pageIsChoosable(page)}
+          isChoosable={true} // TODO: Remove this as every object and model will be choosable
           isNavigable={this.pageIsNavigable(page)}
           onChoose={onChoose}
           onNavigate={handleNavigate}
-          // pageTypes={pageTypes}
+          modelType={parentPage || null}
         />
       );
     });
 
     // Parent page
     let parent = null;
-    console.log("parent in model chooser result set is:", parent)
     if (parentPage) {
       const onChoose = e => {
         onPageChosen(parentPage);
@@ -83,13 +83,12 @@ class ModelChooserResultSet extends React.Component {
         onNavigate(parentPage);
         e.preventDefault();
       };
-
       parent = (
         <ModelChooserResult
           page={parentPage}
           isParent={true}
-          isChoosable={this.pageIsChoosable(parentPage)}
-          isNavigable={false}
+          isChoosable={true} // TODO: Remove this as every object and model will be choosable
+          isNavigable={this.pageIsNavigable(page)}
           onChoose={onChoose}
           onNavigate={handleNavigate}
           pageTypes={pageTypes}
@@ -102,20 +101,19 @@ class ModelChooserResultSet extends React.Component {
         <table className="listing  chooser">
           <colgroup>
             <col />
-            <col width="12%" />
             <col width="10%" />
           </colgroup>
           <thead>
             <tr className="table-headers">
-              <th className="title">Title</th>
-              <th className="type">Type</th>
+              <th className="title">Model Name</th>
               <th />
             </tr>
-            {/* {parent} */}
+            {parent}
           </thead>
           <tbody>{results}</tbody>
         </table>
 
+        {/* TODO: Pagination?  */}
         {/* <PageChooserPagination
           pageNumber={pageNumber}
           totalPages={totalPages}

@@ -7,11 +7,11 @@ import PageChooserWidget from './components/PageChooserWidget';
 import ContentImportForm from './components/ContentImportForm';
 
 document.addEventListener('DOMContentLoaded', () => {
+  // TODO: Is this querySelectorAll being used?
   document
     .querySelectorAll('[data-wagtail-component="page-chooser"]')
     .forEach(element => {
       const apiBaseUrl = element.dataset.apiBaseUrl;
-
       const render = page => {
         ReactDOM.render(
           <PageChooserWidget
@@ -30,13 +30,13 @@ document.addEventListener('DOMContentLoaded', () => {
     .querySelectorAll('[data-wagtail-component="content-import-form"]')
     .forEach(element => {
       const localApiBaseUrl = element.dataset.localApiBaseUrl;
-      ('/admin/api/v2beta/pages/');
       const localCheckUIDUrl = element.dataset.localCheckUidUrl;
       const sources = JSON.parse(element.dataset.sources);
       const action = element.dataset.action;
       const csrfToken = element.dataset.csrfToken;
 
-      const onSubmit = (source, sourcePage, destPage) => {
+      const onSubmit = (source, sourcePage, destPage, model, modelObjectId) => {
+        const modelOrPage = model ? 'model' : 'page';
         const formElement = document.createElement('form');
         formElement.action = action;
         formElement.method = 'post';
@@ -50,13 +50,18 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         addField('csrfmiddlewaretoken', csrfToken);
-        addField('source', source.value);
-        addField('source_page_id', sourcePage.id);
-        addField('dest_page_id', destPage ? destPage.id : null);
+        addField('type', modelOrPage);
+        if(modelOrPage === 'page') {
+          addField('source', source.value);
+          addField('source_page_id', sourcePage.id);
+          addField('dest_page_id', destPage ? destPage.id : null);
+        } else {
+          addField('source', source.value);
+          addField('source_object_id', sourcePage.id);
+        }
 
         document.body.appendChild(formElement);
-
-        formElement.submit();
+        // formElement.submit();
       };
 
       ReactDOM.render(

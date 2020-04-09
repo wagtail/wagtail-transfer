@@ -63,7 +63,7 @@ class ModelChooserBrowseView extends React.Component {
     const {
       // pageNumber,
       // totalPages,
-      // parentPage,
+      parentPage,
       items,
       // pageTypes,
       // restrictPageTypes,
@@ -79,7 +79,7 @@ class ModelChooserBrowseView extends React.Component {
         <ModelChooserResultSet
           // pageNumber={pageNumber}
           // totalPages={totalPages}
-          // parentPage={parentPage}
+          parentPage={parentPage}
           items={items}
           // pageTypes={pageTypes}
           // restrictPageTypes={restrictPageTypes}

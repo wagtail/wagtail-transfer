@@ -482,6 +482,10 @@ class ModelsAPIViewSet(ViewSet):
     """
 
     def listing_view(self, request):
+
+        if request.GET.get("model"):
+            return self.detail_view(request, request.GET.get("model"))
+
         data = {
             "meta": {
                 "total_count": len(SNIPPET_MODELS)
@@ -516,7 +520,13 @@ class ModelsAPIViewSet(ViewSet):
 
         objects = model.objects.all()
         serializer = GenericModelSerializer(objects, many=True, model=model)
-        return Response(serializer.data)
+        data = {
+            "meta": {
+                "total_count": objects.count()
+            },
+            "items": serializer.data
+        }
+        return Response(data)
 
     @classmethod
     def get_urlpatterns(cls):

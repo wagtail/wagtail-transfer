@@ -33,7 +33,6 @@ export default function pageChooser(state = defaultState, { type, payload }) {
       });
 
     case 'FETCH_SUCCESS':
-      console.log("FETCH_SUCCESS PAYLOAD IS", payload)
       return Object.assign({}, state, {
         isFetching: false,
         parent: payload.parentJson,
@@ -42,17 +41,6 @@ export default function pageChooser(state = defaultState, { type, payload }) {
         // eslint-disable-next-line no-underscore-dangle
         pageTypes: Object.assign({}, state.pageTypes, payload.itemsJson.__types)
       });
-
-    // case 'FETCH_MODEL_SUCCESS':
-    //   console.log("FETCH_MODEL_SUCCESS")
-    //   return Object.assign({}, state, {
-    //     isFetching: false,
-    //     parent: payload.parentJson,
-    //     items: payload.itemsJson.items,
-    //     totalItems: payload.itemsJson.meta.total_count,
-    //     // eslint-disable-next-line no-underscore-dangle
-    //     pageTypes: Object.assign({}, state.pageTypes, payload.itemsJson.__types)
-    //   });
 
     case 'FETCH_FAILURE':
       return Object.assign({}, state, {
