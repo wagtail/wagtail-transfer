@@ -26,7 +26,6 @@ function capitalizeFirstLetter(text) {
 class ModelChooserResult extends React.Component {
   renderTitle() {
     const { isChoosable, onChoose, page } = this.props;
-
     if (isChoosable) {
       return (
         <td className="title u-vertical-align-top" data-listing-page-title="">
@@ -40,7 +39,7 @@ class ModelChooserResult extends React.Component {
               data-url="#" // {page.meta.html_url}
               data-edit-url="/admin/pages/{page.id}/edit/"
             >
-              {page.name}
+              {page.object_name ? page.object_name : page.name}
             </a>
           </h2>
         </td>
@@ -49,17 +48,7 @@ class ModelChooserResult extends React.Component {
 
     return (
       <td className="title u-vertical-align-top" data-listing-page-title="">
-        <h2>{page.title} other one </h2>
-      </td>
-    );
-  }
-
-  renderType() {
-    const { page } = this.props;
-
-    return (
-      <td className="type u-vertical-align-top">
-        {page.label}
+        <h2>{page.object_name ? page.object_name : page.name}</h2>
       </td>
     );
   }
@@ -100,7 +89,6 @@ class ModelChooserResult extends React.Component {
     return (
       <tr className={classNames.join(' ')}>
         {this.renderTitle()}
-        {this.renderType()}
         {this.renderChildren()}
       </tr>
     );

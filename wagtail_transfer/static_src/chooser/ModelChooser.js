@@ -25,11 +25,7 @@ const defaultProps = {
 
 class ModelChooser extends ModalWindow {
   componentDidMount() {
-    console.log("ModelChooser.componentDidMount() props", this.props)
     const { browse, modelPath } = this.props;
-    console.log("ModelChooser.modelPath", modelPath)
-
-    // browse(modelPath || 'root', 1);
     browse(modelPath);
   }
 
@@ -59,10 +55,11 @@ class ModelChooser extends ModalWindow {
     };
 
     const onNavigate = page => {
-      browse(page.id, 1);
+      browse(page.label, 1);
     };
 
     const onChangePage = newPageNumber => {
+      // Used for pagination
       switch (viewName) {
         case 'browse':
           browse(viewOptions.parentPageID, newPageNumber);
@@ -77,9 +74,6 @@ class ModelChooser extends ModalWindow {
 
     // Views
     let view = null;
-    console.log("viewName is", viewName)
-    console.log("items are", items)
-    console.log("parent is", parent)
     switch (viewName) {
       case 'browse':
         view = (

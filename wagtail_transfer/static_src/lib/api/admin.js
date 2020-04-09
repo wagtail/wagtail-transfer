@@ -67,12 +67,12 @@ export class PagesAPI {
 class ModelsQuery {
   constructor(api, modelPath) {
     this.api = api;
-    this.modelPath = `${modelPath}/` ? modelPath : modelPath;
+    this.modelPath = modelPath ? `${modelPath}/` : modelPath;
   }
 
-  getModel() {
-    console.log("getModel()", `${this.api.endpointUrl}${this.modelPath}?models=True`)
-    return get(`${this.api.endpointUrl}${this.modelPath}?models=True`);
+  getModel(overwriteModelPath='') {
+    const modelPath = overwriteModelPath.length ? `&model=${overwriteModelPath}` : ''
+    return get(`${this.api.endpointUrl}?models=True${modelPath}`);
   }
 }
 

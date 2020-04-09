@@ -77,7 +77,6 @@ export function createReactModelChooser(
   document.body.appendChild(modalPlacement);
 
   const middleware = [thunkMiddleware];
-
   const store = createStore(
     pageChooser,
     {},
@@ -98,12 +97,12 @@ export function createReactModelChooser(
     <Provider store={store}>
       <ModelChooser
         onModalClose={onModalClose}
-        onPageChosen={page => {
+        onPageChosen={page => { // TODO rename to "onModelChosen"
           onPageChosen(page);
           onModalClose();
         }}
         initialParentPageId={initialParentPageId}
-        restrictPageTypes={null}
+        restrictPageTypes={null} // TODO remove this?
       />
     </Provider>,
     modalPlacement
