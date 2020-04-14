@@ -11,9 +11,6 @@ import ModelChooserSearchView from './views/ModelChooserSearchView';
 import PageChooserErrorView from './views/PageChooserErrorView';
 import ModelChooserBrowseView from './views/ModelChooserBrowseView';
 
-const getTotalPages = (totalItems, itemsPerPage) =>
-  Math.ceil(totalItems / itemsPerPage);
-
 const propTypes = {
   modelPath: PropTypes.any,
   browse: PropTypes.func.isRequired
@@ -36,7 +33,6 @@ class ModelChooser extends ModalWindow {
       isFetching,
       items,
       onPageChosen,
-      pageTypes,
       parent,
       search,
       totalItems,
@@ -80,9 +76,7 @@ class ModelChooser extends ModalWindow {
           <ModelChooserBrowseView
             parentPage={parent}
             items={items}
-            // pageTypes={pageTypes}
             // pageNumber={viewOptions.pageNumber}
-            // totalPages={getTotalPages(totalItems, 20)}
             onPageChosen={onPageChosen}
             onNavigate={onNavigate}
             onChangePage={onChangePage}
@@ -90,14 +84,11 @@ class ModelChooser extends ModalWindow {
         );
         break;
       case 'search':
-        // TODO this section
         view = (
           <ModelChooserSearchView
             items={items}
             totalItems={totalItems}
-            // pageTypes={pageTypes}
             // pageNumber={viewOptions.pageNumber}
-            // totalPages={getTotalPages(totalItems, 20)}
             onPageChosen={onPageChosen}
             onNavigate={onNavigate}
             onChangePage={onChangePage}
@@ -115,7 +106,7 @@ class ModelChooser extends ModalWindow {
 
     return (
       <div>
-        <PageChooserHeader onSearch={onSearch} searchEnabled={!error} />
+        <PageChooserHeader onSearch={onSearch} searchEnabled={!error} searchTitle="Choose a model" />
         <PageChooserSpinner isActive={isFetching}>{view}</PageChooserSpinner>
       </div>
     );
@@ -129,9 +120,8 @@ const mapStateToProps = state => ({
   viewName: state.viewName,
   viewOptions: state.viewOptions,
   parent: state.parent,
-  items: state.items,
   totalItems: state.totalItems,
-  pageTypes: state.pageTypes,
+  items: state.items,
   isFetching: state.isFetching,
   error: state.error
 });

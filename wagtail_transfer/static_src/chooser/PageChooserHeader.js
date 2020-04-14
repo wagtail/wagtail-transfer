@@ -3,15 +3,18 @@ import PropTypes from 'prop-types';
 
 const propTypes = {
   onSearch: PropTypes.func.isRequired,
-  searchEnabled: PropTypes.bool.isRequired
+  searchEnabled: PropTypes.bool.isRequired,
+  searchTitle: PropTypes.string
 };
 
-const PageChooserHeader = ({ onSearch, searchEnabled }) => (
+const PageChooserHeader = ({ onSearch, searchEnabled, searchTitle }) => (
   <header className="nice-padding hasform">
     <div className="row">
       <div className="left">
         <div className="col">
-          <h1 className="icon icon-doc-empty-inverse">Choose a page</h1>
+          <h1 className="icon icon-doc-empty-inverse">
+            {!searchTitle ? "Choose a page" : searchTitle}
+          </h1>
         </div>
         <form className="col search-form" noValidate={true}>
           <ul className="fields">
