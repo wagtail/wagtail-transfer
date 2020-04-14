@@ -69,14 +69,14 @@ class ModelsQuery {
     this.query = query;
   }
 
-  getModel(overwriteModelPath='') {
+  getModel(modelPath='') {
     let encodedQueryParams = ''
     if(this.query) {
       encodedQueryParams = Object.entries(this.query)
         .map(kv => kv.map(encodeURIComponent).join('='))
         .join('&');
     }
-    const modelPath = overwriteModelPath.length ? `&model=${overwriteModelPath}` : ''
+    modelPath = modelPath.length ? `&model=${modelPath}` : ''
     return get(`${this.api.endpointUrl}?models=True${modelPath}&${encodedQueryParams}`);
   }
 }
