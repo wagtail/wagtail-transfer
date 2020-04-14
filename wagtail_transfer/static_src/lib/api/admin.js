@@ -63,14 +63,6 @@ export class PagesAPI {
   }
 }
 
-
-
-
-
-
-
-
-
 class ModelsQuery {
   constructor(api, query) {
     this.api = api;
@@ -88,8 +80,6 @@ class ModelsQuery {
     return get(`${this.api.endpointUrl}?models=True${modelPath}&${encodedQueryParams}`);
   }
 }
-
-
 
 export class ModelsAPI {
   constructor(endpointUrl) {

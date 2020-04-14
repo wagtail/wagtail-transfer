@@ -191,6 +191,7 @@ export function searchModels(queryString, pageNumber) {
 
     const query = api.query({
       search: queryString
+      // TODO: Add `models: label` to this for searching through a model.
     });
 
     return query
