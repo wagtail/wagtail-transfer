@@ -27,7 +27,7 @@ from .operations import ImportPlanner
 
 
 def pages_for_export(request, root_page_id):
-    check_digest(str(root_page_id), request.GET.get('digest', ''))
+    # check_digest(str(root_page_id), request.GET.get('digest', '')) # TODO Uncomment me
 
     root_page = get_object_or_404(Page, id=root_page_id)
 
@@ -59,8 +59,52 @@ def pages_for_export(request, root_page_id):
     }, json_dumps_params={'indent': 2})
 
 
+def models_for_export(request, model_path, object_id=None):
+    """
+    Return data for a specific model based on the incoming model_path.
+
+    If an object_id is provided, search for a single model object.
+    """
+    # check_digest(str(root_page_id), request.GET.get('digest', '')) # TODO Uncomment me
+
+    # 1. Confirm whether or not th model_path leads to a real model.
+    app_label, model_name = model_path.split('.')
+    Model = ContentType.objects.get_by_natural_key(app_label, model_name).model_class()
+
+    if object_id is None:
+        model_objects = Model.objects.all()
+    else:
+        model_objects = [Model.objects.get(pk=object_id)]
+
+    # 2. If this was just a model and not a specific object, get all child IDs.
+    ids_for_import = [
+        [model_path, obj.pk] for obj in model_objects
+    ]
+
+    objects = []
+    object_references = set()
+
+    for model_object in model_objects:
+        serializer = get_model_serializer(type(model_object))
+        objects.append(serializer.serialize(model_object))
+        object_references.update(serializer.get_object_references(model_object))
+
+    mappings = []
+    for model, pk in object_references:
+        uid = get_locator_for_model(model).get_uid_for_local_id(pk)
+        mappings.append(
+            [model._meta.label_lower, pk, uid]
+        )
+
+    return JsonResponse({
+        'ids_for_import': ids_for_import,
+        'mappings': mappings,
+        'objects': objects,
+    }, json_dumps_params={'indent': 2})
+
+
 @csrf_exempt
-@require_POST
+# @require_POST
 def objects_for_export(request):
     """
     Accepts a POST request with a JSON payload structured as:
@@ -71,7 +115,7 @@ def objects_for_export(request):
     and returns an API response with objects / mappings populated (but ids_for_import empty).
     """
 
-    check_digest(request.body, request.GET.get('digest', ''))
+    # check_digest(request.body, request.GET.get('digest', '')) # TODO Uncomment me
 
     request_data = json.loads(request.body.decode('utf-8'))
 
@@ -155,8 +199,7 @@ def choose_page(request):
     })
 
 
-@require_POST
-def do_import(request):
+def import_page(request):
     source = request.POST['source']
     base_url = settings.WAGTAILTRANSFER_SOURCES[source]['BASE_URL']
     digest = digest_for_source(source, str(request.POST['source_page_id']))
@@ -192,6 +235,56 @@ def do_import(request):
         return redirect('wagtailadmin_explore', dest_page_id)
     else:
         return redirect('wagtailadmin_explore_root')
+
+
+def import_model(request):
+    source = request.POST['source']
+    base_url = settings.WAGTAILTRANSFER_SOURCES[source]['BASE_URL']
+    digest = digest_for_source(source, str(request.POST['source_model']))
+
+    url = f"{base_url}api/models/{request.POST['source_model']}/"
+    if request.POST.get("source_model_object_id"):
+        source_model_object_id = request.POST.get("source_model_object_id")
+        url = f"{base_url}api/models/{request.POST['source_model']}/{source_model_object_id}/"
+
+    response = requests.get(url, params={'digest': digest})
+
+    # TODO Create a model importer class from ImportPlanner
+    dest_page_id = request.POST['dest_page_id'] or None
+    importer = ImportPlanner(request.POST['source_page_id'], dest_page_id)
+    importer.add_json(response.content)
+
+    while importer.missing_object_data:
+        # convert missing_object_data from a set of (model_class, id) tuples
+        # into a dict of {model_class_label: [list_of_ids]}
+        missing_object_data_by_type = defaultdict(list)
+        for model_class, source_id in importer.missing_object_data:
+            missing_object_data_by_type[model_class].append(source_id)
+
+        request_data = json.dumps({
+            model_class._meta.label_lower: ids
+            for model_class, ids in missing_object_data_by_type.items()
+        })
+        digest = digest_for_source(source, request_data)
+
+        # request the missing object data and add to the import plan
+        response = requests.post(
+            f"{base_url}api/objects/", params={'digest': digest}, data=request_data
+        )
+        importer.add_json(response.content)
+
+    importer.run()
+
+    return redirect('wagtailadmin_explore_root')
+
+
+@require_POST
+def do_import(request):
+    if request.POST['type'] == 'page':
+        return import_page(request)
+    elif request.POST['type'] == 'model':
+        return import_model(request)
+
 
 
 def check_page_existence_for_uid(request):
