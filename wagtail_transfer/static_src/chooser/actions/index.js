@@ -139,7 +139,6 @@ export const fetchModelsFailure = createAction('FETCH_FAILURE', message => ({
 
 export function browseModels(modelPath, pageNumber) {
   // TODO Remove pageNumber?
-  // HACK: Assuming page 1 is the root page
   // eslint-disable-next-line no-param-reassign
   if (modelPath === null) {
     modelPath = '';
@@ -156,7 +155,6 @@ export function browseModels(modelPath, pageNumber) {
 
     // HACK: The admin API currently doesn't serve the root page
     if (modelPath === '') {
-
       return query
         .getModel()
         .then(models => {
@@ -175,8 +173,6 @@ export function browseModels(modelPath, pageNumber) {
       query.getModel(modelPath),
     ])
       .then(([pages, parentPage]) => {
-
-
         dispatch(setView('browse', { modelPath, pageNumber }));
         dispatch(fetchPagesSuccess(pages, parentPage));
       })
@@ -185,3 +181,27 @@ export function browseModels(modelPath, pageNumber) {
       });
   };
 }
+
+
+export function searchModels(queryString, pageNumber) {
+  return (dispatch, getState) => {
+    dispatch(fetchModelsStart());
+
+    const { api } = getState();
+
+    const query = api.query({
+      search: queryString
+    });
+
+    return query
+      .getModel()
+      .then(pages => {
+        dispatch(setView('search', { queryString, pageNumber }));
+        dispatch(fetchModelsSuccess(pages, null));
+      })
+      .catch(error => {
+        dispatch(fetchModelsFailure(error.message));
+      });
+  };
+}
+

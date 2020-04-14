@@ -64,24 +64,39 @@ export class PagesAPI {
 }
 
 
+
+
+
+
+
+
+
 class ModelsQuery {
-  constructor(api, modelPath) {
+  constructor(api, query) {
     this.api = api;
-    this.modelPath = modelPath ? `${modelPath}/` : modelPath;
+    this.query = query;
   }
 
   getModel(overwriteModelPath='') {
+    let encodedQueryParams = ''
+    if(this.query) {
+      encodedQueryParams = Object.entries(this.query)
+        .map(kv => kv.map(encodeURIComponent).join('='))
+        .join('&');
+    }
     const modelPath = overwriteModelPath.length ? `&model=${overwriteModelPath}` : ''
-    return get(`${this.api.endpointUrl}?models=True${modelPath}`);
+    return get(`${this.api.endpointUrl}?models=True${modelPath}&${encodedQueryParams}`);
   }
 }
+
+
 
 export class ModelsAPI {
   constructor(endpointUrl) {
     this.endpointUrl = endpointUrl;
   }
 
-  query(modelPath = '') {
-    return new ModelsQuery(this, modelPath);
+  query(query) {
+    return new ModelsQuery(this, query);
   }
 }

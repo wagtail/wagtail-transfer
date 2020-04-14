@@ -481,21 +481,47 @@ class ModelsAPIViewSet(ViewSet):
     Note: This is an atypical use of a ViewSet.
     """
 
+    def _get_model_list(self, request) -> list:
+        """
+        Get the original list of models to display.
+
+        Apply optional text-based filtering if ?search is in the query params.
+        """
+
+        # Loop through the SNIPPET_MODELS and create a list of dicts with the
+        # model label and name.
+        return_items = [{
+            'label': model._meta.label_lower,
+            'name': model._meta.verbose_name.title(),
+        } for model in SNIPPET_MODELS]
+
+        # Check for a ?search query param.
+        query = request.GET.get("search", '')
+        if query:
+            query_lower = query.lower()
+            def filter_model_items(obj):
+                # Local function to filter `return_items` (ie. SNIPPET_MODELS)
+                # Looks for a text match in the SNIPPET_MODEL['name']
+                if query_lower in obj['name'].lower():
+                    return True
+            return_items = list(filter(filter_model_items, return_items))
+
+        return return_items
+
     def listing_view(self, request):
 
         if request.GET.get("model"):
+            # If there is a ?model query param, use the detail_view.
             return self.detail_view(request, request.GET.get("model"))
 
+        return_items = self._get_model_list(request)
+
+        # Return the structured data with the `meta` and `items` objects.
         data = {
             "meta": {
-                "total_count": len(SNIPPET_MODELS)
+                "total_count": len(return_items)
             },
-            "items": [
-                {
-                    'label': model._meta.label_lower,
-                    'name': model._meta.verbose_name.title(),
-                } for model in SNIPPET_MODELS
-            ]
+            "items": return_items
         }
         return Response(data)
 

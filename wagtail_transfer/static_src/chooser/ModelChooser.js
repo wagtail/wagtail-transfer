@@ -7,7 +7,7 @@ import ModalWindow from '../lib/ModalWindow';
 import * as actions from './actions';
 import PageChooserHeader from './PageChooserHeader';
 import PageChooserSpinner from './PageChooserSpinner';
-import PageChooserSearchView from './views/PageChooserSearchView';
+import ModelChooserSearchView from './views/ModelChooserSearchView';
 import PageChooserErrorView from './views/PageChooserErrorView';
 import ModelChooserBrowseView from './views/ModelChooserBrowseView';
 
@@ -38,19 +38,19 @@ class ModelChooser extends ModalWindow {
       onPageChosen,
       pageTypes,
       parent,
-      restrictPageTypes,
       search,
       totalItems,
       viewName,
       viewOptions
     } = this.props;
+
     // Event handlers
     const onSearch = queryString => {
       if (queryString) {
-        search(queryString, restrictPageTypes, 1);
+        search(queryString);
       } else {
         // Search box is empty, browse instead
-        browse('root', 1);
+        browse('');
       }
     };
 
@@ -65,7 +65,7 @@ class ModelChooser extends ModalWindow {
           browse(viewOptions.parentPageID, newPageNumber);
           break;
         case 'search':
-          search(viewOptions.queryString, restrictPageTypes, newPageNumber);
+          search(viewOptions.queryString, newPageNumber); // TODO NOTE I removed the middle param
           break;
         default:
           break;
@@ -81,7 +81,6 @@ class ModelChooser extends ModalWindow {
             parentPage={parent}
             items={items}
             // pageTypes={pageTypes}
-            // restrictPageTypes={restrictPageTypes}
             // pageNumber={viewOptions.pageNumber}
             // totalPages={getTotalPages(totalItems, 20)}
             onPageChosen={onPageChosen}
@@ -93,13 +92,12 @@ class ModelChooser extends ModalWindow {
       case 'search':
         // TODO this section
         view = (
-          <PageChooserSearchView
+          <ModelChooserSearchView
             items={items}
             totalItems={totalItems}
-            pageTypes={pageTypes}
-            restrictPageTypes={restrictPageTypes}
-            pageNumber={viewOptions.pageNumber}
-            totalPages={getTotalPages(totalItems, 20)}
+            // pageTypes={pageTypes}
+            // pageNumber={viewOptions.pageNumber}
+            // totalPages={getTotalPages(totalItems, 20)}
             onPageChosen={onPageChosen}
             onNavigate={onNavigate}
             onChangePage={onChangePage}
@@ -141,8 +139,8 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   browse: (parentPageID, pageNumber) =>
     dispatch(actions.browseModels(parentPageID, pageNumber)),
-  search: (queryString, restrictPageTypes, pageNumber) =>
-    dispatch(actions.search(queryString, restrictPageTypes, pageNumber))
+  search: (queryString) =>
+    dispatch(actions.searchModels(queryString))
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(ModelChooser);
