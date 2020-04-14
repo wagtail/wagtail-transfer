@@ -50,13 +50,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         addField('csrfmiddlewaretoken', csrfToken);
         addField('type', modelOrPage);
+        addField('source', source.value);
         if(modelOrPage === 'page') {
-          addField('source', source.value);
           addField('source_page_id', sourcePage.id);
           addField('dest_page_id', destPage ? destPage.id : null);
         } else {
-          addField('source', model.label);
-          addField('source_object_id', modelObjectId);
+          addField('source_model', model.label);
+          addField('source_model_object_id', modelObjectId);
         }
 
         document.body.appendChild(formElement);
