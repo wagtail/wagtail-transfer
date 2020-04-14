@@ -7,7 +7,6 @@ import PageChooserWidget from './components/PageChooserWidget';
 import ContentImportForm from './components/ContentImportForm';
 
 document.addEventListener('DOMContentLoaded', () => {
-  // TODO: Is this querySelectorAll being used?
   document
     .querySelectorAll('[data-wagtail-component="page-chooser"]')
     .forEach(element => {

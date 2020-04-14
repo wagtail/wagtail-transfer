@@ -102,7 +102,6 @@ export function createReactModelChooser(
           onModalClose();
         }}
         initialParentPageId={initialParentPageId}
-        restrictPageTypes={null} // TODO remove this?
       />
     </Provider>,
     modalPlacement
