@@ -522,7 +522,7 @@ class ModelsAPIViewSet(ViewSet):
         serializer = GenericModelSerializer(objects, many=True, model=model)
         data = {
             "meta": {
-                "total_count": objects.count()
+                "total_count": objects.count(),
             },
             "items": serializer.data
         }

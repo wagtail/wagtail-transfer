@@ -46,10 +46,6 @@ class ModelChooserResultSet extends React.Component {
 
     const results = items.map((page, i) => {
       const onChoose = e => {
-
-        // if('object_name' in page) {
-        // } else {
-        // }
         onPageChosen(page);
         e.preventDefault();
       };

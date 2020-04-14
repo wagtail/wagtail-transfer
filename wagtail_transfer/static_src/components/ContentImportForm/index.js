@@ -81,7 +81,6 @@ export default function ImportContentForm({
     if (!sourcePage && destPage) {
       setDestPage(null);
     }
-    console.log("SOURCE MODEL IS ", sourceModel, "AND SOURCE MODEL OBJECT IS ", sourceModelObjectId)
   }, [source, sourcePage, destPage, sourceModel, sourceModelObjectId]);
 
   const onClickSubmit = () => {
@@ -148,8 +147,8 @@ export default function ImportContentForm({
       setSourcePage(null)
 
       if('object_name' in model) {
-        setSourceModelObjectId(model)
-        setSourceModel(null)
+        setSourceModel(model)
+        setSourceModelObjectId(model.id)
       } else {
         setSourceModel(model)
         setSourceModelObjectId(null)
@@ -204,10 +203,11 @@ export default function ImportContentForm({
 
         <li className="transfer numbered">
           <div className="transfer list-container">
-            <h2>Select pages to import</h2>
+            <h2>Select pages or models to import</h2>
           </div>
           {source ? (
-              <div>
+              // TODO: Style this parent with flexbox; give child elements flex-basis: 500px; make mobile friendly
+              <div style={{'display': 'flex'}}>
                 <PageChooserWidget
                   apiBaseUrl={source.page_chooser_api}
                   value={sourcePage}
