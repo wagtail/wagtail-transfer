@@ -10,7 +10,7 @@ const propTypes = {
   items: PropTypes.array,
   // pageTypes: PropTypes.object,
   // restrictPageTypes: PropTypes.array,
-  onPageChosen: PropTypes.func.isRequired,
+  onObjectChosen: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
   onChangePage: PropTypes.func.isRequired
 };
@@ -22,8 +22,7 @@ const defaultProps = {
 class ModelChooserBrowseView extends React.Component {
   renderBreadcrumb() {
     const { parentPage, onNavigate } = this.props;
-    let breadcrumbItems = null;
-
+    let breadcrumbItems = null
     if (parentPage) {
       const ancestorPages = parentPage.meta.ancestors;
 
@@ -67,7 +66,7 @@ class ModelChooserBrowseView extends React.Component {
       items,
       // pageTypes,
       // restrictPageTypes,
-      onPageChosen,
+      onObjectChosen,
       onNavigate,
       onChangePage
     } = this.props;
@@ -84,7 +83,7 @@ class ModelChooserBrowseView extends React.Component {
           // pageTypes={pageTypes}
           // restrictPageTypes={restrictPageTypes}
           displayChildNavigation={true}
-          onPageChosen={onPageChosen}
+          onObjectChosen={onObjectChosen}
           onNavigate={onNavigate}
           onChangePage={onChangePage}
         />

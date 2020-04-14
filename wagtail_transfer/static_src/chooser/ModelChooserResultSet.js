@@ -7,7 +7,7 @@ import ModelChooserResult from './ModelChooserResult';
 const propTypes = {
   displayChildNavigation: PropTypes.bool,
   items: PropTypes.array,
-  onPageChosen: PropTypes.func.isRequired,
+  onObjectChosen: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
   // pageTypes: PropTypes.object,
   // parentPage: PropTypes.any,
@@ -35,7 +35,7 @@ class ModelChooserResultSet extends React.Component {
   render() {
     const {
       items,
-      onPageChosen,
+      onObjectChosen,
       onNavigate,
       // pageTypes,
       parentPage,
@@ -46,7 +46,7 @@ class ModelChooserResultSet extends React.Component {
 
     const results = items.map((page, i) => {
       const onChoose = e => {
-        onPageChosen(page);
+        onObjectChosen(page);
         e.preventDefault();
       };
 
@@ -71,7 +71,7 @@ class ModelChooserResultSet extends React.Component {
     let parent = null;
     if (parentPage) {
       const onChoose = e => {
-        onPageChosen(parentPage);
+        onObjectChosen(parentPage);
         e.preventDefault();
       };
 

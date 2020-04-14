@@ -10,7 +10,7 @@ const propTypes = {
   items: PropTypes.array,
   // pageTypes: PropTypes.object,
   // restrictPageTypes: PropTypes.array,
-  onPageChosen: PropTypes.func.isRequired,
+  onObjectChosen: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
   onChangePage: PropTypes.func.isRequired
 };
@@ -34,7 +34,7 @@ function ModelChooserSearchView(props) {
     items,
     // pageTypes,
     // restrictPageTypes,
-    onPageChosen,
+    onObjectChosen,
     onNavigate,
     onChangePage
   } = props;
@@ -48,7 +48,7 @@ function ModelChooserSearchView(props) {
         items={items}
         // pageTypes={pageTypes}
         // restrictPageTypes={restrictPageTypes}
-        onPageChosen={onPageChosen}
+        onObjectChosen={onObjectChosen}
         onNavigate={onNavigate}
         onChangePage={onChangePage}
       />

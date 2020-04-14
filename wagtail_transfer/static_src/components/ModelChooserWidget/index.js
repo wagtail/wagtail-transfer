@@ -10,7 +10,7 @@ export default function ModelChooserWidget({
   unchosenText
 }) {
   const onClickChoose = () => {
-    createReactModelChooser(apiBaseUrl, 'root', newValue => { // TODO: remove 'root' or re-purpose it
+    createReactModelChooser(apiBaseUrl, newValue => {
       onChange(newValue);
     });
   };

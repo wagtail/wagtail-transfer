@@ -70,8 +70,7 @@ window.createReactPageChooser = createReactPageChooser;
 
 export function createReactModelChooser(
   apiBaseUrl,
-  initialParentPageId,
-  onPageChosen
+  onObjectChosen
 ) {
   const modalPlacement = document.createElement('div');
   document.body.appendChild(modalPlacement);
@@ -97,11 +96,10 @@ export function createReactModelChooser(
     <Provider store={store}>
       <ModelChooser
         onModalClose={onModalClose}
-        onPageChosen={object => { // TODO rename to "onModelChosen"
-          onPageChosen(object);
+        onObjectChosen={object => {
+          onObjectChosen(object);
           onModalClose();
         }}
-        initialParentPageId={initialParentPageId}
       />
     </Provider>,
     modalPlacement

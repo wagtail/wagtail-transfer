@@ -126,7 +126,6 @@ export function search(queryString, restrictPageTypes, pageNumber) {
   };
 }
 
-
 export const fetchModelsStart = createAction('FETCH_START');
 export const fetchModelsSuccess = createAction(
   'FETCH_SUCCESS',
@@ -135,7 +134,6 @@ export const fetchModelsSuccess = createAction(
 export const fetchModelsFailure = createAction('FETCH_FAILURE', message => ({
   message
 }));
-
 
 export function browseModels(modelPath, pageNumber) {
   // TODO Remove pageNumber?
@@ -147,13 +145,9 @@ export function browseModels(modelPath, pageNumber) {
   return (dispatch, getState) => {
     dispatch(fetchModelsStart());
 
-
     const { api } = getState();
-
     const query = api.query();
 
-
-    // HACK: The admin API currently doesn't serve the root page
     if (modelPath === '') {
       return query
         .getModel()
@@ -167,17 +161,15 @@ export function browseModels(modelPath, pageNumber) {
         });
     }
 
-
-
     return Promise.all([
       query.getModel(modelPath),
     ])
-      .then(([pages, parentPage]) => {
+      .then(([models, parentPage]) => {
         dispatch(setView('browse', { modelPath, pageNumber }));
-        dispatch(fetchPagesSuccess(pages, parentPage));
+        dispatch(fetchModelsSuccess(models, parentPage));
       })
       .catch(error => {
-        dispatch(fetchPagesFailure(error.message));
+        dispatch(fetchModelsFailure(error.message));
       });
   };
 }

@@ -32,7 +32,7 @@ class ModelChooser extends ModalWindow {
       error,
       isFetching,
       items,
-      onPageChosen,
+      onObjectChosen,
       parent,
       search,
       totalItems,
@@ -45,23 +45,23 @@ class ModelChooser extends ModalWindow {
       if (queryString) {
         search(queryString);
       } else {
-        // Search box is empty, browse instead
-        browse('');
+        browse();
       }
     };
 
     const onNavigate = page => {
-      browse(page.label, 1);
+      browse(page.label);
     };
 
     const onChangePage = newPageNumber => {
       // Used for pagination
+      console.log("newPageNumber is", newPageNumber)
       switch (viewName) {
         case 'browse':
           browse(viewOptions.parentPageID, newPageNumber);
           break;
         case 'search':
-          search(viewOptions.queryString, newPageNumber); // TODO NOTE I removed the middle param
+          search(viewOptions.queryString, newPageNumber);
           break;
         default:
           break;
@@ -77,7 +77,7 @@ class ModelChooser extends ModalWindow {
             parentPage={parent}
             items={items}
             // pageNumber={viewOptions.pageNumber}
-            onPageChosen={onPageChosen}
+            onObjectChosen={onObjectChosen}
             onNavigate={onNavigate}
             onChangePage={onChangePage}
           />
@@ -89,7 +89,7 @@ class ModelChooser extends ModalWindow {
             items={items}
             totalItems={totalItems}
             // pageNumber={viewOptions.pageNumber}
-            onPageChosen={onPageChosen}
+            onObjectChosen={onObjectChosen}
             onNavigate={onNavigate}
             onChangePage={onChangePage}
           />
