@@ -97,8 +97,8 @@ export function createReactModelChooser(
     <Provider store={store}>
       <ModelChooser
         onModalClose={onModalClose}
-        onPageChosen={page => { // TODO rename to "onModelChosen"
-          onPageChosen(page);
+        onPageChosen={object => { // TODO rename to "onModelChosen"
+          onPageChosen(object);
           onModalClose();
         }}
         initialParentPageId={initialParentPageId}

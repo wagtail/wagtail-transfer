@@ -2,7 +2,6 @@ import * as React from 'react';
 
 import { createReactModelChooser } from '../../chooser';
 
-// customThing()
 export default function ModelChooserWidget({
   apiBaseUrl,
   value,

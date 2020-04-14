@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const csrfToken = element.dataset.csrfToken;
 
       const onSubmit = (source, sourcePage, destPage, model, modelObjectId) => {
-        const modelOrPage = model ? 'model' : 'page';
+        const modelOrPage = model || modelObjectId ? 'model' : 'page';
         const formElement = document.createElement('form');
         formElement.action = action;
         formElement.method = 'post';
@@ -56,12 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
           addField('source_page_id', sourcePage.id);
           addField('dest_page_id', destPage ? destPage.id : null);
         } else {
-          addField('source', source.value);
-          addField('source_object_id', sourcePage.id);
+          addField('source', model.label);
+          addField('source_object_id', modelObjectId);
         }
 
         document.body.appendChild(formElement);
-        // formElement.submit();
+        formElement.submit();
       };
 
       ReactDOM.render(
