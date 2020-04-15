@@ -23,7 +23,7 @@ from .locators import get_locator_for_model
 from .models import get_model_for_path
 from .serializers import get_model_serializer
 
-from .operations import ImportPlanner
+from .operations import ImportPlanner, ImportModelPlanner
 
 
 def pages_for_export(request, root_page_id):
@@ -239,19 +239,17 @@ def import_page(request):
 
 def import_model(request):
     source = request.POST['source']
+    model = request.POST['source_model']
     base_url = settings.WAGTAILTRANSFER_SOURCES[source]['BASE_URL']
-    digest = digest_for_source(source, str(request.POST['source_model']))
+    digest = digest_for_source(source, model)
 
-    url = f"{base_url}api/models/{request.POST['source_model']}/"
+    url = f"{base_url}api/models/{model}/"
     if request.POST.get("source_model_object_id"):
         source_model_object_id = request.POST.get("source_model_object_id")
-        url = f"{base_url}api/models/{request.POST['source_model']}/{source_model_object_id}/"
+        url = f"{url}{source_model_object_id}/"
 
     response = requests.get(url, params={'digest': digest})
-
-    # TODO Create a model importer class from ImportPlanner
-    dest_page_id = request.POST['dest_page_id'] or None
-    importer = ImportPlanner(request.POST['source_page_id'], dest_page_id)
+    importer = ImportModelPlanner(model)
     importer.add_json(response.content)
 
     while importer.missing_object_data:
@@ -272,7 +270,6 @@ def import_model(request):
             f"{base_url}api/objects/", params={'digest': digest}, data=request_data
         )
         importer.add_json(response.content)
-
     importer.run()
 
     return redirect('wagtailadmin_explore_root')
