@@ -23,7 +23,7 @@ from .locators import get_locator_for_model
 from .models import get_model_for_path
 from .serializers import get_model_serializer
 
-from .operations import ImportPlanner, ImportModelPlanner
+from .operations import ImportPlanner
 
 
 def pages_for_export(request, root_page_id):
@@ -207,7 +207,10 @@ def import_page(request):
     response = requests.get(f"{base_url}api/pages/{request.POST['source_page_id']}/", params={'digest': digest})
 
     dest_page_id = request.POST['dest_page_id'] or None
-    importer = ImportPlanner(request.POST['source_page_id'], dest_page_id)
+    importer = ImportPlanner(
+        root_page_source_pk=request.POST['source_page_id'],
+        destination_parent_id=dest_page_id,
+    )
     importer.add_json(response.content)
 
     while importer.missing_object_data:
@@ -249,7 +252,7 @@ def import_model(request):
         url = f"{url}{source_model_object_id}/"
 
     response = requests.get(url, params={'digest': digest})
-    importer = ImportModelPlanner(model)
+    importer = ImportPlanner(model=model)
     importer.add_json(response.content)
 
     while importer.missing_object_data:
