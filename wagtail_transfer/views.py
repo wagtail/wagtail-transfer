@@ -27,7 +27,7 @@ from .operations import ImportPlanner
 
 
 def pages_for_export(request, root_page_id):
-    # check_digest(str(root_page_id), request.GET.get('digest', '')) # TODO Uncomment me
+    check_digest(str(root_page_id), request.GET.get('digest', ''))
 
     root_page = get_object_or_404(Page, id=root_page_id)
 
@@ -65,7 +65,7 @@ def models_for_export(request, model_path, object_id=None):
 
     If an object_id is provided, search for a single model object.
     """
-    # check_digest(str(root_page_id), request.GET.get('digest', '')) # TODO Uncomment me
+    check_digest(str(model_path), request.GET.get('digest', ''))
 
     # 1. Confirm whether or not th model_path leads to a real model.
     app_label, model_name = model_path.split('.')
@@ -104,7 +104,7 @@ def models_for_export(request, model_path, object_id=None):
 
 
 @csrf_exempt
-# @require_POST
+@require_POST
 def objects_for_export(request):
     """
     Accepts a POST request with a JSON payload structured as:
@@ -115,7 +115,7 @@ def objects_for_export(request):
     and returns an API response with objects / mappings populated (but ids_for_import empty).
     """
 
-    # check_digest(request.body, request.GET.get('digest', '')) # TODO Uncomment me
+    check_digest(request.body, request.GET.get('digest', ''))
 
     request_data = json.loads(request.body.decode('utf-8'))
 
