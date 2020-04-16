@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 
 const propTypes = {
-  isChoosable: PropTypes.bool.isRequired,
   isNavigable: PropTypes.bool,
   isParent: PropTypes.bool,
   onChoose: PropTypes.func.isRequired,
@@ -25,30 +24,22 @@ function capitalizeFirstLetter(text) {
 
 class ModelChooserResult extends React.Component {
   renderTitle() {
-    const { isChoosable, onChoose, page } = this.props;
-    if (isChoosable) {
-      return (
-        <td className="title u-vertical-align-top" data-listing-page-title="">
-          <h2>
-            <a
-              onClick={onChoose}
-              className="choose-page"
-              href="#"
-              data-id={page.id}
-              data-title={page.title}
-              data-url="#" // {page.meta.html_url}
-              data-edit-url="/admin/pages/{page.id}/edit/"
-            >
-              {page.object_name ? page.object_name : page.name}
-            </a>
-          </h2>
-        </td>
-      );
-    }
-
+    const { onChoose, page } = this.props;
     return (
       <td className="title u-vertical-align-top" data-listing-page-title="">
-        <h2>{page.object_name ? page.object_name : page.name}</h2>
+        <h2>
+          <a
+            onClick={onChoose}
+            className="choose-page"
+            href="#"
+            data-id={page.id}
+            data-title={page.title}
+            data-url="#"
+            data-edit-url="/admin/pages/{page.id}/edit/"
+          >
+            {page.object_name ? page.object_name : page.name}
+          </a>
+        </h2>
       </td>
     );
   }
@@ -75,15 +66,11 @@ class ModelChooserResult extends React.Component {
   }
 
   render() {
-    const { isParent, isChoosable } = this.props;
+    const { isParent } = this.props;
     const classNames = [];
 
     if (isParent) {
       classNames.push('index');
-    }
-
-    if (!isChoosable) {
-      classNames.push('disabled');
     }
 
     return (

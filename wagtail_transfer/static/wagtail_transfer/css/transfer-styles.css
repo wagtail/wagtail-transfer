@@ -17,6 +17,12 @@
     vertical-align: top;
 }
 
+@media(min-width:950px) {
+    .transfer.chooser-parent {
+        display: flex;
+    }
+}
+
 button.link {
 	font-size: 0.85em;
 	background: none;

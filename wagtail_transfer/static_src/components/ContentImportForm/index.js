@@ -206,8 +206,7 @@ export default function ImportContentForm({
             <h2>Select pages or models to import</h2>
           </div>
           {source ? (
-              // TODO: Style this parent with flexbox; give child elements flex-basis: 500px; make mobile friendly
-              <div style={{'display': 'flex'}}>
+              <div className="transfer chooser-parent">
                 <PageChooserWidget
                   apiBaseUrl={source.page_chooser_api}
                   value={sourcePage}
