@@ -58,7 +58,6 @@ class ModelChooserResultSet extends React.Component {
         <ModelChooserResult
           key={i}
           page={page}
-          isChoosable={true} // TODO: Remove this as every object and model will be choosable
           isNavigable={this.pageIsNavigable(page)}
           onChoose={onChoose}
           onNavigate={handleNavigate}
@@ -83,7 +82,6 @@ class ModelChooserResultSet extends React.Component {
         <ModelChooserResult
           page={parentPage}
           isParent={true}
-          isChoosable={true} // TODO: Remove this as every object and model will be choosable
           isNavigable={this.pageIsNavigable(page)}
           onChoose={onChoose}
           onNavigate={handleNavigate}
