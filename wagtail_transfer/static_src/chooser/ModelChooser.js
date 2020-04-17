@@ -21,6 +21,7 @@ const defaultProps = {
 };
 
 class ModelChooser extends ModalWindow {
+
   componentDidMount() {
     const { browse, modelPath } = this.props;
     browse(modelPath);
@@ -37,7 +38,9 @@ class ModelChooser extends ModalWindow {
       search,
       totalItems,
       viewName,
-      viewOptions
+      viewOptions,
+      changeModelModalView,
+      modelModalView
     } = this.props;
 
     // Event handlers
@@ -50,6 +53,7 @@ class ModelChooser extends ModalWindow {
     };
 
     const onNavigate = page => {
+      // changeModelModalView('modelObjectList')
       browse(page.label);
     };
 
@@ -66,7 +70,7 @@ class ModelChooser extends ModalWindow {
           break;
       }
     };
-
+    console.log("ModeChooser.js is", modelModalView)
     // Views
     let view = null;
     switch (viewName) {
@@ -79,6 +83,7 @@ class ModelChooser extends ModalWindow {
             onObjectChosen={onObjectChosen}
             onNavigate={onNavigate}
             onChangePage={onChangePage}
+            resultType={viewOptions.modelPath ? "modelObjectList" : "model"}
           />
         );
         break;

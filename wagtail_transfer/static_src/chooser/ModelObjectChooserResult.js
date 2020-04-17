@@ -17,11 +17,6 @@ const defaultProps = {
   isParent: false
 };
 
-// Capitalizes first letter without making any other letters lowercase
-function capitalizeFirstLetter(text) {
-  return text[0].toUpperCase() + text.slice(1);
-}
-
 class ModelChooserResult extends React.Component {
   renderTitle() {
     const { onChoose, page } = this.props;
@@ -44,26 +39,6 @@ class ModelChooserResult extends React.Component {
     );
   }
 
-  renderChildren() {
-    const { isNavigable, onNavigate, page } = this.props;
-
-    if (isNavigable) {
-      return (
-        <td className="children">
-          <a
-            href="#"
-            onClick={onNavigate}
-            className="icon text-replace icon-arrow-right navigate-pages"
-            title={`Explore data  ${page.name}`}
-          >
-            Explore
-          </a>
-        </td>
-      );
-    }
-
-    return <td />;
-  }
 
   render() {
     const { isParent } = this.props;
@@ -76,7 +51,6 @@ class ModelChooserResult extends React.Component {
     return (
       <tr className={classNames.join(' ')}>
         {this.renderTitle()}
-        {this.renderChildren()}
       </tr>
     );
   }

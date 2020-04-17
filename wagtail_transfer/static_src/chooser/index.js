@@ -6,7 +6,7 @@ import thunkMiddleware from 'redux-thunk';
 
 import { PagesAPI, ModelsAPI } from '../lib/api/admin';
 import PageChooser from './PageChooser';
-import pageChooser from './reducers';
+import { pageChooser, modelChooser } from './reducers';
 import { setApi } from './actions';
 
 import ModelChooser from './ModelChooser';
@@ -70,14 +70,16 @@ window.createReactPageChooser = createReactPageChooser;
 
 export function createReactModelChooser(
   apiBaseUrl,
-  onObjectChosen
+  onObjectChosen,
+  changeModelModalView,
+  modelModalView
 ) {
   const modalPlacement = document.createElement('div');
   document.body.appendChild(modalPlacement);
 
   const middleware = [thunkMiddleware];
   const store = createStore(
-    pageChooser,
+    modelChooser,
     {},
     compose(
       applyMiddleware(...middleware),
@@ -85,7 +87,9 @@ export function createReactModelChooser(
       window.devToolsExtension ? window.devToolsExtension() : f => f
     )
   );
+      console.log("NEW react modal is ", modelModalView)
 
+      console.log("Store is", store)
   store.dispatch(setApi(new ModelsAPI(apiBaseUrl)));
 
   const onModalClose = () => {
@@ -100,6 +104,8 @@ export function createReactModelChooser(
           onObjectChosen(object);
           onModalClose();
         }}
+        changeModelModalView={changeModelModalView}
+        modelModalView={modelModalView}
       />
     </Provider>,
     modalPlacement

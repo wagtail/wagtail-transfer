@@ -7,12 +7,14 @@ export default function ModelChooserWidget({
   value,
   onChange,
   chosenText,
-  unchosenText
+  unchosenText,
+  changeModelModalView,
+  modelModalView
 }) {
   const onClickChoose = () => {
     createReactModelChooser(apiBaseUrl, newValue => {
       onChange(newValue);
-    });
+    }, changeModelModalView, modelModalView);
   };
   const onClickClear = () => {
     onChange(null);
