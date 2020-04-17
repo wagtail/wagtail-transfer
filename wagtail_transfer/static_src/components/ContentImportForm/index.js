@@ -1,7 +1,7 @@
 import * as React from 'react';
 import PageChooserWidget from '../PageChooserWidget';
 import ModelChooserWidget from '../ModelChooserWidget';
-import { PagesAPI } from '../../lib/api/admin';
+import { PagesAPI, ModelsAPI } from '../../lib/api/admin';
 
 function SourceSelectorWidget({ sources, selectedSource, onChange }) {
   return (
@@ -28,14 +28,17 @@ function SourceSelectorWidget({ sources, selectedSource, onChange }) {
 
 function SubmitButton({ onClick, disabled, numPages, importingModel }) {
   let buttonText = 'Import';
+  let defaultImportType = 'page';
+  if(importingModel) {
+    defaultImportType = 'snippet';
+  }
+
   if (numPages !== null) {
     if (numPages == 1) {
-      buttonText = 'Import 1 page';
+      buttonText = `Import 1 ${defaultImportType}`;
     } else {
-      buttonText = `Import ${numPages} pages`;
+      buttonText = `Import ${numPages} ${defaultImportType}s`;
     }
-  } else if(importingModel) {
-    buttonText = 'Import Model'
   }
 
   return (
@@ -82,6 +85,22 @@ export default function ImportContentForm({
       setDestPage(null);
     }
   }, [source, sourcePage, destPage, sourceModel, sourceModelObjectId]);
+
+  React.useEffect(() => {
+    if(sourceModel && !sourceModelObjectId) {
+      // There is a sourceModel but no sourceModelObjectId
+      const fetchNumPages = async () => {
+        const api = new ModelsAPI(source.page_chooser_api).query()
+        const page = await api.getModel(sourceModel.label)
+        setNumPages(page.meta.total_count);
+      }
+      fetchNumPages()
+    } else if(sourceModelObjectId) {
+      // A modelObject was selected.
+      // Set num of imported pages to 0.
+      setNumPages(0);
+    }
+  }, [sourceModel, sourceModelObjectId])
 
   const onClickSubmit = () => {
     // The `onSubmit` function is found in static_src/index.js and is passed into
@@ -212,14 +231,14 @@ export default function ImportContentForm({
                   value={sourcePage}
                   onChange={changePageSource}
                   unchosenText="All child pages will be imported"
-                  chosenText={`This page has ${numPages - 1} child pages.`}
+                  chosenText={`This page has ${numPages - 1} child pages`}
                 />
                 <ModelChooserWidget
                   apiBaseUrl={source.page_chooser_api}
                   value={sourceModel || sourceModelObjectId}
                   onChange={changeModelSource}
-                  unchosenText="Select a model to import"
-                  chosenText="Model selected"
+                  unchosenText="Select a snippet to import"
+                  chosenText={numPages ? `This snippet has ${numPages} items` : 'Snippet selected'}
                 />
               </div>
           ) : (

@@ -55,7 +55,6 @@ class ModelChooser extends ModalWindow {
 
     const onChangePage = newPageNumber => {
       // Used for pagination
-      console.log("newPageNumber is", newPageNumber)
       switch (viewName) {
         case 'browse':
           browse(viewOptions.parentPageID, newPageNumber);
@@ -106,7 +105,7 @@ class ModelChooser extends ModalWindow {
 
     return (
       <div>
-        <PageChooserHeader onSearch={onSearch} searchEnabled={!error} searchTitle="Choose a model" />
+        <PageChooserHeader onSearch={onSearch} searchEnabled={!error} searchTitle="Choose a snippet" />
         <PageChooserSpinner isActive={isFetching}>{view}</PageChooserSpinner>
       </div>
     );

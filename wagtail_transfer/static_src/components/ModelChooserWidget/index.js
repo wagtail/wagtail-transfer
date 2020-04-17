@@ -62,7 +62,7 @@ export default function ModelChooserWidget({
             className="transfer bicolor button button-secondary action-choose icon icon-doc-empty-inverse"
             onClick={onClickChoose}
           >
-            Choose a model
+            Choose a snippet
           </button>
           <h6 className="transfer subtitle">{unchosenText}</h6>
         </div>
