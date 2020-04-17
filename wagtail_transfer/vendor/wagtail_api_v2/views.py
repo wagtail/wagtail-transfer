@@ -484,6 +484,7 @@ class ModelsAPIViewSet(GenericViewSet):
 
     pagination_class = ModelPagination
     serializer_class = GenericModelSerializer
+    queryset = None
 
     def _get_model_list(self, request) -> list:
         """
@@ -519,8 +520,13 @@ class ModelsAPIViewSet(GenericViewSet):
             return self.detail_view(request, request.GET.get("model"))
 
         return_items = self._get_model_list(request)
-        queryset = self.paginate_queryset(return_items)
-        return self.get_paginated_response(queryset)
+        data = {
+            'meta': {
+                'total_count': len(return_items)
+            },
+            'items': return_items
+        }
+        return Response(data)
 
     def detail_view(self, request, model_path):
         """Detail view accepts a model path such as app_name.model_name."""
@@ -542,14 +548,9 @@ class ModelsAPIViewSet(GenericViewSet):
             raise Http404("not found")
 
         objects = model.objects.all()
-        serializer = GenericModelSerializer(objects, many=True, model=model)
-        data = {
-            "meta": {
-                "total_count": objects.count(),
-            },
-            "items": serializer.data
-        }
-        return Response(data)
+        queryset = self.paginate_queryset(objects)
+        serializer = GenericModelSerializer(queryset, many=True, model=model)
+        return self.get_paginated_response(serializer.data)
 
     @classmethod
     def get_urlpatterns(cls):
