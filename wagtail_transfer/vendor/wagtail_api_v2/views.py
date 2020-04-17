@@ -16,12 +16,13 @@ from wagtail.api import APIField
 from wagtail.core.models import Page
 from wagtail.snippets.models import SNIPPET_MODELS
 
-from .filters import ChildOfFilter, DescendantOfFilter, FieldsFilter, OrderingFilter, SearchFilter
-from .pagination import WagtailPagination
-from .serializers import BaseSerializer, GenericModelSerializer, PageSerializer, get_serializer_class
-from .utils import (
-    BadRequestError, filter_page_type, get_object_detail_url, page_models_from_string,
-    parse_fields_parameter)
+from .filters import (ChildOfFilter, DescendantOfFilter, FieldsFilter, OrderingFilter,
+                      SearchFilter)
+from .pagination import WagtailPagination, ModelPagination
+from .serializers import (BaseSerializer, GenericModelSerializer, PageSerializer,
+                          get_serializer_class)
+from .utils import (BadRequestError, filter_page_type, get_object_detail_url,
+                    page_models_from_string, parse_fields_parameter)
 
 
 class BaseAPIViewSet(GenericViewSet):
@@ -472,7 +473,7 @@ class PagesAPIViewSet(BaseAPIViewSet):
         return context
 
 
-class ModelsAPIViewSet(ViewSet):
+class ModelsAPIViewSet(GenericViewSet):
     """
     Like the Pages API, this exposes data for models and model objects.
 
@@ -480,6 +481,9 @@ class ModelsAPIViewSet(ViewSet):
     Detail view will return a list of all the model objects.
     Note: This is an atypical use of a ViewSet.
     """
+
+    pagination_class = ModelPagination
+    serializer_class = GenericModelSerializer
 
     def _get_model_list(self, request) -> list:
         """
@@ -515,15 +519,8 @@ class ModelsAPIViewSet(ViewSet):
             return self.detail_view(request, request.GET.get("model"))
 
         return_items = self._get_model_list(request)
-
-        # Return the structured data with the `meta` and `items` objects.
-        data = {
-            "meta": {
-                "total_count": len(return_items)
-            },
-            "items": return_items
-        }
-        return Response(data)
+        queryset = self.paginate_queryset(return_items)
+        return self.get_paginated_response(queryset)
 
     def detail_view(self, request, model_path):
         """Detail view accepts a model path such as app_name.model_name."""
