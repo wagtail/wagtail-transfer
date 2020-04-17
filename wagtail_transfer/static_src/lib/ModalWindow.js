@@ -7,6 +7,7 @@ const propTypes = {
 
 class ModalWindow extends React.Component {
   // eslint-disable-next-line class-methods-use-this
+
   renderModalContents() {
     return <div>Empty</div>;
   }

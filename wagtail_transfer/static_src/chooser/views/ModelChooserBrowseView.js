@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import ModelChooserResultSet from '../ModelChooserResultSet';
+import ModelObjectChooserResultSet from '../ModelObjectChooserResultSet';
 
 const propTypes = {
   // pageNumber: PropTypes.number.isRequired,
@@ -9,7 +10,6 @@ const propTypes = {
   parentPage: PropTypes.object,
   items: PropTypes.array,
   // pageTypes: PropTypes.object,
-  // restrictPageTypes: PropTypes.array,
   onObjectChosen: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
   onChangePage: PropTypes.func.isRequired
@@ -65,30 +65,51 @@ class ModelChooserBrowseView extends React.Component {
       parentPage,
       items,
       // pageTypes,
-      // restrictPageTypes,
       onObjectChosen,
       onNavigate,
-      onChangePage
+      onChangePage,
+      resultType
     } = this.props;
-
-    return (
-      <div className="nice-padding">
-        <h2>Explorer</h2>
-        {this.renderBreadcrumb()}
-        <ModelChooserResultSet
-          // pageNumber={pageNumber}
-          // totalPages={totalPages}
-          parentPage={parentPage}
-          items={items}
-          // pageTypes={pageTypes}
-          // restrictPageTypes={restrictPageTypes}
-          displayChildNavigation={true}
-          onObjectChosen={onObjectChosen}
-          onNavigate={onNavigate}
-          onChangePage={onChangePage}
-        />
-      </div>
-    );
+    console.log("result type is", resultType)
+    if(resultType == "model") {
+      // Model listing view
+      return (
+        <div className="nice-padding">
+          <h2>Explorer</h2>
+          {this.renderBreadcrumb()}
+          <ModelChooserResultSet
+            // pageNumber={pageNumber}
+            // totalPages={totalPages}
+            parentPage={parentPage}
+            items={items}
+            // pageTypes={pageTypes}
+            displayChildNavigation={true}
+            onObjectChosen={onObjectChosen}
+            onNavigate={onNavigate}
+            onChangePage={onChangePage}
+          />
+        </div>
+      );
+    } else {
+      // Object result view.
+      return (
+        <div className="nice-padding">
+          <h2>Explorer</h2>
+          {this.renderBreadcrumb()}
+          <ModelObjectChooserResultSet
+            // pageNumber={pageNumber}
+            // totalPages={totalPages}
+            parentPage={parentPage}
+            items={items}
+            // pageTypes={pageTypes}
+            displayChildNavigation={true}
+            onObjectChosen={onObjectChosen}
+            onNavigate={onNavigate}
+            onChangePage={onChangePage}
+          />
+        </div>
+      )
+    }
   }
 }
 

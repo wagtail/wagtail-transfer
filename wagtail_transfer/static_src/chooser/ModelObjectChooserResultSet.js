@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 
 import PageChooserPagination from './PageChooserPagination';
 import ModelChooserResult from './ModelChooserResult';
+import ModelObjectChooserResult from './ModelObjectChooserResult';
 
 const propTypes = {
   displayChildNavigation: PropTypes.bool,
@@ -55,7 +56,7 @@ class ModelChooserResultSet extends React.Component {
         e.preventDefault();
       };
       return (
-        <ModelChooserResult
+        <ModelObjectChooserResult
           key={i}
           page={page}
           isNavigable={this.pageIsNavigable(page)}
@@ -92,15 +93,10 @@ class ModelChooserResultSet extends React.Component {
 
     return (
       <div className="page-results">
-        <table className="listing  chooser">
-          <colgroup>
-            <col />
-            <col width="10%" />
-          </colgroup>
+        <table className="listing chooser">
           <thead>
             <tr className="table-headers">
-              <th className="title">Snippet Name</th>
-              <th />
+              <th className="title">Item Name</th>
             </tr>
             {parent}
           </thead>
