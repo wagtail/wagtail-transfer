@@ -6,38 +6,26 @@ import ModelChooserResult from './ModelChooserResult';
 import ModelObjectChooserResult from './ModelObjectChooserResult';
 
 const propTypes = {
-  displayChildNavigation: PropTypes.bool,
   items: PropTypes.array,
   onObjectChosen: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
-  // pageTypes: PropTypes.object,
-  // parentPage: PropTypes.any,
-  // pageNumber: PropTypes.number.isRequired,
-  // totalPages: PropTypes.number.isRequired,
+  parentPage: PropTypes.any,
   onChangePage: PropTypes.func.isRequired
 };
 
 const defaultProps = {
-  displayChildNavigation: false,
   items: [],
-  pageTypes: {},
   parentPage: null
 };
 
 class ModelChooserResultSet extends React.Component {
-  pageIsNavigable(page) {
-    return !('id' in page);
-  }
 
   render() {
     const {
       items,
       onObjectChosen,
       onNavigate,
-      // pageTypes,
       parentPage,
-      // pageNumber,
-      // totalPages,
       onChangePage,
       nextPage,
       previousPage
@@ -57,7 +45,6 @@ class ModelChooserResultSet extends React.Component {
         <ModelObjectChooserResult
           key={i}
           model={page}
-          isNavigable={this.pageIsNavigable(page)}
           onChoose={onChoose}
           onNavigate={handleNavigate}
           modelType={parentPage || null}
@@ -79,12 +66,10 @@ class ModelChooserResultSet extends React.Component {
       };
       parent = (
         <ModelChooserResult
-          page={parentPage}
+          model={parentPage}
           isParent={true}
-          isNavigable={this.pageIsNavigable(page)}
           onChoose={onChoose}
           onNavigate={handleNavigate}
-          pageTypes={pageTypes}
         />
       );
     }
@@ -95,9 +80,6 @@ class ModelChooserResultSet extends React.Component {
         <ModelChooserPagination
           nextPage={nextPage}
           previousPage={previousPage}
-          // pageNumber={pageNumber}
-          // totalPages={totalPages}
-          totalPages={1}
           onChangePage={onChangePage}
         />
       )

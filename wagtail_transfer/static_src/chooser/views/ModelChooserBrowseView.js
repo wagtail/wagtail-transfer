@@ -80,11 +80,8 @@ class ModelChooserBrowseView extends React.Component {
           <h2>Explorer</h2>
           {this.renderBreadcrumb()}
           <ModelChooserResultSet
-            // pageNumber={pageNumber}
-            // totalPages={totalPages}
             parentPage={parentPage}
             items={items}
-            // pageTypes={pageTypes}
             displayChildNavigation={true}
             onObjectChosen={onObjectChosen}
             onNavigate={onNavigate}

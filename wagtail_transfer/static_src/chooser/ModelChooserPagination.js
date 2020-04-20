@@ -2,13 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const propTypes = {
-  totalPages: PropTypes.number.isRequired,
-  pageNumber: PropTypes.number,
-  // onChangePage: PropTypes.func.isRequired
+  onChangePage: PropTypes.func.isRequired
 };
 
 const defaultProps = {
-  pageNumber: 0
+  nextPage: null,
+  previousPage: null,
 };
 
 class PageChooserPagination extends React.Component {

@@ -6,12 +6,10 @@ const propTypes = {
   isParent: PropTypes.bool,
   onChoose: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
-  page: PropTypes.object.isRequired,
-  // pageTypes: PropTypes.object
+  model: PropTypes.object.isRequired
 };
 
 const defaultProps = {
-  // pageTypes: {},
   isParent: false
 };
 
@@ -22,7 +20,7 @@ function capitalizeFirstLetter(text) {
 
 class ModelChooserResult extends React.Component {
   renderTitle() {
-    const { onChoose, page: model } = this.props;
+    const { onChoose, model } = this.props;
     return (
       <td className="title u-vertical-align-top" data-listing-page-title="">
         <h2>
@@ -42,7 +40,7 @@ class ModelChooserResult extends React.Component {
   }
 
   renderChildren() {
-    const { onNavigate, page: model } = this.props;
+    const { onNavigate, model } = this.props;
 
     return (
       <td className="children">
