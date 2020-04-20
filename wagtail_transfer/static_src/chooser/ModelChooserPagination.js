@@ -70,7 +70,7 @@ class PageChooserPagination extends React.Component {
       <div className="pagination">
         {showPagination ? (
           <div>
-            {/* <p>{`Page ${pageNumber} of ${totalPages}.`}</p> */}
+            <p>&nbsp;</p> {/* TODO: Add `Page x of y.` */}
             <ul>
               {this.renderPrev()}
               {this.renderNext()}
