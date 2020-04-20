@@ -135,8 +135,13 @@ export const fetchModelsFailure = createAction('FETCH_FAILURE', message => ({
   message
 }));
 
-export function browseModels(modelPath, pageUrl) {
-  // TODO Remove pageUrl?
+export function browseModels(modelPath, paginationUrl) {
+  /**
+   * :modelPath is an optional parameter to get all objects from a particular model.
+   * :paginationUrl is an optional parameter that will overwrite the :modelPath param.
+   *  .. the paginationUrl comes from Django Rest Framework for the Model Chooser,
+   *  .. but the Page Chooser does not have this feature.
+   */
   // eslint-disable-next-line no-param-reassign
   if (modelPath === null) {
     modelPath = '';
@@ -152,7 +157,7 @@ export function browseModels(modelPath, pageUrl) {
       return query
         .getModel()
         .then(models => {
-          dispatch(setView('browse', { modelPath, pageUrl }));
+          dispatch(setView('browse', { modelPath, paginationUrl }));
           dispatch(fetchModelsSuccess(models, null));
         })
         .catch(error => {
@@ -161,7 +166,7 @@ export function browseModels(modelPath, pageUrl) {
     }
 
     return Promise.all([
-      query.getModel(modelPath, pageUrl),
+      query.getModel(modelPath, paginationUrl),
     ])
       .then(([models, parentPage]) => {
         let nextPage = null
@@ -182,7 +187,7 @@ export function browseModels(modelPath, pageUrl) {
 }
 
 
-export function searchModels(queryString, pageUrl) {
+export function searchModels(queryString, paginationUrl) {
   return (dispatch, getState) => {
     dispatch(fetchModelsStart());
 
@@ -196,7 +201,7 @@ export function searchModels(queryString, pageUrl) {
     return query
       .getModel()
       .then(pages => {
-        dispatch(setView('search', { queryString, pageUrl }));
+        dispatch(setView('search', { queryString, paginationUrl }));
         dispatch(fetchModelsSuccess(pages, null));
       })
       .catch(error => {
