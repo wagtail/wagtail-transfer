@@ -68,9 +68,11 @@ class ModelChooserBrowseView extends React.Component {
       onObjectChosen,
       onNavigate,
       onChangePage,
-      resultType
+      resultType,
+      nextPage,
+      previousPage
     } = this.props;
-    console.log("result type is", resultType)
+
     if(resultType == "model") {
       // Model listing view
       return (
@@ -106,6 +108,8 @@ class ModelChooserBrowseView extends React.Component {
             onObjectChosen={onObjectChosen}
             onNavigate={onNavigate}
             onChangePage={onChangePage}
+            nextPage={nextPage}
+            previousPage={previousPage}
           />
         </div>
       )

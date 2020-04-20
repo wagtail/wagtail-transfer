@@ -135,8 +135,8 @@ export const fetchModelsFailure = createAction('FETCH_FAILURE', message => ({
   message
 }));
 
-export function browseModels(modelPath, pageNumber) {
-  // TODO Remove pageNumber?
+export function browseModels(modelPath, pageUrl) {
+  // TODO Remove pageUrl?
   // eslint-disable-next-line no-param-reassign
   if (modelPath === null) {
     modelPath = '';
@@ -152,8 +152,7 @@ export function browseModels(modelPath, pageNumber) {
       return query
         .getModel()
         .then(models => {
-
-          dispatch(setView('browse', { modelPath, pageNumber }));
+          dispatch(setView('browse', { modelPath, pageUrl }));
           dispatch(fetchModelsSuccess(models, null));
         })
         .catch(error => {
@@ -162,10 +161,18 @@ export function browseModels(modelPath, pageNumber) {
     }
 
     return Promise.all([
-      query.getModel(modelPath),
+      query.getModel(modelPath, pageUrl),
     ])
       .then(([models, parentPage]) => {
-        dispatch(setView('browse', { modelPath, pageNumber }));
+        let nextPage = null
+        let previousPage = null
+        if('next' in models.meta) {
+          nextPage = models.meta.next
+        }
+        if('previous' in models.meta) {
+          previousPage = models.meta.previous
+        }
+        dispatch(setView('browse', { modelPath, nextPage, previousPage }));
         dispatch(fetchModelsSuccess(models, parentPage));
       })
       .catch(error => {
@@ -175,7 +182,7 @@ export function browseModels(modelPath, pageNumber) {
 }
 
 
-export function searchModels(queryString, pageNumber) {
+export function searchModels(queryString, pageUrl) {
   return (dispatch, getState) => {
     dispatch(fetchModelsStart());
 
@@ -189,7 +196,7 @@ export function searchModels(queryString, pageNumber) {
     return query
       .getModel()
       .then(pages => {
-        dispatch(setView('search', { queryString, pageNumber }));
+        dispatch(setView('search', { queryString, pageUrl }));
         dispatch(fetchModelsSuccess(pages, null));
       })
       .catch(error => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import PageChooserPagination from './PageChooserPagination';
+import ModelChooserPagination from './ModelChooserPagination';
 import ModelChooserResult from './ModelChooserResult';
 import ModelObjectChooserResult from './ModelObjectChooserResult';
 
@@ -14,7 +14,7 @@ const propTypes = {
   // parentPage: PropTypes.any,
   // pageNumber: PropTypes.number.isRequired,
   // totalPages: PropTypes.number.isRequired,
-  // onChangePage: PropTypes.func.isRequired
+  onChangePage: PropTypes.func.isRequired
 };
 
 const defaultProps = {
@@ -29,10 +29,6 @@ class ModelChooserResultSet extends React.Component {
     return !('id' in page);
   }
 
-  pageIsChoosable(page) {
-    return true;
-  }
-
   render() {
     const {
       items,
@@ -42,7 +38,9 @@ class ModelChooserResultSet extends React.Component {
       parentPage,
       // pageNumber,
       // totalPages,
-      // onChangePage
+      onChangePage,
+      nextPage,
+      previousPage
     } = this.props;
 
     const results = items.map((page, i) => {
@@ -58,7 +56,7 @@ class ModelChooserResultSet extends React.Component {
       return (
         <ModelObjectChooserResult
           key={i}
-          page={page}
+          model={page}
           isNavigable={this.pageIsNavigable(page)}
           onChoose={onChoose}
           onNavigate={handleNavigate}
@@ -91,24 +89,33 @@ class ModelChooserResultSet extends React.Component {
       );
     }
 
+    let pagination = null;
+    if(nextPage || previousPage) {
+      pagination = (
+        <ModelChooserPagination
+          nextPage={nextPage}
+          previousPage={previousPage}
+          // pageNumber={pageNumber}
+          // totalPages={totalPages}
+          totalPages={1}
+          onChangePage={onChangePage}
+        />
+      )
+    }
+
     return (
       <div className="page-results">
         <table className="listing chooser">
           <thead>
             <tr className="table-headers">
-              <th className="title">Item Name</th>
+              <th className="title">Select Snippet</th>
             </tr>
             {parent}
           </thead>
           <tbody>{results}</tbody>
         </table>
 
-        {/* TODO: Pagination?  */}
-        {/* <PageChooserPagination
-          pageNumber={pageNumber}
-          totalPages={totalPages}
-          onChangePage={onChangePage}
-        /> */}
+        {pagination}
       </div>
     );
   }

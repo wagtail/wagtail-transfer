@@ -33,12 +33,14 @@ function SubmitButton({ onClick, disabled, numPages, importingModel }) {
     defaultImportType = 'snippet';
   }
 
-  if (numPages !== null) {
+  if (numPages !== null && numPages !== 0) {
     if (numPages == 1) {
       buttonText = `Import 1 ${defaultImportType}`;
     } else {
       buttonText = `Import ${numPages} ${defaultImportType}s`;
     }
+  } else {
+    buttonText = `Import ${defaultImportType}`;
   }
 
   return (
@@ -70,6 +72,9 @@ export default function ImportContentForm({
   // A `sourceModelObjectId` is a specific model object the user wants to import.
   const [sourceModelObjectId, setSourceModelObjectId] = React.useState(null);
   const [modelModalView, setModelModalView] = React.useState('model');
+  // The number of pages (including child pages) that be imported when a
+  // user selects a page to import.
+  const [numPages, setNumPages] = React.useState(null);
 
   const [
     alreadyExistsAtDestination,
@@ -79,7 +84,6 @@ export default function ImportContentForm({
 
   React.useEffect(() => {
     setModelModalView(modelModalView)
-    console.log("modelModalView changed to", modelModalView)
   }, [modelModalView])
 
   React.useEffect(() => {
@@ -113,10 +117,6 @@ export default function ImportContentForm({
     // this class (ContentImportForm) as a JSX attribute.
     onSubmit(source, sourcePage, destPage, sourceModel, sourceModelObjectId);
   };
-
-  // The number of pages (including child pages) that be imported when a
-  // user selects a page to import.
-  const [numPages, setNumPages] = React.useState(null);
 
   React.useEffect(() => {
     /**
