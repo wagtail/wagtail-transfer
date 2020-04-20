@@ -187,22 +187,25 @@ export function browseModels(modelPath, paginationUrl) {
 }
 
 
-export function searchModels(queryString, paginationUrl) {
+export function searchModels(modelPath, queryString, paginationUrl) {
   return (dispatch, getState) => {
     dispatch(fetchModelsStart());
 
     const { api } = getState();
 
-    const query = api.query({
-      search: queryString
-      // TODO: Add `models: label` to this for searching through a model.
-    });
+    let searchQuery = {
+      search: queryString,
+    }
+    if(modelPath) {
+      searchQuery['model'] = modelPath
+    }
+    const query = api.query(searchQuery);
 
     return query
       .getModel()
-      .then(pages => {
-        dispatch(setView('search', { queryString, paginationUrl }));
-        dispatch(fetchModelsSuccess(pages, null));
+      .then(models => {
+        dispatch(setView('search', { modelPath, queryString }));
+        dispatch(fetchModelsSuccess(models, null));
       })
       .catch(error => {
         dispatch(fetchModelsFailure(error.message));

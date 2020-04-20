@@ -548,6 +548,18 @@ class ModelsAPIViewSet(GenericViewSet):
             raise Http404("not found")
 
         objects = model.objects.all()
+
+        if request.GET.get("search"):
+            # If there is a ?search parameter loop through the objects and compare
+            # the search query parameter to the objects __str__().
+            # Create a new list of objects to serialize based on any str to str matches
+            search_query = request.GET.get("search").lower()
+            new_objects = []
+            for index, obj in enumerate(list(objects)):
+                if search_query in obj.__str__().lower():
+                    new_objects.append(obj)
+            objects = new_objects
+
         queryset = self.paginate_queryset(objects)
         serializer = GenericModelSerializer(queryset, many=True, model=model)
         return self.get_paginated_response(serializer.data)

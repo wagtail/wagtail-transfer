@@ -70,9 +70,7 @@ window.createReactPageChooser = createReactPageChooser;
 
 export function createReactModelChooser(
   apiBaseUrl,
-  onObjectChosen,
-  changeModelModalView,
-  modelModalView
+  onObjectChosen
 ) {
   const modalPlacement = document.createElement('div');
   document.body.appendChild(modalPlacement);
@@ -102,8 +100,6 @@ export function createReactModelChooser(
           onObjectChosen(object);
           onModalClose();
         }}
-        changeModelModalView={changeModelModalView}
-        modelModalView={modelModalView}
       />
     </Provider>,
     modalPlacement
