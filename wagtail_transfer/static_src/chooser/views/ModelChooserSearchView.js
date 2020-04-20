@@ -5,11 +5,7 @@ import ModelChooserResultSet from '../ModelChooserResultSet';
 
 const propTypes = {
   totalItems: PropTypes.number.isRequired,
-  // pageNumber: PropTypes.number.isRequired,
-  // totalPages: PropTypes.number.isRequired,
   items: PropTypes.array,
-  // pageTypes: PropTypes.object,
-  // restrictPageTypes: PropTypes.array,
   onObjectChosen: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
   onChangePage: PropTypes.func.isRequired
@@ -29,11 +25,7 @@ const renderTitle = totalItems => {
 function ModelChooserSearchView(props) {
   const {
     totalItems,
-    // pageNumber,
-    // totalPages,
     items,
-    // pageTypes,
-    // restrictPageTypes,
     onObjectChosen,
     onNavigate,
     onChangePage
@@ -43,11 +35,7 @@ function ModelChooserSearchView(props) {
     <div className="nice-padding">
       <h2>{renderTitle(totalItems)}</h2>
       <ModelChooserResultSet
-        // pageNumber={pageNumber}
-        // totalPages={totalPages}
         items={items}
-        // pageTypes={pageTypes}
-        // restrictPageTypes={restrictPageTypes}
         onObjectChosen={onObjectChosen}
         onNavigate={onNavigate}
         onChangePage={onChangePage}
@@ -57,6 +45,5 @@ function ModelChooserSearchView(props) {
 }
 
 ModelChooserSearchView.propTypes = propTypes;
-// ModelChooserSearchView.defaultProps = defaultProps;
 
 export default ModelChooserSearchView;

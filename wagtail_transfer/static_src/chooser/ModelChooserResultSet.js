@@ -53,7 +53,7 @@ class ModelChooserResultSet extends React.Component {
       return (
         <ModelChooserResult
           key={i}
-          page={page}
+          model={page}
           onChoose={onChoose}
           onNavigate={handleNavigate}
         />
@@ -74,12 +74,10 @@ class ModelChooserResultSet extends React.Component {
       };
       parent = (
         <ModelChooserResult
-          page={parentPage}
+          model={parentPage}
           isParent={true}
-          isNavigable={this.pageIsNavigable(page)}
           onChoose={onChoose}
           onNavigate={handleNavigate}
-          pageTypes={pageTypes}
         />
       );
     }

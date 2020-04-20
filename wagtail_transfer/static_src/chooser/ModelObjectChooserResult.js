@@ -3,17 +3,13 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 
 const propTypes = {
-  isNavigable: PropTypes.bool,
   isParent: PropTypes.bool,
   onChoose: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
   model: PropTypes.object.isRequired,
-  // pageTypes: PropTypes.object
 };
 
 const defaultProps = {
-  // pageTypes: {},
-  isNavigable: false,
   isParent: false
 };
 
