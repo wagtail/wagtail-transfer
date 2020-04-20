@@ -48,8 +48,8 @@ function ModelChooserSearchView(props) {
   } else {
     return (
       <div className="nice-padding">
-        <h2>{renderTitle(totalItems)}  THIS IS FOR MODELOBJECLIST</h2>
-        <ModelChooserResultSet
+        <h2>{renderTitle(totalItems)}</h2>
+        <ModelObjectChooserResultSet
           items={items}
           onObjectChosen={onObjectChosen}
           onNavigate={onNavigate}

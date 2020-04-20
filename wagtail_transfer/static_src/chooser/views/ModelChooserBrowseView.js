@@ -5,11 +5,8 @@ import ModelChooserResultSet from '../ModelChooserResultSet';
 import ModelObjectChooserResultSet from '../ModelObjectChooserResultSet';
 
 const propTypes = {
-  // pageNumber: PropTypes.number.isRequired,
-  // totalPages: PropTypes.number.isRequired,
   parentPage: PropTypes.object,
   items: PropTypes.array,
-  // pageTypes: PropTypes.object,
   onObjectChosen: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
   onChangePage: PropTypes.func.isRequired
@@ -60,11 +57,8 @@ class ModelChooserBrowseView extends React.Component {
   }
   render() {
     const {
-      // pageNumber,
-      // totalPages,
       parentPage,
       items,
-      // pageTypes,
       onObjectChosen,
       onNavigate,
       onChangePage,
@@ -96,12 +90,8 @@ class ModelChooserBrowseView extends React.Component {
           <h2>Explorer</h2>
           {this.renderBreadcrumb()}
           <ModelObjectChooserResultSet
-            // pageNumber={pageNumber}
-            // totalPages={totalPages}
             parentPage={parentPage}
             items={items}
-            // pageTypes={pageTypes}
-            displayChildNavigation={true}
             onObjectChosen={onObjectChosen}
             onNavigate={onNavigate}
             onChangePage={onChangePage}
