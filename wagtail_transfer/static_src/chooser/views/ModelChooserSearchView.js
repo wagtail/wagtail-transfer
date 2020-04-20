@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 import ModelChooserResultSet from '../ModelChooserResultSet';
+import ModelObjectChooserResultSet from '../ModelObjectChooserResultSet';
 
 const propTypes = {
   totalItems: PropTypes.number.isRequired,
@@ -28,20 +29,35 @@ function ModelChooserSearchView(props) {
     items,
     onObjectChosen,
     onNavigate,
-    onChangePage
+    onChangePage,
+    resultType
   } = props;
 
-  return (
-    <div className="nice-padding">
-      <h2>{renderTitle(totalItems)}</h2>
-      <ModelChooserResultSet
-        items={items}
-        onObjectChosen={onObjectChosen}
-        onNavigate={onNavigate}
-        onChangePage={onChangePage}
-      />
-    </div>
-  );
+  if(resultType == "model") {
+    return (
+      <div className="nice-padding">
+        <h2>{renderTitle(totalItems)}</h2>
+        <ModelChooserResultSet
+          items={items}
+          onObjectChosen={onObjectChosen}
+          onNavigate={onNavigate}
+          onChangePage={onChangePage}
+        />
+      </div>
+    );
+  } else {
+    return (
+      <div className="nice-padding">
+        <h2>{renderTitle(totalItems)}  THIS IS FOR MODELOBJECLIST</h2>
+        <ModelChooserResultSet
+          items={items}
+          onObjectChosen={onObjectChosen}
+          onNavigate={onNavigate}
+          onChangePage={onChangePage}
+        />
+      </div>
+    );
+  }
 }
 
 ModelChooserSearchView.propTypes = propTypes;

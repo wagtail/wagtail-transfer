@@ -71,7 +71,6 @@ export default function ImportContentForm({
   const [sourceModel, setSourceModel] = React.useState(null);
   // A `sourceModelObjectId` is a specific model object the user wants to import.
   const [sourceModelObjectId, setSourceModelObjectId] = React.useState(null);
-  const [modelModalView, setModelModalView] = React.useState('model');
   // The number of pages (including child pages) that be imported when a
   // user selects a page to import.
   const [numPages, setNumPages] = React.useState(null);
@@ -80,11 +79,6 @@ export default function ImportContentForm({
     alreadyExistsAtDestination,
     setAlreadyExistsAtDestination
   ] = React.useState(null);
-
-
-  React.useEffect(() => {
-    setModelModalView(modelModalView)
-  }, [modelModalView])
 
   React.useEffect(() => {
     // Reset fields when prior fields are unset
@@ -245,8 +239,6 @@ export default function ImportContentForm({
                   onChange={changeModelSource}
                   unchosenText="Select a snippet to import"
                   chosenText={numPages ? `This snippet has ${numPages} items` : 'Snippet selected'}
-                  changeModelModalView={setModelModalView}
-                  modelModalView={modelModalView}
                 />
               </div>
           ) : (

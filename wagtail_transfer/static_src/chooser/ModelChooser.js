@@ -38,22 +38,19 @@ class ModelChooser extends ModalWindow {
       search,
       totalItems,
       viewName,
-      viewOptions,
-      changeModelModalView,
-      modelModalView
+      viewOptions
     } = this.props;
 
     // Event handlers
     const onSearch = queryString => {
       if (queryString) {
-        search(queryString);
+        search(viewOptions.modelPath, queryString);
       } else {
         browse();
       }
     };
 
     const onNavigate = page => {
-      // changeModelModalView('modelObjectList')
       browse(page.label);
     };
 
@@ -79,7 +76,6 @@ class ModelChooser extends ModalWindow {
           <ModelChooserBrowseView
             parentPage={parent}
             items={items}
-            // pageNumber={viewOptions.pageNumber}
             onObjectChosen={onObjectChosen}
             onNavigate={onNavigate}
             onChangePage={onChangePage}
@@ -94,10 +90,10 @@ class ModelChooser extends ModalWindow {
           <ModelChooserSearchView
             items={items}
             totalItems={totalItems}
-            // pageNumber={viewOptions.pageNumber}
             onObjectChosen={onObjectChosen}
             onNavigate={onNavigate}
             onChangePage={onChangePage}
+            resultType={viewOptions.modelPath ? "modelObjectList" : "model"}
           />
         );
         break;
@@ -135,8 +131,8 @@ const mapStateToProps = state => ({
 const mapDispatchToProps = dispatch => ({
   browse: (parentPageID, pageUrl) =>
     dispatch(actions.browseModels(parentPageID, pageUrl)),
-  search: (queryString) =>
-    dispatch(actions.searchModels(queryString))
+  search: (modelPath, queryString) =>
+    dispatch(actions.searchModels(modelPath, queryString))
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(ModelChooser);
