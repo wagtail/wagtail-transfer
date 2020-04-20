@@ -66,7 +66,9 @@ const defaultModelState = {
   viewName: 'browse',
   viewOptions: {
     modelPath: null,
-    pageNumber: 1
+    pageNumber: 1,
+    nextPage: null,
+    previousPage: null
   }
 };
 

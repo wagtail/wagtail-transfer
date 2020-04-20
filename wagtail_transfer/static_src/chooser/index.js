@@ -87,9 +87,7 @@ export function createReactModelChooser(
       window.devToolsExtension ? window.devToolsExtension() : f => f
     )
   );
-      console.log("NEW react modal is ", modelModalView)
 
-      console.log("Store is", store)
   store.dispatch(setApi(new ModelsAPI(apiBaseUrl)));
 
   const onModalClose = () => {

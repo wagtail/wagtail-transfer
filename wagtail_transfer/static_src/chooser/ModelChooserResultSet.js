@@ -1,7 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-import PageChooserPagination from './PageChooserPagination';
 import ModelChooserResult from './ModelChooserResult';
 
 const propTypes = {
@@ -28,10 +27,6 @@ class ModelChooserResultSet extends React.Component {
     return !('id' in page);
   }
 
-  pageIsChoosable(page) {
-    return true;
-  }
-
   render() {
     const {
       items,
@@ -54,14 +49,13 @@ class ModelChooserResultSet extends React.Component {
         onNavigate(page);
         e.preventDefault();
       };
+
       return (
         <ModelChooserResult
           key={i}
           page={page}
-          isNavigable={this.pageIsNavigable(page)}
           onChoose={onChoose}
           onNavigate={handleNavigate}
-          modelType={parentPage || null}
         />
       );
     });
@@ -106,13 +100,6 @@ class ModelChooserResultSet extends React.Component {
           </thead>
           <tbody>{results}</tbody>
         </table>
-
-        {/* TODO: Pagination?  */}
-        {/* <PageChooserPagination
-          pageNumber={pageNumber}
-          totalPages={totalPages}
-          onChangePage={onChangePage}
-        /> */}
       </div>
     );
   }

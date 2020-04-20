@@ -57,20 +57,20 @@ class ModelChooser extends ModalWindow {
       browse(page.label);
     };
 
-    const onChangePage = newPageNumber => {
+    const onChangePage = pageUrl => {
       // Used for pagination
       switch (viewName) {
         case 'browse':
-          browse(viewOptions.parentPageID, newPageNumber);
+          browse(viewOptions.modelPath, pageUrl);
           break;
         case 'search':
-          search(viewOptions.queryString, newPageNumber);
+          search(viewOptions.queryString, pageUrl);
           break;
         default:
           break;
       }
     };
-    console.log("ModeChooser.js is", modelModalView)
+
     // Views
     let view = null;
     switch (viewName) {
@@ -84,6 +84,8 @@ class ModelChooser extends ModalWindow {
             onNavigate={onNavigate}
             onChangePage={onChangePage}
             resultType={viewOptions.modelPath ? "modelObjectList" : "model"}
+            nextPage={viewOptions.nextPage ? viewOptions.nextPage : null}
+            previousPage={viewOptions.previousPage ? viewOptions.previousPage : null}
           />
         );
         break;
@@ -131,8 +133,8 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
-  browse: (parentPageID, pageNumber) =>
-    dispatch(actions.browseModels(parentPageID, pageNumber)),
+  browse: (parentPageID, pageUrl) =>
+    dispatch(actions.browseModels(parentPageID, pageUrl)),
   search: (queryString) =>
     dispatch(actions.searchModels(queryString))
 });

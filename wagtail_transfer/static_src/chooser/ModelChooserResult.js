@@ -3,7 +3,6 @@ import PropTypes from 'prop-types';
 import moment from 'moment';
 
 const propTypes = {
-  isNavigable: PropTypes.bool,
   isParent: PropTypes.bool,
   onChoose: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
@@ -13,7 +12,6 @@ const propTypes = {
 
 const defaultProps = {
   // pageTypes: {},
-  isNavigable: false,
   isParent: false
 };
 
@@ -24,20 +22,19 @@ function capitalizeFirstLetter(text) {
 
 class ModelChooserResult extends React.Component {
   renderTitle() {
-    const { onChoose, page } = this.props;
+    const { onChoose, page: model } = this.props;
     return (
       <td className="title u-vertical-align-top" data-listing-page-title="">
         <h2>
           <a
             onClick={onChoose}
             className="choose-page"
-            href={`/admin/pages/${page.id}/edit/`}
-            data-id={page.id}
-            data-title={page.title}
+            href="#"
+            data-id={model.id}
+            data-title={model.title}
             data-url="#"
-            data-edit-url={`/admin/pages/${page.id}/edit/`}
           >
-            {page.object_name ? page.object_name : page.name}
+            {model.object_name ? model.object_name : model.name}
           </a>
         </h2>
       </td>
@@ -45,24 +42,20 @@ class ModelChooserResult extends React.Component {
   }
 
   renderChildren() {
-    const { isNavigable, onNavigate, page } = this.props;
+    const { onNavigate, page: model } = this.props;
 
-    if (isNavigable) {
-      return (
-        <td className="children">
-          <a
-            href="#"
-            onClick={onNavigate}
-            className="icon text-replace icon-arrow-right navigate-pages"
-            title={`Explore data  ${page.name}`}
-          >
-            Explore
-          </a>
-        </td>
-      );
-    }
-
-    return <td />;
+    return (
+      <td className="children">
+        <a
+          href="#"
+          onClick={onNavigate}
+          className="icon text-replace icon-arrow-right navigate-pages"
+          title={`Explore data  ${model.name}`}
+        >
+          Explore
+        </a>
+      </td>
+    );
   }
 
   render() {

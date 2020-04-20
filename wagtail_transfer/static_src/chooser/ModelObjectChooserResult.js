@@ -7,7 +7,7 @@ const propTypes = {
   isParent: PropTypes.bool,
   onChoose: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
-  page: PropTypes.object.isRequired,
+  model: PropTypes.object.isRequired,
   // pageTypes: PropTypes.object
 };
 
@@ -19,20 +19,20 @@ const defaultProps = {
 
 class ModelChooserResult extends React.Component {
   renderTitle() {
-    const { onChoose, page } = this.props;
+    const { onChoose, model } = this.props;
     return (
-      <td className="title u-vertical-align-top" data-listing-page-title="">
+      <td className="title u-vertical-align-top">
         <h2>
           <a
             onClick={onChoose}
             className="choose-page"
-            href={`/admin/pages/${page.id}/edit/`}
-            data-id={page.id}
-            data-title={page.title}
+            href="#"
+            data-id={model.id}
+            data-title={model.object_name ? model.object_name : model.name}
             data-url="#"
-            data-edit-url={`/admin/pages/${page.id}/edit/`}
+            data-edit-url="#"
           >
-            {page.object_name ? page.object_name : page.name}
+            {model.object_name ? model.object_name : model.name}
           </a>
         </h2>
       </td>
