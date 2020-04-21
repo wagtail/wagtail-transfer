@@ -12,7 +12,7 @@ from wagtail.images.models import Image
 from wagtail_transfer.models import IDMapping
 from wagtail_transfer.operations import ImportPlanner
 from tests.models import (
-    Advert, Author, Avatar, ModelWithManyToMany, PageWithParentalManyToMany, PageWithRelatedPages,
+    Advert, Author, Avatar, Category, ModelWithManyToMany, PageWithParentalManyToMany, PageWithRelatedPages,
     PageWithRichText, PageWithStreamField, RedirectPage, SectionedPage, SimplePage, SponsoredPage
 )
 
@@ -30,6 +30,35 @@ class TestImport(TestCase):
 
     def tearDown(self):
         shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
+
+    def test_import_model(self):
+        # Import a Category
+        data = """{
+            "ids_for_import": [
+                ["tests.category", 1]
+            ],
+            "mappings": [
+                ["tests.category", 1, "11111111-1111-1111-1111-111111111111"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.category",
+                    "pk": 1,
+                    "fields": {
+                        "name": "Category Test Import",
+                        "colour": "red..ish?"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(model="tests.category")
+        importer.add_json(data)
+        importer.run()
+
+        cats = Category.objects.all()
+        self.assertEquals(cats.count(), 2)
+
 
     def test_import_pages(self):
         # make a draft edit to the homepage
