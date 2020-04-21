@@ -30,4 +30,4 @@ class WagtailTransferMenuItem(MenuItem):
 
 @hooks.register('register_admin_menu_item')
 def register_admin_menu_item():
-    return WagtailTransferMenuItem('Import pages', reverse('wagtail_transfer_admin:choose_page'), classnames='icon icon-doc-empty-inverse', order=10000)
+    return WagtailTransferMenuItem('Import', reverse('wagtail_transfer_admin:choose_page'), classnames='icon icon-doc-empty-inverse', order=10000)
