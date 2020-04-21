@@ -1,12 +1,12 @@
 import uuid
 
 from django.apps import apps
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 
-from wagtail_transfer.models import IDMapping, get_model_for_path, get_base_model
+from wagtail_transfer.models import IDMapping, get_base_model, get_model_for_path
 
+from django.contrib.contenttypes.models import ContentType
 
 # Namespace UUID common to all wagtail-transfer installances, used with uuid5 to generate
 # a predictable UUID for any given model-name / PK combination

@@ -1,17 +1,18 @@
 import json
 
 from django.conf import settings
-from django.db import models, transaction
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.functional import cached_property
+from django.db import models, transaction
 from modelcluster.models import ClusterableModel, get_all_child_relations
 from treebeard.mp_tree import MP_Node
+
 from wagtail.core.models import Page
 
 from .field_adapters import get_field_adapter
 from .locators import get_locator_for_model
 from .models import get_base_model, get_base_model_for_path, get_model_for_path
 
+from django.utils.functional import cached_property
 
 # Models which should be updated to their latest version when encountered in object references
 default_update_related_models = ['wagtailimages.image']

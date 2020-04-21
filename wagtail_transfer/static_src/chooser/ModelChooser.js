@@ -21,7 +21,6 @@ const defaultProps = {
 };
 
 class ModelChooser extends ModalWindow {
-
   componentDidMount() {
     const { browse, modelPath } = this.props;
     browse(modelPath);
@@ -79,9 +78,11 @@ class ModelChooser extends ModalWindow {
             onObjectChosen={onObjectChosen}
             onNavigate={onNavigate}
             onChangePage={onChangePage}
-            resultType={viewOptions.modelPath ? "modelObjectList" : "model"}
+            resultType={viewOptions.modelPath ? 'modelObjectList' : 'model'}
             nextPage={viewOptions.nextPage ? viewOptions.nextPage : null}
-            previousPage={viewOptions.previousPage ? viewOptions.previousPage : null}
+            previousPage={
+              viewOptions.previousPage ? viewOptions.previousPage : null
+            }
           />
         );
         break;
@@ -93,7 +94,7 @@ class ModelChooser extends ModalWindow {
             onObjectChosen={onObjectChosen}
             onNavigate={onNavigate}
             onChangePage={onChangePage}
-            resultType={viewOptions.modelPath ? "modelObjectList" : "model"}
+            resultType={viewOptions.modelPath ? 'modelObjectList' : 'model'}
           />
         );
         break;
@@ -108,7 +109,11 @@ class ModelChooser extends ModalWindow {
 
     return (
       <div>
-        <PageChooserHeader onSearch={onSearch} searchEnabled={!error} searchTitle="Choose a snippet" />
+        <PageChooserHeader
+          onSearch={onSearch}
+          searchEnabled={!error}
+          searchTitle="Choose a snippet"
+        />
         <PageChooserSpinner isActive={isFetching}>{view}</PageChooserSpinner>
       </div>
     );

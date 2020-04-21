@@ -1,7 +1,9 @@
-from wagtail.core.blocks import ListBlock, RichTextBlock, ChooserBlock, StreamBlock, StructBlock
+from functools import partial
+
+from wagtail.core.blocks import (ChooserBlock, ListBlock, RichTextBlock, StreamBlock,
+                                 StructBlock)
 
 from .richtext import get_reference_handler
-from functools import partial
 
 
 def get_references_using_handler(block, stream, references):

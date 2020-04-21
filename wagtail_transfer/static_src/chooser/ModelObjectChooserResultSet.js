@@ -19,7 +19,6 @@ const defaultProps = {
 };
 
 class ModelChooserResultSet extends React.Component {
-
   render() {
     const {
       items,
@@ -75,14 +74,14 @@ class ModelChooserResultSet extends React.Component {
     }
 
     let pagination = null;
-    if(nextPage || previousPage) {
+    if (nextPage || previousPage) {
       pagination = (
         <ModelChooserPagination
           nextPage={nextPage}
           previousPage={previousPage}
           onChangePage={onChangePage}
         />
-      )
+      );
     }
 
     return (

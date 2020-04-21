@@ -13,7 +13,7 @@ const PageChooserHeader = ({ onSearch, searchEnabled, searchTitle }) => (
       <div className="left">
         <div className="col">
           <h1 className="icon icon-doc-empty-inverse">
-            {!searchTitle ? "Choose a page" : searchTitle}
+            {!searchTitle ? 'Choose a page' : searchTitle}
           </h1>
         </div>
         <form className="col search-form" noValidate={true}>
