@@ -255,3 +255,15 @@ class TestImportView(TestCase):
         created_page = SponsoredPage.objects.get(url_path='/home/eggs-are-great-too/')
         self.assertEqual(created_page.intro, "you can make cakes with them")
         self.assertEqual(created_page.advert, None)
+
+    def test_list_snippet_models(self, get, post):
+        # Test the model chooser view.
+        response = self.client.get("https://www.example.com/wagtail-transfer/api/chooser/models/?models=True")
+        self.assertEqual(response.status_code, 200)
+
+        content = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(content['meta']['total_count'], 1)
+
+        snippet = content['items'][0]
+        self.assertEqual(snippet['label'], 'tests.category')
+        self.assertEqual(snippet['name'], 'Category')

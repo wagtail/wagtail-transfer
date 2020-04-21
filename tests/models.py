@@ -2,6 +2,7 @@ from django.db import models
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Orderable, Page
+from wagtail.snippets.models import register_snippet
 
 from .blocks import BaseStreamBlock
 
@@ -19,9 +20,13 @@ class Author(models.Model):
     bio = models.TextField()
 
 
+@register_snippet
 class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)
     colour = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return "{} {}".format(self.colour, self.name)
 
 
 class SponsoredPage(Page):

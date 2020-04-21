@@ -27,6 +27,99 @@ TEST_MEDIA_DIR = os.path.join(os.path.join(settings.BASE_DIR, 'test-media'))
 FIXTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fixtures')
 
 
+class TestModelsApi(TestCase):
+    fixtures = ['test.json']
+
+    def test_model_chooser_response(self):
+        response = self.client.get('/wagtail-transfer/api/chooser/models/')
+        self.assertEqual(response.status_code, 200)
+
+        content = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(content['meta']['total_count'], 1)
+
+        snippet = content['items'][0]
+        self.assertEqual(snippet['label'], 'tests.category')
+        self.assertEqual(snippet['name'], 'Category')
+
+
+    def test_model_object_chooser(self):
+        response = self.client.get('/wagtail-transfer/api/chooser/models/tests.category/')
+        self.assertEqual(response.status_code, 200)
+
+        content = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(content['meta']['total_count'], 1)
+        self.assertEqual(content['meta']['next'], None)
+        self.assertEqual(content['meta']['previous'], None)
+
+        snippet = content['items'][0]
+        self.assertEqual(snippet['label'], 'tests.category')
+        self.assertEqual(snippet['object_name'], 'red Cars')
+        self.assertEqual(snippet['name'], 'Cars')
+        self.assertEqual(snippet['colour'], 'red')
+
+    def test_model_object_next_pagination(self):
+        # Create 50 more categories
+        for i in range(50):
+            name = "Car #{}".format(i)
+            Category.objects.create(name=name, colour="Violet")
+
+        response = self.client.get('/wagtail-transfer/api/chooser/models/tests.category/')
+        self.assertEqual(response.status_code, 200)
+
+        content = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(content['meta']['total_count'], 51)
+        self.assertTrue(bool(content['meta']['next']))
+        self.assertFalse(bool(content['meta']['previous']))
+
+        items = content['items']
+        self.assertEqual(len(items), 20)
+
+        # Remove the newly created categories
+        Category.objects.filter(colour="Violet").delete()
+
+    def test_model_object_previous_and_next_pagination(self):
+        # Create 50 more categories
+        for i in range(50):
+            name = "Car #{}".format(i)
+            Category.objects.create(name=name, colour="Violet")
+
+        response = self.client.get('/wagtail-transfer/api/chooser/models/tests.category/?page=2')
+        self.assertEqual(response.status_code, 200)
+
+        content = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(content['meta']['total_count'], 51)
+        self.assertTrue(bool(content['meta']['previous']))
+        self.assertTrue(bool(content['meta']['next']))
+
+        items = content['items']
+        self.assertEqual(len(items), 20)
+
+        # Remove the newly created categories
+        Category.objects.filter(colour="Violet").delete()
+
+    def test_model_object_previous_pagination(self):
+        # Create 50 more categories
+        for i in range(50):
+            name = "Car #{}".format(i)
+            Category.objects.create(name=name, colour="Violet")
+
+        response = self.client.get('/wagtail-transfer/api/chooser/models/tests.category/?page=3')
+        self.assertEqual(response.status_code, 200)
+
+        content = json.loads(response.content.decode("utf-8"))
+        self.assertEqual(content['meta']['total_count'], 51)
+        self.assertTrue(bool(content['meta']['previous']))
+        self.assertFalse(bool(content['meta']['next']))
+
+        # Pagination happens 20 at a time by default.
+        # Page 3 = 2 pages of 20, with 11 remaining.
+        items = content['items']
+        self.assertEqual(len(items), 11)
+
+        # Remove the newly created categories
+        Category.objects.filter(colour="Violet").delete()
+
+
 class TestPagesApi(TestCase):
     fixtures = ['test.json']
 
