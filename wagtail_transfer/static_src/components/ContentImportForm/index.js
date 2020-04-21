@@ -201,7 +201,7 @@ export default function ImportContentForm({
      */
     let text = !alreadyExistsAtDestination ? 'Select destination parent page': 'This page already exists at the destination, and will be updated.'
     if(sourceModel || sourceModelObjectId) {
-      text = "Import your model"
+      text = "Import your snippet"
     }
     return text
   }
@@ -222,7 +222,7 @@ export default function ImportContentForm({
 
         <li className="transfer numbered">
           <div className="transfer list-container">
-            <h2>Select pages or models to import</h2>
+            <h2>Select pages or snippets to import</h2>
           </div>
           {source ? (
               <div className="transfer chooser-parent">
