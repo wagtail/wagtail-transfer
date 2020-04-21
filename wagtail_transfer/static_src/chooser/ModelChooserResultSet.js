@@ -8,17 +8,12 @@ const propTypes = {
   items: PropTypes.array,
   onObjectChosen: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
-  // pageTypes: PropTypes.object,
-  // parentPage: PropTypes.any,
-  // pageNumber: PropTypes.number.isRequired,
-  // totalPages: PropTypes.number.isRequired,
-  // onChangePage: PropTypes.func.isRequired
+  parentPage: PropTypes.any,
 };
 
 const defaultProps = {
   displayChildNavigation: false,
   items: [],
-  pageTypes: {},
   parentPage: null
 };
 
@@ -32,11 +27,7 @@ class ModelChooserResultSet extends React.Component {
       items,
       onObjectChosen,
       onNavigate,
-      // pageTypes,
       parentPage,
-      // pageNumber,
-      // totalPages,
-      // onChangePage
     } = this.props;
 
     const results = items.map((page, i) => {
