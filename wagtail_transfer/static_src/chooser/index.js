@@ -67,11 +67,7 @@ export function createReactPageChooser(
 
 window.createReactPageChooser = createReactPageChooser;
 
-
-export function createReactModelChooser(
-  apiBaseUrl,
-  onObjectChosen
-) {
+export function createReactModelChooser(apiBaseUrl, onObjectChosen) {
   const modalPlacement = document.createElement('div');
   document.body.appendChild(modalPlacement);
 

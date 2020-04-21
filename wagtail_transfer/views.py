@@ -1,29 +1,27 @@
-from collections import defaultdict
 import json
-from rest_framework import status
-from rest_framework.fields import ReadOnlyField
+from collections import defaultdict
 
+import requests
 from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
-from django.http import HttpResponse, JsonResponse, Http404
+from django.http import Http404, HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.shortcuts import get_object_or_404, render, redirect
-import requests
+from rest_framework import status
+from rest_framework.fields import ReadOnlyField
 
 from wagtail.core.models import Page
 
 from .auth import check_digest, digest_for_source
 from .locators import get_locator_for_model
-from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
-from .vendor.wagtail_admin_api.serializers import AdminPageSerializer
-from .locators import get_locator_for_model
-
 from .models import get_model_for_path
-from .serializers import get_model_serializer
-
 from .operations import ImportPlanner
+from .serializers import get_model_serializer
+from .vendor.wagtail_admin_api.serializers import AdminPageSerializer
+from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
+
+from django.contrib.contenttypes.models import ContentType
 
 
 def pages_for_export(request, root_page_id):

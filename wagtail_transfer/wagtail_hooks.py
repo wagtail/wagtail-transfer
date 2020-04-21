@@ -1,5 +1,14 @@
 from django.conf import settings
-from django.conf.urls import url, include
+from django.conf.urls import include, url
+from django.urls import reverse
+
+from wagtail.admin.menu import MenuItem
+from wagtail.core import hooks
+
+from . import admin_urls
+
+from django.utils.html import format_html
+
 try:
     # Django 2
     from django.contrib.staticfiles.templatetags.staticfiles import static
@@ -7,13 +16,8 @@ except ImportError:
     # Django 3
     from django.templatetags.static import static
 
-from django.urls import reverse
-from django.utils.html import format_html
 
-from wagtail.admin.menu import MenuItem
-from wagtail.core import hooks
 
-from . import admin_urls
 
 
 @hooks.register('register_admin_urls')

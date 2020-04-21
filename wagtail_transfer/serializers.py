@@ -1,8 +1,9 @@
 from functools import lru_cache
 
 from django.db import models
-from treebeard.mp_tree import MP_Node
 from modelcluster.fields import ParentalKey
+from treebeard.mp_tree import MP_Node
+
 from wagtail.core.models import Page
 
 from .field_adapters import get_field_adapter

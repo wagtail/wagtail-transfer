@@ -4,16 +4,16 @@ all sites - usually a UUID to look up in the IDMapping table, but may be somethi
 model-specific such as a slug field.
 """
 
-from functools import lru_cache
 import uuid
+from functools import lru_cache
 
 from django.conf import settings
-from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
 from django.db import IntegrityError
 
 from .models import IDMapping, get_base_model
 
+from django.contrib.contenttypes.models import ContentType
 
 UUID_SEQUENCE = 0
 

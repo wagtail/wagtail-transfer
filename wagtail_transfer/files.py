@@ -1,9 +1,8 @@
 import hashlib
 from contextlib import contextmanager
 
-from django.core.files.base import ContentFile
-
 import requests
+from django.core.files.base import ContentFile
 
 from .models import ImportedFile
 

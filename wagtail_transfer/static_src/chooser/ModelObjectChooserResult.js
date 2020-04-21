@@ -6,7 +6,7 @@ const propTypes = {
   isParent: PropTypes.bool,
   onChoose: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
-  model: PropTypes.object.isRequired,
+  model: PropTypes.object.isRequired
 };
 
 const defaultProps = {
@@ -35,7 +35,6 @@ class ModelChooserResult extends React.Component {
     );
   }
 
-
   render() {
     const { isParent } = this.props;
     const classNames = [];
@@ -44,11 +43,7 @@ class ModelChooserResult extends React.Component {
       classNames.push('index');
     }
 
-    return (
-      <tr className={classNames.join(' ')}>
-        {this.renderTitle()}
-      </tr>
-    );
+    return <tr className={classNames.join(' ')}>{this.renderTitle()}</tr>;
   }
 }
 

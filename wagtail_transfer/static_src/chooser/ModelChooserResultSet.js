@@ -8,7 +8,7 @@ const propTypes = {
   items: PropTypes.array,
   onObjectChosen: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
-  parentPage: PropTypes.any,
+  parentPage: PropTypes.any
 };
 
 const defaultProps = {
@@ -23,12 +23,7 @@ class ModelChooserResultSet extends React.Component {
   }
 
   render() {
-    const {
-      items,
-      onObjectChosen,
-      onNavigate,
-      parentPage,
-    } = this.props;
+    const { items, onObjectChosen, onNavigate, parentPage } = this.props;
 
     const results = items.map((page, i) => {
       const onChoose = e => {

@@ -7,7 +7,7 @@ const propTypes = {
 
 const defaultProps = {
   nextPage: null,
-  previousPage: null,
+  previousPage: null
 };
 
 class PageChooserPagination extends React.Component {

@@ -18,7 +18,7 @@ from wagtail.snippets.models import SNIPPET_MODELS
 
 from .filters import (ChildOfFilter, DescendantOfFilter, FieldsFilter, OrderingFilter,
                       SearchFilter)
-from .pagination import WagtailPagination, ModelPagination
+from .pagination import ModelPagination, WagtailPagination
 from .serializers import (BaseSerializer, GenericModelSerializer, PageSerializer,
                           get_serializer_class)
 from .utils import (BadRequestError, filter_page_type, get_object_detail_url,
