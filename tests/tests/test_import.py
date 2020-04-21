@@ -74,7 +74,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(12, None)
+        importer = ImportPlanner(root_page_source_pk=12, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -177,7 +177,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(12, None)
+        importer = ImportPlanner(root_page_source_pk=12, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -239,7 +239,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(15, None)
+        importer = ImportPlanner(root_page_source_pk=15, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -305,7 +305,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(100, 2)
+        importer = ImportPlanner(root_page_source_pk=100, destination_parent_id=2)
         importer.add_json(data)
         importer.run()
 
@@ -368,7 +368,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(100, 2)
+        importer = ImportPlanner(root_page_source_pk=100, destination_parent_id=2)
         importer.add_json(data)
         importer.run()
 
@@ -407,7 +407,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(1, None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -443,7 +443,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(1, None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -479,7 +479,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(1, None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -516,7 +516,7 @@ class TestImport(TestCase):
                         }
                     ]
                 }"""
-        importer = ImportPlanner(1, None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -531,7 +531,7 @@ class TestImport(TestCase):
         # Check that ids in RichTextBlock within a StreamField are converted properly
 
         data = """{"ids_for_import": [["wagtailcore.page", 6]], "mappings": [["wagtailcore.page", 6, "a231303a-1754-11ea-8000-0800278dc04d"], ["wagtailcore.page", 100, "11111111-1111-1111-1111-111111111111"]], "objects": [{"model": "tests.pagewithstreamfield", "pk": 6, "fields": {"title": "My streamfield rich text block has a link", "slug": "my-streamfield-rich-text-block-has-a-link", "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "body": "[{\\"type\\": \\"rich_text\\", \\"value\\": \\"<p>I link to a <a id=\\\\\\"100\\\\\\" linktype=\\\\\\"page\\\\\\">page</a>.</p>\\", \\"id\\": \\"7d4ee3d4-9213-4319-b984-45be4ded8853\\"}]"}, "parent_id": 100}]}"""
-        importer = ImportPlanner(1, None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -599,7 +599,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(1, None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -663,7 +663,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(1, None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -750,7 +750,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(1, None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -830,7 +830,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(1, None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -870,7 +870,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(1, None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -908,7 +908,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(1, None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -942,7 +942,7 @@ class TestImport(TestCase):
             ]}
         """
 
-        importer = ImportPlanner(6, 3)
+        importer = ImportPlanner(root_page_source_pk=6, destination_parent_id=3)
         importer.add_json(data)
         importer.run()
 
@@ -979,7 +979,7 @@ class TestImport(TestCase):
                 }
             ]}"""
 
-        importer = ImportPlanner(6, 3)
+        importer = ImportPlanner(root_page_source_pk=6, destination_parent_id=3)
         importer.add_json(data)
         importer.run()
 
@@ -1045,7 +1045,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(15, None)
+        importer = ImportPlanner(root_page_source_pk=15, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
@@ -1165,7 +1165,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(20, 2)
+        importer = ImportPlanner(root_page_source_pk=20, destination_parent_id=2)
         importer.add_json(data)
         importer.run()
 
@@ -1239,7 +1239,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(20, 2)
+        importer = ImportPlanner(root_page_source_pk=20, destination_parent_id=2)
         importer.add_json(data)
         importer.run()
 
@@ -1308,7 +1308,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(20, 2)
+        importer = ImportPlanner(root_page_source_pk=20, destination_parent_id=2)
         importer.add_json(data)
         importer.run()
 
@@ -1347,7 +1347,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(1, None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
 
