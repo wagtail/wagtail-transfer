@@ -280,9 +280,10 @@ def import_model(request):
 
 @require_POST
 def do_import(request):
-    if request.POST['type'] == 'page':
+    post_type = request.POST.get('type', 'page')
+    if  post_type == 'page':
         return import_page(request)
-    elif request.POST['type'] == 'model':
+    elif post_type == 'model':
         return import_model(request)
 
 

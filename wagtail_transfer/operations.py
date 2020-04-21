@@ -116,7 +116,7 @@ class ImportContext:
 class ImportPlanner:
     def __init__(self, root_page_source_pk=None, destination_parent_id=None, model=None):
 
-        if root_page_source_pk and destination_parent_id:
+        if root_page_source_pk or destination_parent_id:
             self.import_type = 'page'
             self.root_page_source_pk = int(root_page_source_pk)
             if destination_parent_id is None:
@@ -126,6 +126,9 @@ class ImportPlanner:
         elif model:
             self.import_type = 'model'
             self.model = model
+        else:
+            # TODO Raise exception
+            pass
 
         self.context = ImportContext()
 
