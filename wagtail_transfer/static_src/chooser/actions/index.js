@@ -135,12 +135,14 @@ export const fetchModelsFailure = createAction('FETCH_FAILURE', message => ({
   message
 }));
 
-export function browseModels(modelPath, paginationUrl) {
+export function browseModels(modelPath, paginationPageNumber) {
   /**
    * :modelPath is an optional parameter to get all objects from a particular model.
-   * :paginationUrl is an optional parameter that will overwrite the :modelPath param.
-   *  .. the paginationUrl comes from Django Rest Framework for the Model Chooser,
+   * :paginationPageNumber is an optional numeric parameter that will add &page=x to a modelObjectResultSet's pagination
+   *  .. the paginationPageNumber comes from Django Rest Framework for the Model Chooser,
    *  .. but the Page Chooser does not have this feature.
+   *  .. Django Rest Framework is returnning the `next` and `previous` urls. But the proxy needs a ?page=x to pass through.
+   *  .. If we use the DRF `next`/`previous` links, it will return the source destination site URL and we'll run into a CORS
    */
   // eslint-disable-next-line no-param-reassign
   if (modelPath === null) {
@@ -157,7 +159,7 @@ export function browseModels(modelPath, paginationUrl) {
       return query
         .getModel()
         .then(models => {
-          dispatch(setView('browse', { modelPath, paginationUrl }));
+          dispatch(setView('browse', { modelPath, paginationPageNumber }));
           dispatch(fetchModelsSuccess(models, null));
         })
         .catch(error => {
@@ -166,16 +168,16 @@ export function browseModels(modelPath, paginationUrl) {
     }
 
     return Promise.all([
-      query.getModel(modelPath, paginationUrl),
+      query.getModel(modelPath, paginationPageNumber),
     ])
       .then(([models, parentPage]) => {
         let nextPage = null
         let previousPage = null
-        if('next' in models.meta) {
-          nextPage = models.meta.next
+        if('next_page' in models.meta) {
+          nextPage = models.meta.next_page
         }
-        if('previous' in models.meta) {
-          previousPage = models.meta.previous
+        if('prev_page' in models.meta) {
+          previousPage = models.meta.prev_page
         }
         dispatch(setView('browse', { modelPath, nextPage, previousPage }));
         dispatch(fetchModelsSuccess(models, parentPage));
@@ -187,7 +189,7 @@ export function browseModels(modelPath, paginationUrl) {
 }
 
 
-export function searchModels(modelPath, queryString, paginationUrl) {
+export function searchModels(modelPath, queryString, paginationPageNumber) {
   return (dispatch, getState) => {
     dispatch(fetchModelsStart());
 

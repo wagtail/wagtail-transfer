@@ -69,20 +69,16 @@ class ModelsQuery {
     this.query = query;
   }
 
-  getModel(modelPath='', paginationUrl) {
-    if(!paginationUrl) {
-      let encodedQueryParams = ''
-      if(this.query) {
-        encodedQueryParams = Object.entries(this.query)
-          .map(kv => kv.map(encodeURIComponent).join('='))
-          .join('&');
-      }
-      modelPath = modelPath.length ? `&model=${modelPath}` : ''
-      return get(`${this.api.endpointUrl}?models=True${modelPath}&${encodedQueryParams}`);
-    } else {
-      // Use a pagination URL from Django Rest Framework
-      return get(paginationUrl);
+  getModel(modelPath='', paginationPageNumber) {
+    let encodedQueryParams = ''
+    if(this.query) {
+      encodedQueryParams = Object.entries(this.query)
+        .map(kv => kv.map(encodeURIComponent).join('='))
+        .join('&');
     }
+    modelPath = modelPath.length ? `&model=${modelPath}` : ''
+    paginationPageNumber = paginationPageNumber ? `&page=${paginationPageNumber}` : ''
+    return get(`${this.api.endpointUrl}?models=True${modelPath}&${encodedQueryParams}${paginationPageNumber}`);
   }
 }
 

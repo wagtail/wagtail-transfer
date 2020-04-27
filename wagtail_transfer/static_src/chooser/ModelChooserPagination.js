@@ -10,7 +10,7 @@ const defaultProps = {
   previousPage: null
 };
 
-class PageChooserPagination extends React.Component {
+class ModelChooserPagination extends React.Component {
   renderPrev() {
     const { previousPage, onChangePage } = this.props;
 
@@ -81,7 +81,7 @@ class PageChooserPagination extends React.Component {
   }
 }
 
-PageChooserPagination.propTypes = propTypes;
-PageChooserPagination.defaultProps = defaultProps;
+ModelChooserPagination.propTypes = propTypes;
+ModelChooserPagination.defaultProps = defaultProps;
 
-export default PageChooserPagination;
+export default ModelChooserPagination;

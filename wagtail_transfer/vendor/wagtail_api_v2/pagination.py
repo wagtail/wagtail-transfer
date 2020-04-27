@@ -52,11 +52,20 @@ class ModelPagination(PageNumberPagination):
     page_size_query_param = 'page_size'
 
     def get_paginated_response(self, data):
+        next_page = None
+        prev_page = None
+        if self.get_next_link():
+            next_page = self.page.number + 1
+        if self.get_previous_link():
+            prev_page = self.page.number - 1 if self.page.number >= 1 else 1
+
         data = {
             "meta": {
                 "total_count": self.page.paginator.count,
                 "next": self.get_next_link(),
                 "previous": self.get_previous_link(),
+                "next_page": next_page,
+                "prev_page": prev_page,
             },
             "items": data
         }
