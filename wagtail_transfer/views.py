@@ -3,6 +3,7 @@ from collections import defaultdict
 
 import requests
 from django.conf import settings
+from django.contrib import messages
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -273,7 +274,10 @@ def import_model(request):
         importer.add_json(response.content)
     importer.run()
 
-    return redirect('wagtailadmin_explore_root')
+    messages.add_message(request, messages.SUCCESS, 'Snippet(s) successfully imported')
+    app_label, model_name = model.split('.')
+    redirect_url = reverse('wagtailsnippets:list', args=(app_label, model_name,))
+    return redirect(redirect_url)
 
 
 @require_POST
