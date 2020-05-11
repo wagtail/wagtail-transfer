@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
           addField('source_page_id', sourcePage.id);
           addField('dest_page_id', destPage ? destPage.id : null);
         } else {
-          addField('source_model', model.label);
+          addField('source_model', model.model_label);
           addField('source_model_object_id', modelObjectId);
         }
 

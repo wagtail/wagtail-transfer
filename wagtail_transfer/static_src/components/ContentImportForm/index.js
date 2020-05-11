@@ -97,7 +97,7 @@ export default function ImportContentForm({
       // There is a sourceModel but no sourceModelObjectId
       const fetchNumPages = async () => {
         const api = new ModelsAPI(source.page_chooser_api).query();
-        const page = await api.getModel(sourceModel.label);
+        const page = await api.getModel(sourceModel.model_label);
         setNumPages(page.meta.total_count);
       };
       fetchNumPages();
