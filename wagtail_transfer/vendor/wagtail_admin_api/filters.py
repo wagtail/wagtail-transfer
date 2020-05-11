@@ -1,5 +1,4 @@
 from rest_framework.filters import BaseFilterBackend
-
 from wagtail.core import hooks
 
 from ..wagtail_api_v2.utils import BadRequestError, parse_boolean

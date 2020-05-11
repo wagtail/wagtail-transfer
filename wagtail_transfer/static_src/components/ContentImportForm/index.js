@@ -29,7 +29,7 @@ function SourceSelectorWidget({ sources, selectedSource, onChange }) {
 function SubmitButton({ onClick, disabled, numPages, importingModel }) {
   let buttonText = 'Import';
   let defaultImportType = 'page';
-  if(importingModel) {
+  if (importingModel) {
     defaultImportType = 'snippet';
   }
 
@@ -62,7 +62,9 @@ export default function ImportContentForm({
 }) {
   // A `source` is set in Django/Wagtail settings. For example, a source could
   // be "production" or "staging". Note: These are NOT set in JavaScript
-  const [source, setSource] = React.useState(sources.length == 1 ? sources[0] : null);
+  const [source, setSource] = React.useState(
+    sources.length == 1 ? sources[0] : null
+  );
   // A `sourcePage` is the the page the user wants to import.
   const [sourcePage, setSourcePage] = React.useState(null);
   // A `destPage` is the destination parent page in which to copy the `sourcePage` from
@@ -91,20 +93,20 @@ export default function ImportContentForm({
   }, [source, sourcePage, destPage, sourceModel, sourceModelObjectId]);
 
   React.useEffect(() => {
-    if(sourceModel && !sourceModelObjectId) {
+    if (sourceModel && !sourceModelObjectId) {
       // There is a sourceModel but no sourceModelObjectId
       const fetchNumPages = async () => {
-        const api = new ModelsAPI(source.page_chooser_api).query()
-        const page = await api.getModel(sourceModel.label)
+        const api = new ModelsAPI(source.page_chooser_api).query();
+        const page = await api.getModel(sourceModel.label);
         setNumPages(page.meta.total_count);
-      }
-      fetchNumPages()
-    } else if(sourceModelObjectId) {
+      };
+      fetchNumPages();
+    } else if (sourceModelObjectId) {
       // A modelObject was selected.
       // Set num of imported pages to 0.
       setNumPages(0);
     }
-  }, [sourceModel, sourceModelObjectId])
+  }, [sourceModel, sourceModelObjectId]);
 
   const onClickSubmit = () => {
     // The `onSubmit` function is found in static_src/index.js and is passed into
@@ -157,40 +159,40 @@ export default function ImportContentForm({
     }
   }, [sourcePage]); // Only trigger the effect when `sourcePage` is updated.
 
-  const changeModelSource = (model) => {
+  const changeModelSource = model => {
     /**
      * When a model is selected, set the sourceModel and sourceModelObjectId
      * and unset the sourcePage.
      */
-    if(model) {
-      setSourcePage(null)
+    if (model) {
+      setSourcePage(null);
 
-      if('object_name' in model) {
-        setSourceModel(model)
-        setSourceModelObjectId(model.id)
+      if ('object_name' in model) {
+        setSourceModel(model);
+        setSourceModelObjectId(model.id);
       } else {
-        setSourceModel(model)
-        setSourceModelObjectId(null)
+        setSourceModel(model);
+        setSourceModelObjectId(null);
       }
     } else {
-      setSourceModel(null)
-      setSourceModelObjectId(null)
+      setSourceModel(null);
+      setSourceModelObjectId(null);
     }
-  }
+  };
 
-  const changePageSource = (page) => {
+  const changePageSource = page => {
     /**
      * When a page is selected, unset the sourceModel and sourceModelObjectId
      * and set the sourcePage. This is the opposite of changeModelSource().
      */
-    if(page) {
-      setSourceModel(null)
-      setSourceModelObjectId(null)
-      setSourcePage(page)
+    if (page) {
+      setSourceModel(null);
+      setSourceModelObjectId(null);
+      setSourcePage(page);
     } else {
-      setSourcePage(null)
+      setSourcePage(null);
     }
-  }
+  };
 
   const getStepText = () => {
     /**
@@ -199,12 +201,14 @@ export default function ImportContentForm({
      * Assume a page import is happening by default.
      * Checks for a model import happening and updates the text accordingly.
      */
-    let text = !alreadyExistsAtDestination ? 'Select destination parent page': 'This page already exists at the destination, and will be updated.'
-    if(sourceModel || sourceModelObjectId) {
-      text = "Import your snippet"
+    let text = !alreadyExistsAtDestination
+      ? 'Select destination parent page'
+      : 'This page already exists at the destination, and will be updated.';
+    if (sourceModel || sourceModelObjectId) {
+      text = 'Import your snippet';
     }
-    return text
-  }
+    return text;
+  };
 
   return (
     <div>
@@ -225,22 +229,26 @@ export default function ImportContentForm({
             <h2>Select pages or snippets to import</h2>
           </div>
           {source ? (
-              <div className="transfer chooser-parent">
-                <PageChooserWidget
-                  apiBaseUrl={source.page_chooser_api}
-                  value={sourcePage}
-                  onChange={changePageSource}
-                  unchosenText="All child pages will be imported"
-                  chosenText={`This page has ${numPages - 1} child pages`}
-                />
-                <ModelChooserWidget
-                  apiBaseUrl={source.page_chooser_api}
-                  value={sourceModel || sourceModelObjectId}
-                  onChange={changeModelSource}
-                  unchosenText="Select a snippet to import"
-                  chosenText={numPages ? `This snippet has ${numPages} items` : 'Snippet selected'}
-                />
-              </div>
+            <div className="transfer chooser-parent">
+              <PageChooserWidget
+                apiBaseUrl={source.page_chooser_api}
+                value={sourcePage}
+                onChange={changePageSource}
+                unchosenText="All child pages will be imported"
+                chosenText={`This page has ${numPages - 1} child pages`}
+              />
+              <ModelChooserWidget
+                apiBaseUrl={source.page_chooser_api}
+                value={sourceModel || sourceModelObjectId}
+                onChange={changeModelSource}
+                unchosenText="Select a snippet to import"
+                chosenText={
+                  numPages
+                    ? `This snippet has ${numPages} items`
+                    : 'Snippet selected'
+                }
+              />
+            </div>
           ) : (
             ''
           )}
@@ -248,9 +256,7 @@ export default function ImportContentForm({
 
         <li className="transfer numbered">
           <div className="transfer list-container">
-            <h2>
-                {getStepText()}
-            </h2>
+            <h2>{getStepText()}</h2>
           </div>
           {sourcePage && alreadyExistsAtDestination === false ? (
             <PageChooserWidget
@@ -266,7 +272,12 @@ export default function ImportContentForm({
           <div>
             <SubmitButton
               onClick={onClickSubmit}
-              disabled={!destPage && !alreadyExistsAtDestination && !sourceModel && !sourceModelObjectId}
+              disabled={
+                !destPage &&
+                !alreadyExistsAtDestination &&
+                !sourceModel &&
+                !sourceModelObjectId
+              }
               numPages={numPages}
               importingModel={sourceModel || sourceModelObjectId}
             />

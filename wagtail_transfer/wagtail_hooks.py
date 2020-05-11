@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.conf.urls import include, url
 from django.urls import reverse
-
 from wagtail.admin.menu import MenuItem
 from wagtail.core import hooks
 
@@ -15,9 +14,6 @@ try:
 except ImportError:
     # Django 3
     from django.templatetags.static import static
-
-
-
 
 
 @hooks.register('register_admin_urls')
