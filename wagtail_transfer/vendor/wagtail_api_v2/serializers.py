@@ -332,7 +332,7 @@ class GenericModelSerializer(serializers.ModelSerializer):
     """Generic Model Serializer. Pass in the keyword `model` to activate it."""
 
     object_name = serializers.CharField(source='__str__')
-    label = serializers.SerializerMethodField()
+    model_label = serializers.SerializerMethodField()
 
     def __init__(self, *args, **kwargs):
         if 'model' in kwargs:
@@ -340,7 +340,7 @@ class GenericModelSerializer(serializers.ModelSerializer):
             self.Meta.model = model
         return super().__init__(*args, **kwargs)
 
-    def get_label(self, obj):
+    def get_model_label(self, obj):
         if self.Meta.model:
             return self.Meta.model._meta.label_lower
 
