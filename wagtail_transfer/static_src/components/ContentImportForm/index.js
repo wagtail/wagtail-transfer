@@ -95,14 +95,14 @@ export default function ImportContentForm({
   React.useEffect(() => {
     if (sourceInstance && !sourceInstanceObjectId) {
       // There is a sourceInstance but no sourceInstanceObjectId
-      const fetchNumPages = async () => {
+      const fetchTotalPages = async () => {
         const api = new ModelsAPI(source.page_chooser_api).query();
-        const page = await api.getModelInstances(sourceInstance.model_label);
-        setNumPages(page.meta.total_count);
+        const response = await api.getModelInstances(sourceInstance.model_label);
+        setNumPages(response.meta.total_count);
       };
-      fetchNumPages();
+      fetchTotalPages();
     } else if (sourceInstanceObjectId) {
-      // A modelObject was selected.
+      // A sourceInstanceObjectId was selected.
       // Set num of imported pages to 0.
       setNumPages(0);
     }
