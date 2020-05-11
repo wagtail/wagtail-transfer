@@ -7,7 +7,6 @@ from django.conf import settings
 from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
 from taggit.managers import TaggableManager
-
 from wagtail.core.fields import RichTextField, StreamField
 
 from .files import File, FileTransferError, get_file_hash, get_file_size

@@ -2,7 +2,6 @@ from django.conf import settings
 from django.db import models
 from rest_framework.filters import BaseFilterBackend
 from taggit.managers import TaggableManager
-
 from wagtail.core.models import Page
 from wagtail.search.backends import get_search_backend
 from wagtail.search.backends.base import FilterFieldError, OrderByFieldError

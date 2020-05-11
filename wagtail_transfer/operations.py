@@ -5,7 +5,6 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db import models, transaction
 from modelcluster.models import ClusterableModel, get_all_child_relations
 from treebeard.mp_tree import MP_Node
-
 from wagtail.core.models import Page
 
 from .field_adapters import get_field_adapter
@@ -537,7 +536,7 @@ class Operation:
     within a transaction.
     """
     def run(self, context):
-        raise NotImplemented
+        raise NotImplementedError
 
     @property
     def dependencies(self):

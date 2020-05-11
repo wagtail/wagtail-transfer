@@ -1,7 +1,6 @@
 from urllib.parse import urlparse
 
 from django.conf import settings
-
 from wagtail.core.models import Page
 from wagtail.core.utils import resolve_model_string
 

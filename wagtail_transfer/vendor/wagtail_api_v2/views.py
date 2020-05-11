@@ -11,7 +11,6 @@ from rest_framework import status
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ViewSet
-
 from wagtail.api import APIField
 from wagtail.core.models import Page
 from wagtail.snippets.models import SNIPPET_MODELS
@@ -504,6 +503,7 @@ class ModelsAPIViewSet(GenericViewSet):
         query = request.GET.get("search", '')
         if query:
             query_lower = query.lower()
+
             def filter_model_items(obj):
                 # Local function to filter `return_items` (ie. SNIPPET_MODELS)
                 # Looks for a text match in the SNIPPET_MODEL['name']

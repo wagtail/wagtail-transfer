@@ -3,7 +3,6 @@ from collections import defaultdict
 
 import requests
 from django.conf import settings
-from django.contrib import messages
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -11,7 +10,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from rest_framework import status
 from rest_framework.fields import ReadOnlyField
-
 from wagtail.core.models import Page
 
 from .auth import check_digest, digest_for_source
@@ -22,6 +20,7 @@ from .serializers import get_model_serializer
 from .vendor.wagtail_admin_api.serializers import AdminPageSerializer
 from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
 
+from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 
 
@@ -126,7 +125,7 @@ def objects_for_export(request):
         serializer = get_model_serializer(model)
 
         for obj in serializer.get_objects_by_ids(ids):
-            instance_serializer = get_model_serializer(type(obj))
+            instance_serializer = get_model_serializer(type(obj))  # noqa
             objects.append(serializer.serialize(obj))
             object_references.update(serializer.get_object_references(obj))
 
@@ -283,11 +282,10 @@ def import_model(request):
 @require_POST
 def do_import(request):
     post_type = request.POST.get('type', 'page')
-    if  post_type == 'page':
+    if post_type == 'page':
         return import_page(request)
     elif post_type == 'model':
         return import_model(request)
-
 
 
 def check_page_existence_for_uid(request):

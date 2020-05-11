@@ -1,7 +1,6 @@
 from collections import OrderedDict
 
 from rest_framework.authentication import SessionAuthentication
-
 from wagtail.admin.navigation import get_explorable_root_page
 from wagtail.core.models import Page, UserPagePermissionsProxy
 

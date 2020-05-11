@@ -3,7 +3,6 @@ from functools import lru_cache
 from django.db import models
 from modelcluster.fields import ParentalKey
 from treebeard.mp_tree import MP_Node
-
 from wagtail.core.models import Page
 
 from .field_adapters import get_field_adapter
@@ -92,6 +91,7 @@ class TreeModelSerializer(ModelSerializer):
                 (self.base_model, instance.get_parent().pk)
             )
         return refs
+
 
 class PageSerializer(TreeModelSerializer):
     ignored_fields = TreeModelSerializer.ignored_fields + [

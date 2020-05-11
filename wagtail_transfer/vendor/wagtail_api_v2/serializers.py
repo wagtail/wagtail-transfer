@@ -5,7 +5,6 @@ from modelcluster.models import get_all_child_relations
 from rest_framework import relations, serializers
 from rest_framework.fields import Field, SkipField
 from taggit.managers import _TaggableManager
-
 from wagtail.core import fields as wagtailcore_fields
 
 from .utils import get_object_detail_url
@@ -346,7 +345,7 @@ class GenericModelSerializer(serializers.ModelSerializer):
             return self.Meta.model._meta.label_lower
 
     class Meta:
-        model = None # gets overwritten when class is instantiated
+        model = None  # gets overwritten when class is instantiated
         fields = '__all__'
 
 
