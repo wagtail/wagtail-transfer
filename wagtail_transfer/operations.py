@@ -127,8 +127,7 @@ class ImportPlanner:
             self.import_type = 'model'
             self.model = model
         else:
-            # TODO Raise exception
-            pass
+            raise NotImplementedError("Missing page kwargs or specified model kwarg")
 
         self.context = ImportContext()
 
