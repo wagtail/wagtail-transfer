@@ -69,7 +69,7 @@ class ModelsQuery {
     this.query = query;
   }
 
-  getModel(modelPath='', paginationPageNumber) {
+  getModelInstances(modelPath='', paginationPageNumber) {
     let encodedQueryParams = ''
     if(this.query) {
       encodedQueryParams = Object.entries(this.query)
