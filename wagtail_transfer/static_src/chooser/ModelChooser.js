@@ -50,7 +50,7 @@ class ModelChooser extends ModalWindow {
     };
 
     const onNavigate = page => {
-      browse(page.label);
+      browse(page.model_label);
     };
 
     const onChangePage = pageUrl => {

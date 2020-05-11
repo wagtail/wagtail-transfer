@@ -495,7 +495,7 @@ class ModelsAPIViewSet(GenericViewSet):
         # Loop through the SNIPPET_MODELS and create a list of dicts with the
         # model label and name.
         return_items = [{
-            'label': model._meta.label_lower,
+            'model_label': model._meta.label_lower,
             'name': model._meta.verbose_name.title(),
         } for model in SNIPPET_MODELS]
 
