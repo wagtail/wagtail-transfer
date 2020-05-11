@@ -157,7 +157,7 @@ export function browseModels(modelPath, paginationPageNumber) {
 
     if (modelPath === '') {
       return query
-        .getModel()
+        .getModelInstances()
         .then(models => {
           dispatch(setView('browse', { modelPath, paginationPageNumber }));
           dispatch(fetchModelsSuccess(models, null));
@@ -168,7 +168,7 @@ export function browseModels(modelPath, paginationPageNumber) {
     }
 
     return Promise.all([
-      query.getModel(modelPath, paginationPageNumber),
+      query.getModelInstances(modelPath, paginationPageNumber),
     ])
       .then(([models, parentPage]) => {
         let nextPage = null
@@ -204,7 +204,7 @@ export function searchModels(modelPath, queryString, paginationPageNumber) {
     const query = api.query(searchQuery);
 
     return query
-      .getModel()
+      .getModelInstances()
       .then(models => {
         dispatch(setView('search', { modelPath, queryString }));
         dispatch(fetchModelsSuccess(models, null));

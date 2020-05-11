@@ -69,10 +69,10 @@ export default function ImportContentForm({
   const [sourcePage, setSourcePage] = React.useState(null);
   // A `destPage` is the destination parent page in which to copy the `sourcePage` from
   const [destPage, setDestPage] = React.useState(null);
-  // A `sourceModel` is the model the user wants to import.
-  const [sourceModel, setSourceModel] = React.useState(null);
-  // A `sourceModelObjectId` is a specific model object the user wants to import.
-  const [sourceModelObjectId, setSourceModelObjectId] = React.useState(null);
+  // A `sourceInstance` is the model the user wants to import.
+  const [sourceInstance, setSourceInstance] = React.useState(null);
+  // A `sourceInstanceObjectId` is a specific model object the user wants to import.
+  const [sourceInstanceObjectId, setSourceInstanceObjectId] = React.useState(null);
   // The number of pages (including child pages) that be imported when a
   // user selects a page to import.
   const [numPages, setNumPages] = React.useState(null);
@@ -90,28 +90,28 @@ export default function ImportContentForm({
     if (!sourcePage && destPage) {
       setDestPage(null);
     }
-  }, [source, sourcePage, destPage, sourceModel, sourceModelObjectId]);
+  }, [source, sourcePage, destPage, sourceInstance, sourceInstanceObjectId]);
 
   React.useEffect(() => {
-    if (sourceModel && !sourceModelObjectId) {
-      // There is a sourceModel but no sourceModelObjectId
+    if (sourceInstance && !sourceInstanceObjectId) {
+      // There is a sourceInstance but no sourceInstanceObjectId
       const fetchNumPages = async () => {
         const api = new ModelsAPI(source.page_chooser_api).query();
-        const page = await api.getModel(sourceModel.model_label);
+        const page = await api.getModelInstances(sourceInstance.model_label);
         setNumPages(page.meta.total_count);
       };
       fetchNumPages();
-    } else if (sourceModelObjectId) {
+    } else if (sourceInstanceObjectId) {
       // A modelObject was selected.
       // Set num of imported pages to 0.
       setNumPages(0);
     }
-  }, [sourceModel, sourceModelObjectId]);
+  }, [sourceInstance, sourceInstanceObjectId]);
 
   const onClickSubmit = () => {
     // The `onSubmit` function is found in static_src/index.js and is passed into
     // this class (ContentImportForm) as a JSX attribute.
-    onSubmit(source, sourcePage, destPage, sourceModel, sourceModelObjectId);
+    onSubmit(source, sourcePage, destPage, sourceInstance, sourceInstanceObjectId);
   };
 
   React.useEffect(() => {
@@ -161,33 +161,33 @@ export default function ImportContentForm({
 
   const changeModelSource = model => {
     /**
-     * When a model is selected, set the sourceModel and sourceModelObjectId
+     * When a model is selected, set the sourceInstance and sourceInstanceObjectId
      * and unset the sourcePage.
      */
     if (model) {
       setSourcePage(null);
 
       if ('object_name' in model) {
-        setSourceModel(model);
-        setSourceModelObjectId(model.id);
+        setSourceInstance(model);
+        setSourceInstanceObjectId(model.id);
       } else {
-        setSourceModel(model);
-        setSourceModelObjectId(null);
+        setSourceInstance(model);
+        setSourceInstanceObjectId(null);
       }
     } else {
-      setSourceModel(null);
-      setSourceModelObjectId(null);
+      setSourceInstance(null);
+      setSourceInstanceObjectId(null);
     }
   };
 
   const changePageSource = page => {
     /**
-     * When a page is selected, unset the sourceModel and sourceModelObjectId
+     * When a page is selected, unset the sourceInstance and sourceInstanceObjectId
      * and set the sourcePage. This is the opposite of changeModelSource().
      */
     if (page) {
-      setSourceModel(null);
-      setSourceModelObjectId(null);
+      setSourceInstance(null);
+      setSourceInstanceObjectId(null);
       setSourcePage(page);
     } else {
       setSourcePage(null);
@@ -204,7 +204,7 @@ export default function ImportContentForm({
     let text = !alreadyExistsAtDestination
       ? 'Select destination parent page'
       : 'This page already exists at the destination, and will be updated.';
-    if (sourceModel || sourceModelObjectId) {
+    if (sourceInstance || sourceInstanceObjectId) {
       text = 'Import your snippet';
     }
     return text;
@@ -239,7 +239,7 @@ export default function ImportContentForm({
               />
               <ModelChooserWidget
                 apiBaseUrl={source.page_chooser_api}
-                value={sourceModel || sourceModelObjectId}
+                value={sourceInstance || sourceInstanceObjectId}
                 onChange={changeModelSource}
                 unchosenText="Select a snippet to import"
                 chosenText={
@@ -275,11 +275,11 @@ export default function ImportContentForm({
               disabled={
                 !destPage &&
                 !alreadyExistsAtDestination &&
-                !sourceModel &&
-                !sourceModelObjectId
+                !sourceInstance &&
+                !sourceInstanceObjectId
               }
               numPages={numPages}
-              importingModel={sourceModel || sourceModelObjectId}
+              importingModel={sourceInstance || sourceInstanceObjectId}
             />
           </div>
         </li>
