@@ -205,10 +205,7 @@ def import_page(request):
     response = requests.get(f"{base_url}api/pages/{request.POST['source_page_id']}/", params={'digest': digest})
 
     dest_page_id = request.POST['dest_page_id'] or None
-    importer = ImportPlanner(
-        root_page_source_pk=request.POST['source_page_id'],
-        destination_parent_id=dest_page_id,
-    )
+    importer = ImportPlanner.for_page(source=request.POST['source_page_id'], destination=dest_page_id)
     importer.add_json(response.content)
 
     while importer.missing_object_data:
@@ -250,7 +247,7 @@ def import_model(request):
         url = f"{url}{source_model_object_id}/"
 
     response = requests.get(url, params={'digest': digest})
-    importer = ImportPlanner(model=model)
+    importer = ImportPlanner.for_model(model=model)
     importer.add_json(response.content)
 
     while importer.missing_object_data:

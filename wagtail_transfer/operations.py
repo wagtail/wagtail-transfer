@@ -179,6 +179,14 @@ class ImportPlanner:
         # NO_FOLLOW_MODELS told us not to, or because they did not exist on the source site.
         self.failed_creations = set()
 
+    @classmethod
+    def for_page(cls, source, destination):
+        return cls(root_page_source_pk=source, destination_parent_id=destination)
+
+    @classmethod
+    def for_model(cls, model):
+        return cls(model=model)
+
     def add_json(self, json_data):
         """
         Add JSON data to the import plan. The data is a dict consisting of:
