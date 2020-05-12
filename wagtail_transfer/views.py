@@ -197,17 +197,7 @@ def choose_page(request):
     })
 
 
-def import_page(request):
-    source = request.POST['source']
-    base_url = settings.WAGTAILTRANSFER_SOURCES[source]['BASE_URL']
-    digest = digest_for_source(source, str(request.POST['source_page_id']))
-
-    response = requests.get(f"{base_url}api/pages/{request.POST['source_page_id']}/", params={'digest': digest})
-
-    dest_page_id = request.POST['dest_page_id'] or None
-    importer = ImportPlanner.for_page(source=request.POST['source_page_id'], destination=dest_page_id)
-    importer.add_json(response.content)
-
+def import_missing_object_data(importer: ImportPlanner):
     while importer.missing_object_data:
         # convert missing_object_data from a set of (model_class, id) tuples
         # into a dict of {model_class_label: [list_of_ids]}
@@ -226,8 +216,21 @@ def import_page(request):
             f"{base_url}api/objects/", params={'digest': digest}, data=request_data
         )
         importer.add_json(response.content)
-
     importer.run()
+    return importer
+
+
+def import_page(request):
+    source = request.POST['source']
+    base_url = settings.WAGTAILTRANSFER_SOURCES[source]['BASE_URL']
+    digest = digest_for_source(source, str(request.POST['source_page_id']))
+
+    response = requests.get(f"{base_url}api/pages/{request.POST['source_page_id']}/", params={'digest': digest})
+
+    dest_page_id = request.POST['dest_page_id'] or None
+    importer = ImportPlanner.for_page(source=request.POST['source_page_id'], destination=dest_page_id)
+    importer.add_json(response.content)
+    importer = import_missing_object_data(importer)
 
     if dest_page_id:
         return redirect('wagtailadmin_explore', dest_page_id)
@@ -249,26 +252,7 @@ def import_model(request):
     response = requests.get(url, params={'digest': digest})
     importer = ImportPlanner.for_model(model=model)
     importer.add_json(response.content)
-
-    while importer.missing_object_data:
-        # convert missing_object_data from a set of (model_class, id) tuples
-        # into a dict of {model_class_label: [list_of_ids]}
-        missing_object_data_by_type = defaultdict(list)
-        for model_class, source_id in importer.missing_object_data:
-            missing_object_data_by_type[model_class].append(source_id)
-
-        request_data = json.dumps({
-            model_class._meta.label_lower: ids
-            for model_class, ids in missing_object_data_by_type.items()
-        })
-        digest = digest_for_source(source, request_data)
-
-        # request the missing object data and add to the import plan
-        response = requests.post(
-            f"{base_url}api/objects/", params={'digest': digest}, data=request_data
-        )
-        importer.add_json(response.content)
-    importer.run()
+    importer = import_missing_object_data(importer)
 
     messages.add_message(request, messages.SUCCESS, 'Snippet(s) successfully imported')
     app_label, model_name = model.split('.')
