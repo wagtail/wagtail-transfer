@@ -4,3 +4,4 @@ __pycache__
 /build
 /node_modules
 /site
+.DS_Store
