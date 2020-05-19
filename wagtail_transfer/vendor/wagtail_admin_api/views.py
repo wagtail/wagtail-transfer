@@ -60,6 +60,15 @@ class PagesAdminAPIViewSet(PagesAPIViewSet):
         """
         return Page.objects.all()
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+
+        # Hide root page
+        # TODO: Add "include_root" flag
+        # .specific() is required to use .get_admin_display_title()
+        queryset = queryset.exclude(depth=1).specific()
+        return queryset
+
     def get_type_info(self):
         types = OrderedDict()
 
