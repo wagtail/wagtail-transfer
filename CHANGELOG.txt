@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.3 (02.06.2020)
+~~~~~~~~~~~~~~~~
+
+ * Add support for transferring snippet models (Kalob Taulien)
+
+
 0.2.2 (30.03.2020)
 ~~~~~~~~~~~~~~~~~~
 
