@@ -265,5 +265,5 @@ class TestImportView(TestCase):
         self.assertEqual(content['meta']['total_count'], 1)
 
         snippet = content['items'][0]
-        self.assertEqual(snippet['label'], 'tests.category')
+        self.assertEqual(snippet['model_label'], 'tests.category')
         self.assertEqual(snippet['name'], 'Category')
