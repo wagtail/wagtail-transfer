@@ -38,7 +38,7 @@ class TestModelsApi(TestCase):
         self.assertEqual(content['meta']['total_count'], 1)
 
         snippet = content['items'][0]
-        self.assertEqual(snippet['label'], 'tests.category')
+        self.assertEqual(snippet['model_label'], 'tests.category')
         self.assertEqual(snippet['name'], 'Category')
 
 
@@ -52,7 +52,7 @@ class TestModelsApi(TestCase):
         self.assertEqual(content['meta']['previous'], None)
 
         snippet = content['items'][0]
-        self.assertEqual(snippet['label'], 'tests.category')
+        self.assertEqual(snippet['model_label'], 'tests.category')
         self.assertEqual(snippet['object_name'], 'red Cars')
         self.assertEqual(snippet['name'], 'Cars')
         self.assertEqual(snippet['colour'], 'red')
