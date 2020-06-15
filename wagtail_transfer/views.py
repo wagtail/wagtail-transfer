@@ -197,7 +197,8 @@ def choose_page(request):
     })
 
 
-def import_missing_object_data(source, base_url, importer: ImportPlanner):
+def import_missing_object_data(source, importer: ImportPlanner):
+    base_url = settings.WAGTAILTRANSFER_SOURCES[source]['BASE_URL']
     while importer.missing_object_data:
         # convert missing_object_data from a set of (model_class, id) tuples
         # into a dict of {model_class_label: [list_of_ids]}
@@ -230,7 +231,7 @@ def import_page(request):
     dest_page_id = request.POST['dest_page_id'] or None
     importer = ImportPlanner.for_page(source=request.POST['source_page_id'], destination=dest_page_id)
     importer.add_json(response.content)
-    importer = import_missing_object_data(source, base_url, importer)
+    importer = import_missing_object_data(source, importer)
 
     if dest_page_id:
         return redirect('wagtailadmin_explore', dest_page_id)
@@ -252,7 +253,7 @@ def import_model(request):
     response = requests.get(url, params={'digest': digest})
     importer = ImportPlanner.for_model(model=model)
     importer.add_json(response.content)
-    importer = import_missing_object_data(source, base_url, importer)
+    importer = import_missing_object_data(source, importer)
 
     messages.add_message(request, messages.SUCCESS, 'Snippet(s) successfully imported')
     app_label, model_name = model.split('.')
