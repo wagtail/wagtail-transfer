@@ -29,7 +29,7 @@ def pages_for_export(request, root_page_id):
 
     root_page = get_object_or_404(Page, id=root_page_id)
 
-    pages = root_page.get_descendants(inclusive=True).specific()
+    pages = [root_page.specific] if request.GET.get('recursive', 'true') == 'false' else root_page.get_descendants(inclusive=True).specific()
 
     ids_for_import = [
         ['wagtailcore.page', page.pk] for page in pages
