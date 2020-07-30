@@ -123,9 +123,9 @@ class TestModelsApi(TestCase):
 class TestPagesApi(TestCase):
     fixtures = ['test.json']
 
-    def get(self, page_id):
+    def get(self, page_id, recursive=True):
         digest = digest_for_source('local', str(page_id))
-        return self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s' % (page_id, digest))
+        return self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s&recursive=%s' % (page_id, digest, str(recursive).lower()))
 
     def test_incorrect_digest(self):
         response = self.client.get('/wagtail-transfer/api/pages/2/?digest=12345678')
@@ -167,6 +167,20 @@ class TestPagesApi(TestCase):
 
         self.assertTrue(root_page)
         self.assertEqual(root_page['parent_id'], None)
+
+        # check that the child page will also be imported
+        self.assertIn(['wagtailcore.page', 2], data['ids_for_import'])
+
+    def test_export_nonrecursive(self):
+        response = self.get(1, recursive=False)
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        # check that the child page will not be imported
+        self.assertNotIn(['wagtailcore.page', 2], data['ids_for_import'])
+
+        # check that the original page is still listed for import
+        self.assertIn(['wagtailcore.page', 1], data['ids_for_import'])
 
     def test_parental_keys(self):
         page = SectionedPage(title='How to make a cake', intro="Here is how to make a cake.")
