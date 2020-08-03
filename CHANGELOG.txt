@@ -1,8 +1,14 @@
 Changelog
 =========
 
-0.3.1 (08.06.2020)
+0.4 (03.08.2020)
 ~~~~~~~~~~~~~~~~
+
+ * Add recursive option to pages_for_export view (Jacob Topp-Mugglestone)
+
+
+0.3.1 (08.06.2020)
+~~~~~~~~~~~~~~~~~~
 
  * Fix missing source when importing objects (Kalob Taulien)
  * Fix updated request.site to use Site.find_for_request() (Kalob Taulien)
