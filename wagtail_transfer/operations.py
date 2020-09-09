@@ -7,7 +7,7 @@ from modelcluster.models import ClusterableModel, get_all_child_relations
 from treebeard.mp_tree import MP_Node
 from wagtail.core.models import Page
 
-from .field_adapters import get_field_adapter
+from .field_adapters import adapter_registry
 from .locators import get_locator_for_model
 from .models import get_base_model, get_base_model_for_path, get_model_for_path
 
@@ -583,7 +583,7 @@ class SaveOperationMixin:
             except KeyError:
                 continue
 
-            get_field_adapter(field).populate_field(self.instance, value, context)
+            adapter_registry.get_field_adapter(field).populate_field(self.instance, value, context)
 
     def _populate_many_to_many_fields(self, context):
         save_needed = False
@@ -626,7 +626,7 @@ class SaveOperationMixin:
         for field in self.model._meta.get_fields():
             if isinstance(field, models.Field):
                 val = self.object_data['fields'].get(field.name)
-                deps.update(get_field_adapter(field).get_dependencies(val))
+                deps.update(adapter_registry.get_field_adapter(field).get_dependencies(val))
 
         return deps
 

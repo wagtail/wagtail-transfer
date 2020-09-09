@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
 from taggit.managers import TaggableManager
+from wagtail.core import hooks
 from wagtail.core.fields import RichTextField, StreamField
 
 from .files import File, FileTransferError, get_file_hash, get_file_size
@@ -240,26 +241,44 @@ class GenericRelationAdapter(FieldAdapter):
         pass
 
 
-ADAPTERS_BY_FIELD_CLASS = {
-    models.Field: FieldAdapter,
-    models.ForeignKey: ForeignKeyAdapter,
-    ManyToOneRel: ManyToOneRelAdapter,
-    RichTextField: RichTextAdapter,
-    StreamField: StreamFieldAdapter,
-    models.FileField: FileAdapter,
-    models.ManyToManyField: ManyToManyFieldAdapter,
-    TaggableManager: TaggableManagerAdapter,
-    GenericRelation: GenericRelationAdapter,
-}
+class AdapterRegistry:
+    BASE_ADAPTERS_BY_FIELD_CLASS = {
+        models.Field: FieldAdapter,
+        models.ForeignKey: ForeignKeyAdapter,
+        ManyToOneRel: ManyToOneRelAdapter,
+        RichTextField: RichTextAdapter,
+        StreamField: StreamFieldAdapter,
+        models.FileField: FileAdapter,
+        models.ManyToManyField: ManyToManyFieldAdapter,
+        TaggableManager: TaggableManagerAdapter,
+        GenericRelation: GenericRelationAdapter,
+    }
+
+    def __init__(self):
+        self._scanned_for_adapters = False
+        self.adapters_by_field_class = {}
+    
+    def _scan_for_adapters(self):
+        adapters = dict(self.BASE_ADAPTERS_BY_FIELD_CLASS)
+
+        for fn in hooks.get_hooks('register_field_adapters'):
+            adapters.update(fn())
+    
+        self.adapters_by_field_class = adapters
+
+    @lru_cache(maxsize=None)
+    def get_field_adapter(self, field):
+        # find the adapter class for the most specific class in the field's inheritance tree
+
+        if not self._scanned_for_adapters:
+            self._scan_for_adapters()
+
+        for field_class in type(field).__mro__:
+            if field_class in self.adapters_by_field_class:
+                adapter_class = self.adapters_by_field_class[field_class]
+                return adapter_class(field)
+
+        raise ValueError("No adapter found for field: %r" % field)
 
 
-@lru_cache(maxsize=None)
-def get_field_adapter(field):
-    # find the adapter class for the most specific class in the field's inheritance tree
-
-    for field_class in type(field).__mro__:
-        if field_class in ADAPTERS_BY_FIELD_CLASS:
-            adapter_class = ADAPTERS_BY_FIELD_CLASS[field_class]
-            return adapter_class(field)
-
-    raise ValueError("No adapter found for field: %r" % field)
+adapter_registry = AdapterRegistry()
