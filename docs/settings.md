@@ -1,4 +1,6 @@
-# Settings
+# Settings and Hooks
+
+## Settings
 
 ### `WAGTAILTRANSFER_SECRET_KEY`
 
@@ -84,3 +86,32 @@ that object will end up with unresolved references, to be handled by the same se
 
 Note that these settings do not accept models that are defined as subclasses through multi-table inheritance - in 
 particular, they cannot be used to define behaviour that only applies to specific subclasses of Page.
+
+## Hooks
+
+### `register_field_adapters`
+
+Field adapters are classes used by Wagtail Transfer to serialize and identify references from fields when exporting,
+and repopulate them with the serialised data when importing. You can register a custom field adapter by using the
+`register_field_adapters` hook. A function registered with this hook should return a dictionary which maps field classes
+to field adapter classes (note that with inheritance, the field adapter registered with the closest ancestor class will be used).
+For example, to register a custom field adapter against Django's `models.Field`:
+
+```python
+# <my_app>/wagtail_hooks.py
+
+from django.db import models
+
+from wagtail.core import hooks
+from wagtail_transfer.field_adapters import FieldAdapter
+
+
+class MyCustomAdapter(FieldAdapter):
+    pass
+
+
+@hooks.register('register_field_adapters')
+def register_my_custom_adapter():
+    return {models.Field: MyCustomAdapter}
+
+```

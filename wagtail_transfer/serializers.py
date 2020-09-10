@@ -5,7 +5,7 @@ from modelcluster.fields import ParentalKey
 from treebeard.mp_tree import MP_Node
 from wagtail.core.models import Page
 
-from .field_adapters import get_field_adapter
+from .field_adapters import adapter_registry
 from .models import get_base_model
 
 
@@ -39,7 +39,7 @@ class ModelSerializer:
                 if not isinstance(related_field, ParentalKey):
                     continue
 
-            self.field_adapters.append(get_field_adapter(field))
+            self.field_adapters.append(adapter_registry.get_field_adapter(field))
 
     def get_objects_by_ids(self, ids):
         """
