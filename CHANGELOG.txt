@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.5 (10.09.2020)
+~~~~~~~~~~~~~~~~
+
+ * Add support for registering custom field adapters (Jacob Topp-Mugglestone)
+
+
 0.4 (03.08.2020)
 ~~~~~~~~~~~~~~~~
 
