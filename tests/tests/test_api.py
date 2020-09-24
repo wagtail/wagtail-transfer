@@ -374,7 +374,8 @@ class TestPagesApi(TestCase):
 
         data = json.loads(response.content)
         # result should have a mapping for the page we just created, and its parent
-        self.assertEqual(len(data['mappings']), 2)
+        page_mappings = filter(lambda mapping: mapping[0] == 'wagtailcore.page', data['mappings'])
+        self.assertEqual(len(list(page_mappings)), 2)
 
     def test_parental_many_to_many(self):
         page = PageWithParentalManyToMany(title="This page has lots of ads!")
