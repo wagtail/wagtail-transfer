@@ -165,7 +165,10 @@ class StreamFieldAdapter(FieldAdapter):
 
 class FileAdapter(FieldAdapter):
     def serialize(self, instance):
-        url = self.field.value_from_object(instance).url
+        value = self.field.value_from_object(instance)
+        if not value:
+            return None
+        url = value.url
         if settings.MEDIA_URL.startswith('/'):
             # Using a relative media url. ie. /media/
             # Prepend the BASE_URL to turn this into an absolute URL
@@ -177,6 +180,8 @@ class FileAdapter(FieldAdapter):
         }
 
     def populate_field(self, instance, value, context):
+        if not value:
+            return None
         imported_file = context.imported_files_by_source_url.get(value['download_url'])
         if imported_file is None:
 
