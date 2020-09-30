@@ -3,6 +3,7 @@ from functools import partial
 from wagtail.core.blocks import (ChooserBlock, ListBlock, RichTextBlock, StreamBlock,
                                  StructBlock)
 
+from .models import get_base_model
 from .richtext import get_reference_handler
 
 
@@ -107,11 +108,11 @@ class RichTextBlockHandler(BaseBlockHandler):
 class ChooserBlockHandler(BaseBlockHandler):
     def get_object_references(self, value):
         if value:
-            return {(self.block.target_model, value)}
+            return {(get_base_model(self.block.target_model), value)}
         return set()
 
     def update_ids(self, value, destination_ids_by_source):
-        value = destination_ids_by_source.get((self.block.target_model, value), value)
+        value = destination_ids_by_source.get((get_base_model(self.block.target_model), value), value)
         return value
 
 
