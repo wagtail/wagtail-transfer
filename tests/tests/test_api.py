@@ -16,7 +16,7 @@ from wagtail.documents.models import Document
 from wagtail_transfer.auth import digest_for_source
 from wagtail_transfer.models import IDMapping
 from tests.models import (
-    Advert, Avatar, Category, ModelWithManyToMany, PageWithRichText, SectionedPage, SponsoredPage,
+    Advert, Avatar, Category, LongAdvert, ModelWithManyToMany, PageWithRichText, SectionedPage, SponsoredPage,
     PageWithStreamField, PageWithParentalManyToMany
 )
 
@@ -511,6 +511,23 @@ class TestObjectsApi(TestCase):
 
         # Category objects in the mappings section should be identified by name, not UUID
         self.assertIn(['tests.category', 1, ['Cars']], data['mappings'])
+
+    def test_model_with_multi_table_inheritance(self):
+        # LongAdvert inherits from Advert. Fetching the base instance over the objects api should
+        # return a LongAdvert model
+        long_ad = LongAdvert.objects.create(slogan='test', description='longertest')
+
+        response = self.get({
+            'tests.advert': [long_ad.pk]
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        self.assertEqual(data['mappings'][0][0], 'tests.advert')
+        # mappings should be for the base object
+
+        self.assertEqual(data['objects'][0]['model'], 'tests.longadvert')
+        # the child object should be serialized
 
     def test_image(self):
         with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
