@@ -1,12 +1,73 @@
 from functools import lru_cache
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models.constants import LOOKUP_SEP
 from modelcluster.fields import ParentalKey
 from treebeard.mp_tree import MP_Node
 from wagtail.core.models import Page
 
 from .field_adapters import adapter_registry
 from .models import get_base_model
+
+
+def _get_subclasses_recurse(model):
+    """
+    Given a Model class, find all related objects, exploring children
+    recursively, returning a `list` of strings representing the
+    relations for select_related, adapted from https://github.com/jazzband/django-model-utils/blob/master/model_utils/managers.py
+    """
+
+    related_objects = [f for f in model._meta.get_fields() if isinstance(f, models.OneToOneRel)]
+
+    rels = [
+        rel for rel in related_objects
+        if isinstance(rel.field, models.OneToOneField)
+        and issubclass(rel.field.model, model)
+        and model is not rel.field.model
+        and rel.parent_link
+    ]
+
+    subclasses = []
+    for rel in rels:
+        for subclass in _get_subclasses_recurse(rel.field.model):
+            subclasses.append(
+                rel.get_accessor_name() + LOOKUP_SEP + subclass)
+        subclasses.append(rel.get_accessor_name())
+    return subclasses
+
+
+def _get_sub_obj_recurse(obj, s):
+    """
+    Given an object and its potential subclasses in lookup string form,
+    retrieve its most specific subclass recursively
+    Taken from: https://github.com/jazzband/django-model-utils/blob/master/model_utils/managers.py
+    """
+    rel, _, s = s.partition(LOOKUP_SEP)
+
+    try:
+        node = getattr(obj, rel)
+    except ObjectDoesNotExist:
+        return None
+    if s:
+        child = _get_sub_obj_recurse(node, s)
+        return child
+    else:
+        return node
+
+
+def get_subclass_instances(instances, subclasses):
+    subclass_instances = []
+    for obj in instances:
+        sub_obj = None
+        for s in subclasses:
+            sub_obj = _get_sub_obj_recurse(obj, s)
+            if sub_obj:
+                break
+        if not sub_obj:
+            sub_obj = obj
+        subclass_instances.append(sub_obj)
+    return subclass_instances
 
 
 class ModelSerializer:
@@ -43,10 +104,13 @@ class ModelSerializer:
 
     def get_objects_by_ids(self, ids):
         """
-        Given a list of IDs, return a queryset of model instances that we can
-        run serialize and get_object_references on
+        Given a list of IDs, return a list of model instances that we can
+        run serialize and get_object_references on, fetching the specific subclasses
+        if using multi table inheritance as appropriate
         """
-        return self.model.objects.filter(pk__in=ids)
+        base_queryset = self.model.objects.filter(pk__in=ids)
+        subclasses = _get_subclasses_recurse(self.model)
+        return get_subclass_instances(base_queryset, subclasses)
 
     def serialize_fields(self, instance):
         return {
@@ -102,7 +166,7 @@ class PageSerializer(TreeModelSerializer):
 
     def get_objects_by_ids(self, ids):
         # serialize method needs the instance in its specific form
-        return super().get_objects_by_ids(ids).specific()
+        return self.model.objects.filter(pk__in=ids).specific()
 
 
 SERIALIZERS_BY_MODEL_CLASS = {
