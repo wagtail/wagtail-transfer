@@ -12,7 +12,7 @@ from wagtail.images.models import Image
 from wagtail_transfer.models import IDMapping
 from wagtail_transfer.operations import ImportPlanner
 from tests.models import (
-    Advert, Author, Avatar, Category, ModelWithManyToMany, PageWithParentalManyToMany, PageWithRelatedPages,
+    Advert, Author, Avatar, Category, LongAdvert, ModelWithManyToMany, PageWithParentalManyToMany, PageWithRelatedPages,
     PageWithRichText, PageWithStreamField, RedirectPage, SectionedPage, SimplePage, SponsoredPage
 )
 
@@ -1384,3 +1384,34 @@ class TestImport(TestCase):
         get.assert_called()
         avatar = Avatar.objects.get()
         self.assertEqual(avatar.image.read(), b'my test image file contents')
+
+    def test_import_multi_table_model(self):
+        # test that importing a model using multi table inheritance correctly imports the child model, not just the parent
+
+        data = """{
+            "ids_for_import": [
+                ["tests.advert", 4]
+            ],
+            "mappings": [
+                ["tests.advert", 4, "bfd3871a-048e-11eb-8000-287fcf66f689"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.longadvert",
+                    "pk": 4,
+                    "fields": {
+                        "slogan": "test",
+                        "description": "longertest"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+
+        imported_ad = LongAdvert.objects.filter(id=4).first()
+        self.assertIsNotNone(imported_ad)
+        self.assertEqual(imported_ad.slogan, "test")
+        self.assertEqual(imported_ad.description, "longertest")

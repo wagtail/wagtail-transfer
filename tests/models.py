@@ -15,6 +15,10 @@ class Advert(models.Model):
     slogan = models.CharField(max_length=255)
 
 
+class LongAdvert(Advert):
+    description = models.TextField()
+
+
 class Author(models.Model):
     name = models.CharField(max_length=255)
     bio = models.TextField()

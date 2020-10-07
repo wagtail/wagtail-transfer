@@ -126,8 +126,8 @@ def objects_for_export(request):
 
         for obj in serializer.get_objects_by_ids(ids):
             instance_serializer = get_model_serializer(type(obj))  # noqa
-            objects.append(serializer.serialize(obj))
-            object_references.update(serializer.get_object_references(obj))
+            objects.append(instance_serializer.serialize(obj))
+            object_references.update(instance_serializer.get_object_references(obj))
 
     mappings = []
     for model, pk in object_references:
