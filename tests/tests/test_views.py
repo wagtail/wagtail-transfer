@@ -13,6 +13,10 @@ class TestChooseView(TestCase):
     def setUp(self):
         self.client.login(username='admin', password='password')
 
+    def test_fail(self):
+        # gratuitous failure to test our nightly build notifications
+        self.assertFalse(True)
+
     def test_get(self):
         response = self.client.get('/admin/wagtail-transfer/choose/')
         self.assertEqual(response.status_code, 200)
