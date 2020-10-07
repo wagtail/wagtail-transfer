@@ -8,9 +8,14 @@ jobs:
     executor: python/default
     steps:
       - checkout
-      - python/load-cache
-      - python/install-deps
-      - python/save-cache
+      - restore_cache:
+          key: pip-{{ .Branch }}
+      - run: pip install wagtail
+      - run: pip install -e .
+      - save_cache:
+          key: pip-{{ .Branch }}
+          paths:
+            - "~/.cache/pip"
       - run:
           command: ./runtests.py
           name: Test
