@@ -449,6 +449,13 @@ class ImportPlanner:
         with transaction.atomic():
             for operation in operation_order:
                 operation.run(self.context)
+            
+            # pages must only have revisions saved after all child objects have been updated, imported, or deleted, otherwise
+            # they will capture outdated versions of child objects in the revision
+            for operation in operation_order:
+                if isinstance(operation.instance, Page):
+                    operation.instance.save_revision()
+
 
     def _check_satisfiable(self, operation, statuses):
         # Check whether the given operation's dependencies are satisfiable. statuses is a dict of
@@ -685,10 +692,6 @@ class CreateTreeModel(CreateModel):
         # Add the page to the database as a child of parent
         parent.add_child(instance=self.instance)
 
-        if isinstance(self.instance, Page):
-            # Also save this as a revision, so that it exists in revision history
-            self.instance.save_revision(changed=False)
-
 
 class UpdateModel(SaveOperationMixin, Operation):
     def __init__(self, instance, object_data):
@@ -700,15 +703,6 @@ class UpdateModel(SaveOperationMixin, Operation):
         self._populate_fields(context)
         self._save(context)
         self._populate_many_to_many_fields(context)
-
-    def _save(self, context):
-        super()._save(context)
-        if isinstance(self.instance, Page):
-            # Also save this as a revision, so that:
-            # * the edit-page view will pick up this imported version rather than any currently-existing drafts
-            # * it exists in revision history
-            # * the Page.draft_title field (as used in page listings in the admin) is updated to match the real title
-            self.instance.save_revision(changed=False)
 
 
 class DeleteModel(Operation):
