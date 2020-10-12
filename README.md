@@ -67,6 +67,9 @@ The following settings are additionally recognised:
 
 Note that these settings do not accept models that are defined as subclasses through [multi-table inheritance](https://docs.djangoproject.com/en/stable/topics/db/models/#multi-table-inheritance) - in particular, they cannot be used to define behaviour that only applies to specific subclasses of Page.
 
+* `WAGTAILTRANSFER_CHOOSER_API_PROXY_TIMEOUT = 5`
+
+  By default, each API call made to browse the page tree on the source server has a timeout limit of 5 seconds. If you find this threshold is too low, you can increase it. This may be of particular use if you are running two local runservers to test or extend Wagtail Transfer.
 
 ## Management commands
 
