@@ -1,4 +1,5 @@
 import json
+from copy import copy
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -206,11 +207,29 @@ class ImportPlanner:
         """
         data = json.loads(json_data)
 
-        # add source id -> uid mappings to the uids_by_source dict
+        # for each ID in the import list, add to base_import_ids as an object explicitly selected
+        # for import
+        for model_path, source_id in data['ids_for_import']:
+            model = get_base_model_for_path(model_path)
+            self.base_import_ids.add((model, source_id))
+
+        # add source id -> uid mappings to the uids_by_source dict, and add objectives 
+        # for importing referenced models
         for model_path, source_id, jsonish_uid in data['mappings']:
             model = get_base_model_for_path(model_path)
             uid = get_locator_for_model(model).uid_from_json(jsonish_uid)
             self.context.uids_by_source[(model, source_id)] = uid
+
+            base_import = (model, source_id) in self.base_import_ids
+
+            if base_import or model_path not in NO_FOLLOW_MODELS:
+                objective = Objective(
+                    model, source_id, self.context,
+                    must_update=(base_import or model_path in UPDATE_RELATED_MODELS)
+                )
+
+                # add to the set of objectives that need handling
+                self._add_objective(objective)
 
         # add object data to the object_data_by_source dict
         for obj_data in data['objects']:
@@ -219,16 +238,6 @@ class ImportPlanner:
         # retry tasks that were previously postponed due to missing object data
         self._retry_tasks()
 
-        # for each ID in the import list, add to base_import_ids as an object explicitly selected
-        # for import, and add an objective to specify that we want an up-to-date copy of that
-        # object on the destination site
-        for model_path, source_id in data['ids_for_import']:
-            model = get_base_model_for_path(model_path)
-            self.base_import_ids.add((model, source_id))
-            objective = Objective(model, source_id, self.context, must_update=True)
-
-            # add to the set of objectives that need handling
-            self._add_objective(objective)
 
         # Process all unhandled objectives - which may trigger new objectives as dependencies of
         # the resulting operations - until no unhandled objectives remain
@@ -243,10 +252,29 @@ class ImportPlanner:
 
     def _add_objective(self, objective):
         # add to the set of objectives that need handling, unless it's one we've already seen
-        # (in which case it's either in the queue to be handled, or has been handled already)
-        if objective not in self.objectives:
-            self.objectives.add(objective)
-            self.unhandled_objectives.add(objective)
+        # (in which case it's either in the queue to be handled, or has been handled already).
+        # An objective to update a model supercedes an objective to ensure it exists
+
+        if not objective.must_update:
+            update_objective = copy(objective)
+            update_objective.must_update = True
+        else:
+            update_objective = objective
+
+        if update_objective in self.objectives:
+            # We're already updating the model, so this objective isn't relevant
+            return
+        elif objective.must_update:
+            # We're going to add a new objective to update the model
+            # so we should remove any existing objective that doesn't update the model
+            no_update_objective = copy(objective)
+            no_update_objective.must_update = False
+            self.objectives.discard(no_update_objective)
+            self.unhandled_objectives.discard(no_update_objective)
+        
+        self.objectives.add(objective)
+        self.unhandled_objectives.add(objective)
+
 
     def _handle_objective(self, objective):
         if not objective.exists_at_destination:
