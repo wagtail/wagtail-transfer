@@ -6,6 +6,8 @@ from urllib.parse import urlparse
 from django.conf import settings
 from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
+from django.utils.functional import cached_property
+from modelcluster.fields import ParentalKey
 from taggit.managers import TaggableManager
 from wagtail.core import hooks
 from wagtail.core.fields import RichTextField, StreamField
@@ -18,6 +20,11 @@ from .streamfield import get_object_references, update_object_ids
 from django.contrib.contenttypes.fields import GenericRelation
 
 from django.utils.encoding import is_protected_type
+
+
+FOLLOWED_REVERSE_RELATIONS = [
+    (model_label.lower(), relation.lower()) for model_label, relation in getattr(settings, "WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS", [])
+]
 
 
 class FieldAdapter:
@@ -104,29 +111,34 @@ class ForeignKeyAdapter(FieldAdapter):
 class ManyToOneRelAdapter(FieldAdapter):
     def __init__(self, field):
         super().__init__(field)
-        self.related_field = field.field
+        self.related_field = getattr(field, 'field', None) or getattr(field, 'remote_field', None)
         self.related_model = field.related_model
-
-        from .serializers import get_model_serializer
-        self.related_model_serializer = get_model_serializer(self.related_model)
 
     def _get_related_objects(self, instance):
         return getattr(instance, self.name).all()
 
+    @cached_property
+    def related_model_serializer(self):
+        from .serializers import get_model_serializer
+        return get_model_serializer(self.related_model)
+
+
     def serialize(self, instance):
-        return [
-            self.related_model_serializer.serialize(obj)
-            for obj in self._get_related_objects(instance)
-        ]
+        if isinstance(self.related_field, ParentalKey):
+            return [
+                self.related_model_serializer.serialize(obj)
+                for obj in self._get_related_objects(instance)
+            ]
 
     def get_object_references(self, instance):
         refs = set()
-        for obj in self._get_related_objects(instance):
-            refs.update(self.related_model_serializer.get_object_references(obj))
+        if isinstance(self.related_field, ParentalKey) or (get_base_model(type(instance))._meta.label_lower, self.name) in FOLLOWED_REVERSE_RELATIONS:
+            for obj in self._get_related_objects(instance):
+                refs.update(self.related_model_serializer.get_object_references(obj))
         return refs
 
     def populate_field(self, instance, value, context):
-        raise Exception('populate_field is not supported on many-to-one relations')
+        pass
 
 
 class RichTextAdapter(FieldAdapter):
@@ -240,10 +252,8 @@ class TaggableManagerAdapter(FieldAdapter):
         pass
 
 
-class GenericRelationAdapter(FieldAdapter):
-    def populate_field(self, instance, value, context):
-        # TODO
-        pass
+class GenericRelationAdapter(ManyToOneRelAdapter):
+    pass
 
 
 class AdapterRegistry:
@@ -282,8 +292,6 @@ class AdapterRegistry:
             if field_class in self.adapters_by_field_class:
                 adapter_class = self.adapters_by_field_class[field_class]
                 return adapter_class(field)
-
-        raise ValueError("No adapter found for field: %r" % field)
 
 
 adapter_registry = AdapterRegistry()

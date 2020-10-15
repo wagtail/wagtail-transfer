@@ -82,25 +82,14 @@ class ModelSerializer:
             if field.name in self.ignored_fields:
                 continue
 
-            if isinstance(field, models.Field):
-                # this is a genuine field rather than a reverse relation
-
-                # ignore primary keys (including MTI parent pointers)
-                if field.primary_key:
-                    continue
-            else:
-                # this is probably a reverse relation, so fetch its related field
-                try:
-                    related_field = field.field
-                except AttributeError:
-                    # we don't know what sort of pseudo-field this is, so skip it
+            # ignore primary keys (including MTI parent pointers)
+            if getattr(field, 'primary_key', False):
                     continue
 
-                # ignore relations other than ParentalKey
-                if not isinstance(related_field, ParentalKey):
-                    continue
+            adapter = adapter_registry.get_field_adapter(field)
 
-            self.field_adapters.append(adapter_registry.get_field_adapter(field))
+            if adapter:
+                self.field_adapters.append(adapter)
 
     def get_objects_by_ids(self, ids):
         """

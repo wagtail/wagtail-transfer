@@ -609,16 +609,15 @@ class SaveOperationMixin:
 
     def _populate_fields(self, context):
         for field in self.model._meta.get_fields():
-            if not isinstance(field, models.Field):
-                # populate data for actual fields only; ignore reverse relations
-                continue
-
             try:
                 value = self.object_data['fields'][field.name]
             except KeyError:
                 continue
 
-            adapter_registry.get_field_adapter(field).populate_field(self.instance, value, context)
+            adapter = adapter_registry.get_field_adapter(field)
+
+            if adapter:
+                adapter.populate_field(self.instance, value, context)
 
     def _populate_many_to_many_fields(self, context):
         save_needed = False
@@ -659,9 +658,10 @@ class SaveOperationMixin:
         deps = super().dependencies
 
         for field in self.model._meta.get_fields():
-            if isinstance(field, models.Field):
-                val = self.object_data['fields'].get(field.name)
-                deps.update(adapter_registry.get_field_adapter(field).get_dependencies(val))
+            val = self.object_data['fields'].get(field.name)
+            adapter = adapter_registry.get_field_adapter(field)
+            if adapter:
+                deps.update(adapter.get_dependencies(val))
 
         return deps
 
