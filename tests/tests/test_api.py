@@ -529,6 +529,22 @@ class TestObjectsApi(TestCase):
         self.assertEqual(data['objects'][0]['model'], 'tests.longadvert')
         # the child object should be serialized
 
+    def test_model_with_tags(self):
+        # test that a reverse relation such as tagged_items is followed to obtain references to the tags
+        # and tagged_items, if the model and relationship are specified in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS
+        ad = Advert.objects.create(slogan='test')
+        ad.tags.add('test_tag')
+
+        response = self.get({
+            'tests.advert': [ad.pk]
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        mapped_models = {mapping[0] for mapping in data['mappings']}
+        self.assertIn('taggit.tag', mapped_models)
+        self.assertIn('taggit.taggeditem', mapped_models)
+
     def test_image(self):
         with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
             image = Image.objects.create(

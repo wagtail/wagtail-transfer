@@ -1415,3 +1415,39 @@ class TestImport(TestCase):
         self.assertIsNotNone(imported_ad)
         self.assertEqual(imported_ad.slogan, "test")
         self.assertEqual(imported_ad.description, "longertest")
+
+    def test_import_model_with_generic_foreign_key(self):
+        # test importing a model with a generic foreign key by importing a model that implements tagging using standard taggit (not ParentalKey)
+        data = """{
+            "ids_for_import": [["tests.advert", 4]],
+            "mappings": [
+                ["taggit.tag", 152, "ac92b2ba-0fa6-11eb-800b-287fcf66f689"],
+                ["tests.advert", 4, "ac931726-0fa6-11eb-800c-287fcf66f689"],
+                ["taggit.taggeditem", 150, "ac938e5a-0fa6-11eb-800d-287fcf66f689"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.advert",
+                    "pk": 4,
+                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test", "tags": "[<Tag: test_tag>]", "tagged_items": null}
+                },
+                {
+                    "model": "taggit.taggeditem",
+                    "pk": 150,
+                    "fields": {"content_object": ["tests.advert", 4], "tag": 152}
+                },
+                {
+                    "model": "taggit.tag",
+                    "pk": 152,
+                    "fields": {"name": "test_tag", "slug": "testtag"}
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+
+        imported_ad = Advert.objects.filter(id=4).first()
+        self.assertIsNotNone(imported_ad)
+        self.assertEqual(imported_ad.tags.first().name, "test_tag")

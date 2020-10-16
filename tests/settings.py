@@ -134,6 +134,8 @@ WAGTAILTRANSFER_SOURCES = {
     }
 }
 
+WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS = [('wagtailimages.image', 'tagged_items'), ('tests.advert', 'tagged_items')]
+
 WAGTAILTRANSFER_SECRET_KEY = 'i-am-the-local-secret-key'
 
 WAGTAILTRANSFER_UPDATE_RELATED_MODELS = ['wagtailimages.Image', 'tests.advert']
