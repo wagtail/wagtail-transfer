@@ -168,7 +168,7 @@ class GenericForeignKeyAdapter(FieldAdapter):
             model_path, model_id = self.update_object_references(value, context.destination_ids_by_source)
             content_type = ContentType.objects.get_by_natural_key(*model_path.split('.'))
 
-        setattr(instance, instance._meta.get_field(self.field.ct_field).get_attname(), content_type)
+        setattr(instance, instance._meta.get_field(self.field.ct_field).get_attname(), content_type.pk)
         setattr(instance, self.field.fk_field, model_id)
 
     def get_managed_fields(self):
