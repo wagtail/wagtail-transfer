@@ -87,6 +87,17 @@ that object will end up with unresolved references, to be handled by the same se
 Note that these settings do not accept models that are defined as subclasses through multi-table inheritance - in 
 particular, they cannot be used to define behaviour that only applies to specific subclasses of Page.
 
+### `WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS`
+
+```python
+WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS = [('wagtailimages.image', 'tagged_items')]
+```
+
+Specifies a list of models and their reverse relations to follow when identifying object references that should be imported to the destination site. Defaults to `[('wagtailimages.image', 'tagged_items')]`.
+
+By default, Wagtail Transfer will not follow reverse relations (other than importing child models of `ClusterableModel` subclasses) when identifying referenced models. Specifying a `(model, reverse_relationship_name)` in `WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS` means that when
+encountering that model and relation, Wagtail Transfer will follow the reverse relationship from the specified model and add the models found to the import if they do not exist on the destination site. This is typically useful in cases such as tags on non-Page models.
+
 ## Hooks
 
 ### `register_field_adapters`

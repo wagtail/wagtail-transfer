@@ -25,7 +25,7 @@ from django.utils.encoding import is_protected_type
 
 
 FOLLOWED_REVERSE_RELATIONS = [
-    (model_label.lower(), relation.lower()) for model_label, relation in getattr(settings, "WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS", [])
+    (model_label.lower(), relation.lower()) for model_label, relation in getattr(settings, "WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS", [('wagtailimages.image', 'tagged_items')])
 ]
 
 

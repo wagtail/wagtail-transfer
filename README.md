@@ -65,6 +65,13 @@ The following settings are additionally recognised:
 
   By default, objects referenced within imported content will be recursively imported to ensure that those references are still valid on the destination site. However, this is not always desirable - for example, if this happened for the Page model, this would imply that any pages linked from an imported page would get imported as well, along with any pages linked from _those_ pages, and so on, leading to an unpredictable number of extra pages being added anywhere in the page tree as a side-effect of the import. Models listed in `WAGTAILTRANSFER_NO_FOLLOW_MODELS` will thus be skipped in this process, leaving the reference unresolved. The effect this has on the referencing page will vary according to the kind of relation: nullable foreign keys, one-to-many and many-to-many relations will simply omit the missing object; references in rich text and StreamField will become broken links (just as linking a page and then deleting it would); while non-nullable foreign keys will prevent the object from being created at all (meaning that any objects referencing _that_ object will end up with unresolved references, to be handled by the same set of rules).
 
+* `WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS = [('wagtailimages.image', 'tagged_items')]`
+
+  Specifies a list of models and their reverse relations to follow when identifying object references that should be imported to the destination site. Defaults to `[('wagtailimages.image', 'tagged_items')]`.
+
+  By default, Wagtail Transfer will not follow reverse relations (other than importing child models of `ClusterableModel` subclasses) when identifying referenced models. Specifying a `(model, reverse_relationship_name)` in `WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS` means that when
+  encountering that model and relation, Wagtail Transfer will follow the reverse relationship from the specified model and add the models found to the import if they do not exist on the destination site. This is typically useful in cases such as tags on non-Page models.
+
 Note that these settings do not accept models that are defined as subclasses through [multi-table inheritance](https://docs.djangoproject.com/en/stable/topics/db/models/#multi-table-inheritance) - in particular, they cannot be used to define behaviour that only applies to specific subclasses of Page.
 
 
