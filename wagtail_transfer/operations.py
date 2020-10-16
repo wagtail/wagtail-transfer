@@ -383,19 +383,18 @@ class ImportPlanner:
                 related_base_model = get_base_model(rel.related_model)
                 child_uids = set()
 
-                for child_obj_data in object_data['fields'][rel.name]:
-                    # Add child object data to the object_data_by_source lookup
-                    self._add_object_data_to_lookup(child_obj_data)
+                for child_obj_pk in object_data['fields'][rel.name]:
 
                     # Add an objective for handling the child object. Regardless of whether
                     # this is a 'create' or 'update' task, we want the child objects to be at
                     # their most up-to-date versions, so set the objective to 'must update'
+
                     self._add_objective(
-                        Objective(related_base_model, child_obj_data['pk'], self.context, must_update=True)
+                        Objective(related_base_model, child_obj_pk, self.context, must_update=True)
                     )
 
                     # look up the child object's UID
-                    uid = self.context.uids_by_source[(related_base_model, child_obj_data['pk'])]
+                    uid = self.context.uids_by_source[(related_base_model, child_obj_pk)]
                     child_uids.add(uid)
 
                 if action == 'update':

@@ -95,6 +95,7 @@ class ModelSerializer:
 
         self.field_adapters = [adapter for adapter in field_adapters if adapter.name not in adapter_managed_fields]
 
+
     def get_objects_by_ids(self, ids):
         """
         Given a list of IDs, return a list of model instances that we can
@@ -126,6 +127,12 @@ class ModelSerializer:
         for f in self.field_adapters:
             refs.update(f.get_object_references(instance))
         return refs
+
+    def get_objects_to_serialize(self, instance):
+        objects = set()
+        for f in self.field_adapters:
+            objects.update(f.get_objects_to_serialize(instance))
+        return objects
 
 
 class TreeModelSerializer(ModelSerializer):

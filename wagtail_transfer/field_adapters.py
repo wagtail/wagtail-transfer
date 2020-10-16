@@ -93,6 +93,14 @@ class FieldAdapter:
         """
         return []
 
+    def get_objects_to_serialize(self, instance):
+        """
+        Return a set of (model_class, id) pairs for objects that should be serialized on export, before
+        it is known whether or not they exist or should be updated at the destination site
+        """
+        return set()
+
+
 
 class ForeignKeyAdapter(FieldAdapter):
     def __init__(self, field):
@@ -179,29 +187,27 @@ class ManyToOneRelAdapter(FieldAdapter):
     def __init__(self, field):
         super().__init__(field)
         self.related_field = getattr(field, 'field', None) or getattr(field, 'remote_field', None)
-        self.related_model = field.related_model
+        self.related_base_model = get_base_model(field.related_model)
+        self.is_parental = isinstance(self.related_field, ParentalKey)
 
-    def _get_related_objects(self, instance):
-        return getattr(instance, self.name).all()
-
-    @cached_property
-    def related_model_serializer(self):
-        from .serializers import get_model_serializer
-        return get_model_serializer(self.related_model)
+    def _get_related_object_pks(self, instance):
+        return getattr(instance, self.name).all().values_list('pk', flat=True)
 
     def serialize(self, instance):
-        if isinstance(self.related_field, ParentalKey):
-            return [
-                self.related_model_serializer.serialize(obj)
-                for obj in self._get_related_objects(instance)
-            ]
+        if self.is_parental:
+            return list(self._get_related_object_pks(instance))
 
     def get_object_references(self, instance):
         refs = set()
-        if isinstance(self.related_field, ParentalKey) or (get_base_model(type(instance))._meta.label_lower, self.name) in FOLLOWED_REVERSE_RELATIONS:
-            for obj in self._get_related_objects(instance):
-                refs.update(self.related_model_serializer.get_object_references(obj))
+        if self.is_parental or (get_base_model(self.field.model)._meta.label_lower, self.name) in FOLLOWED_REVERSE_RELATIONS:
+            for pk in self._get_related_object_pks(instance):
+                refs.add((self.related_base_model, pk))
         return refs
+    
+    def get_objects_to_serialize(self, instance):
+        if self.is_parental:
+            return getattr(instance, self.name).all()
+        return set()
 
     def populate_field(self, instance, value, context):
         pass

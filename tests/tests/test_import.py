@@ -307,28 +307,27 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "how-to-boil-an-egg",
                         "intro": "This is how to boil an egg",
-                        "sections": [
-                            {
-                                "model": "tests.sectionedpagesection",
-                                "pk": 101,
-                                "fields": {
-                                    "sort_order": 0,
-                                    "title": "Boil the outside of the egg",
-                                    "body": "...",
-                                    "page": 100
-                                }
-                            },
-                            {
-                                "model": "tests.sectionedpagesection",
-                                "pk": 102,
-                                "fields": {
-                                    "sort_order": 1,
-                                    "title": "Boil the rest of the egg",
-                                    "body": "...",
-                                    "page": 100
-                                }
-                            }
-                        ]
+                        "sections": [101, 102]
+                    }
+                },
+                {
+                    "model": "tests.sectionedpagesection",
+                    "pk": 101,
+                    "fields": {
+                        "sort_order": 0,
+                        "title": "Boil the outside of the egg",
+                        "body": "...",
+                        "page": 100
+                    }
+                },
+                {
+                    "model": "tests.sectionedpagesection",
+                    "pk": 102,
+                    "fields": {
+                        "sort_order": 1,
+                        "title": "Boil the rest of the egg",
+                        "body": "...",
+                        "page": 100
                     }
                 }
             ]
@@ -370,28 +369,27 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "how-to-boil-an-egg",
                         "intro": "This is still how to boil an egg",
-                        "sections": [
-                            {
-                                "model": "tests.sectionedpagesection",
-                                "pk": 102,
-                                "fields": {
-                                    "sort_order": 0,
-                                    "title": "Boil the egg",
-                                    "body": "...",
-                                    "page": 100
-                                }
-                            },
-                            {
-                                "model": "tests.sectionedpagesection",
-                                "pk": 103,
-                                "fields": {
-                                    "sort_order": 1,
-                                    "title": "Eat the egg",
-                                    "body": "...",
-                                    "page": 100
-                                }
-                            }
-                        ]
+                        "sections": [102, 103]
+                    }
+                },
+                {
+                    "model": "tests.sectionedpagesection",
+                    "pk": 102,
+                    "fields": {
+                        "sort_order": 0,
+                        "title": "Boil the egg",
+                        "body": "...",
+                        "page": 100
+                    }
+                },
+                {
+                    "model": "tests.sectionedpagesection",
+                    "pk": 103,
+                    "fields": {
+                        "sort_order": 1,
+                        "title": "Eat the egg",
+                        "body": "...",
+                        "page": 100
                     }
                 }
             ]
