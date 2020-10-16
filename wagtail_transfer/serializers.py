@@ -77,7 +77,8 @@ class ModelSerializer:
         self.model = model
         self.base_model = get_base_model(model)
 
-        self.field_adapters = []
+        field_adapters = []
+        adapter_managed_fields = []
         for field in self.model._meta.get_fields():
             if field.name in self.ignored_fields:
                 continue
@@ -89,7 +90,10 @@ class ModelSerializer:
             adapter = adapter_registry.get_field_adapter(field)
 
             if adapter:
-                self.field_adapters.append(adapter)
+                adapter_managed_fields = adapter_managed_fields + adapter.get_managed_fields()
+                field_adapters.append(adapter)
+
+        self.field_adapters = [adapter for adapter in field_adapters if adapter.name not in adapter_managed_fields]
 
     def get_objects_by_ids(self, ids):
         """

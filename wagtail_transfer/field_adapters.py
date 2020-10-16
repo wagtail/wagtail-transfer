@@ -4,6 +4,8 @@ from functools import lru_cache
 from urllib.parse import urlparse
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
 from django.utils.functional import cached_property
@@ -13,7 +15,7 @@ from wagtail.core import hooks
 from wagtail.core.fields import RichTextField, StreamField
 
 from .files import File, FileTransferError, get_file_hash, get_file_size
-from .models import get_base_model
+from .models import get_base_model, get_base_model_for_path
 from .richtext import get_reference_handler
 from .streamfield import get_object_references, update_object_ids
 
@@ -80,6 +82,17 @@ class FieldAdapter:
         value = self.update_object_references(value, context.destination_ids_by_source)
         setattr(instance, self.field.get_attname(), value)
 
+    def get_managed_fields(self):
+        """
+        Normally, a FieldAdapter will adapt a single field. However, more complex fields like
+        GenericForeignKey may 'manage' several other fields. get_managed_fields returns a list of names
+        of managed fields, whose field adapters should not be used when serializing the model. Note
+        that if a managed field also has managed fields itself, these will also be ignored when
+        serializing the model - the current field adapter is expected to address all managed fields in
+        the chain.
+        """
+        return []
+
 
 class ForeignKeyAdapter(FieldAdapter):
     def __init__(self, field):
@@ -108,6 +121,60 @@ class ForeignKeyAdapter(FieldAdapter):
         return destination_ids_by_source.get((self.related_base_model, value))
 
 
+class GenericForeignKeyAdapter(FieldAdapter):
+    def serialize(self, instance):
+        linked_instance = getattr(instance, self.field.name, None)
+        if linked_instance:
+            # here we do not use the base model, as the GFK could be pointing specifically at the child
+            # which needs to be represented accurately
+            return (linked_instance._meta.label_lower, linked_instance.pk)
+
+    def get_object_references(self, instance):
+        linked_instance = getattr(instance, self.field.name, None)
+        if linked_instance:
+            return {(get_base_model(linked_instance), linked_instance.pk)}
+        return set()
+
+    def get_dependencies(self, value):
+        if value is None:
+            return set()
+
+        model_path, model_id = value
+        base_model = get_base_model_for_path(model_path)
+
+        # GenericForeignKey itself has no blank or null properties, so we need to determine its nullable status
+        # from the underlying fields it uses
+        options = self.field.model._meta
+        ct_field = options.get_field(self.field.ct_field)
+        fk_field = options.get_field(self.field.ct_field)
+
+        if all((ct_field.blank, ct_field.null, fk_field.blank, fk_field.null)):
+            # field is nullable, so it's a soft dependency; we can leave the field empty in the
+            # case that the target object cannot be created
+            return {(base_model, model_id, False)}
+        else:
+            # this is a hard dependency
+            return {(base_model, model_id, True)}
+
+    def update_object_references(self, value, destination_ids_by_source):
+        if value:
+            model_path, model_id = value
+            base_model = get_base_model_for_path(model_path)
+            return (model_path, destination_ids_by_source.get((base_model, model_id)))
+
+    def populate_field(self, instance, value, context):
+        model_id, content_type = None, None
+        if value:
+            model_path, model_id = self.update_object_references(value, context.destination_ids_by_source)
+            content_type = ContentType.objects.get_by_natural_key(*model_path.split('.'))
+
+        setattr(instance, instance._meta.get_field(self.field.ct_field).get_attname(), content_type)
+        setattr(instance, self.field.fk_field, model_id)
+
+    def get_managed_fields(self):
+        return [self.field.fk_field, self.field.ct_field]
+
+
 class ManyToOneRelAdapter(FieldAdapter):
     def __init__(self, field):
         super().__init__(field)
@@ -121,7 +188,6 @@ class ManyToOneRelAdapter(FieldAdapter):
     def related_model_serializer(self):
         from .serializers import get_model_serializer
         return get_model_serializer(self.related_model)
-
 
     def serialize(self, instance):
         if isinstance(self.related_field, ParentalKey):
@@ -267,6 +333,7 @@ class AdapterRegistry:
         models.ManyToManyField: ManyToManyFieldAdapter,
         TaggableManager: TaggableManagerAdapter,
         GenericRelation: GenericRelationAdapter,
+        GenericForeignKey: GenericForeignKeyAdapter,
     }
 
     def __init__(self):
