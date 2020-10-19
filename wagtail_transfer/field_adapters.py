@@ -15,6 +15,7 @@ from wagtail.core import hooks
 from wagtail.core.fields import RichTextField, StreamField
 
 from .files import File, FileTransferError, get_file_hash, get_file_size
+from .locators import get_locator_for_model
 from .models import get_base_model, get_base_model_for_path
 from .richtext import get_reference_handler
 from .streamfield import get_object_references, update_object_ids
@@ -23,10 +24,13 @@ from django.contrib.contenttypes.fields import GenericRelation
 
 from django.utils.encoding import is_protected_type
 
-
-FOLLOWED_REVERSE_RELATIONS = [
-    (model_label.lower(), relation.lower()) for model_label, relation in getattr(settings, "WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS", [('wagtailimages.image', 'tagged_items')])
-]
+WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS = getattr(settings, "WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS", [('wagtailimages.image', 'tagged_items', True)])
+FOLLOWED_REVERSE_RELATIONS = {
+    (model_label.lower(), relation.lower()) for model_label, relation, _ in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS
+}
+DELETED_REVERSE_RELATIONS = {
+    (model_label.lower(), relation.lower()) for model_label, relation, track_deletions in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS if track_deletions
+}
 
 
 class FieldAdapter:
@@ -63,6 +67,12 @@ class FieldAdapter:
         This differs from get_object_references in that references inside related child objects
         do not need to be considered, as they do not block the creation/update of the parent
         object.
+        """
+        return set()
+
+    def get_object_deletions(self, instance, value, context):
+        """
+        A set of (base_model_class, id) tuples for objects that must be deleted at the destination site
         """
         return set()
 
@@ -189,20 +199,37 @@ class ManyToOneRelAdapter(FieldAdapter):
         self.related_field = getattr(field, 'field', None) or getattr(field, 'remote_field', None)
         self.related_base_model = get_base_model(field.related_model)
         self.is_parental = isinstance(self.related_field, ParentalKey)
+        self.is_followed = (get_base_model(self.field.model)._meta.label_lower, self.name) in FOLLOWED_REVERSE_RELATIONS
 
-    def _get_related_object_pks(self, instance):
-        return getattr(instance, self.name).all().values_list('pk', flat=True)
+    def _get_related_objects(self, instance):
+        return getattr(instance, self.name).all()
 
     def serialize(self, instance):
-        if self.is_parental:
-            return list(self._get_related_object_pks(instance))
+        if self.is_parental or self.is_followed:
+            return list(self._get_related_objects(instance).values_list('pk', flat=True))
 
     def get_object_references(self, instance):
         refs = set()
-        if self.is_parental or (get_base_model(self.field.model)._meta.label_lower, self.name) in FOLLOWED_REVERSE_RELATIONS:
-            for pk in self._get_related_object_pks(instance):
+        if self.is_parental or self.is_followed:
+            for pk in self._get_related_objects(instance).values_list('pk', flat=True):
                 refs.add((self.related_base_model, pk))
         return refs
+
+    def get_object_deletions(self, instance, value, context):
+        if (self.is_parental or (get_base_model(self.field.model)._meta.label_lower, self.name) in DELETED_REVERSE_RELATIONS):
+            value = value or []
+            uids = {context.uids_by_source[(self.related_base_model, pk)] for pk in value}
+            # delete any related objects on the existing object if they can't be mapped back
+            # to one of the uids in the new set
+            locator = get_locator_for_model(self.related_base_model)
+            matched_destination_ids = set()
+            for uid in uids:
+                child = locator.find(uid)
+                if child is not None:
+                    matched_destination_ids.add(child.pk)
+
+            return {child for child in self._get_related_objects(instance) if child.pk not in matched_destination_ids}
+        return set()
     
     def get_objects_to_serialize(self, instance):
         if self.is_parental:

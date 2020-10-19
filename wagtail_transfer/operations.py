@@ -393,24 +393,6 @@ class ImportPlanner:
                         Objective(related_base_model, child_obj_pk, self.context, must_update=True)
                     )
 
-                    # look up the child object's UID
-                    uid = self.context.uids_by_source[(related_base_model, child_obj_pk)]
-                    child_uids.add(uid)
-
-                if action == 'update':
-                    # delete any child objects on the existing object if they can't be mapped back
-                    # to one of the uids in the new set
-                    locator = get_locator_for_model(related_base_model)
-                    matched_destination_ids = set()
-                    for uid in child_uids:
-                        child = locator.find(uid)
-                        if child is not None:
-                            matched_destination_ids.add(child.pk)
-
-                    for child in getattr(obj, rel.name).all():
-                        if child.pk not in matched_destination_ids:
-                            self.operations.add(DeleteModel(child))
-
         if operation is not None:
             self.operations.add(operation)
 
@@ -436,6 +418,9 @@ class ImportPlanner:
                 self._add_objective(
                     Objective(model, source_id, self.context, must_update=(model._meta.label_lower in UPDATE_RELATED_MODELS))
                 )
+
+            for instance in operation.deletions(self.context):
+                self.operations.add(DeleteModel(instance))
 
     def _retry_tasks(self):
         """
@@ -590,6 +575,10 @@ class Operation:
         """
         return set()
 
+    def deletions(self, context):
+        # the set of objects that must be deleted when we import this object
+        return set()
+
 
 class SaveOperationMixin:
     """
@@ -663,6 +652,18 @@ class SaveOperationMixin:
                 deps.update(adapter.get_dependencies(val))
 
         return deps
+
+    def deletions(self, context):
+        # the set of objects that must be deleted when we import this object
+
+        deletions = super().deletions(context)
+        for field in self.model._meta.get_fields():
+            val = self.object_data['fields'].get(field.name)
+            adapter = adapter_registry.get_field_adapter(field)
+            if adapter:
+                deletions.update(adapter.get_object_deletions(self.instance, val, context))
+
+        return deletions
 
 
 class CreateModel(SaveOperationMixin, Operation):

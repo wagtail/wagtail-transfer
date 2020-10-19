@@ -620,7 +620,7 @@ class TestImport(TestCase):
                         "file_size": 18521,
                         "file_hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada",
                         "tags": "[]",
-                        "tagged_items": "[]"
+                        "tagged_items": []
                     }
                 }
             ]
@@ -684,7 +684,7 @@ class TestImport(TestCase):
                         "file_size": 18521,
                         "file_hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada",
                         "tags": "[]",
-                        "tagged_items": "[]"
+                        "tagged_items": []
                     }
                 }
             ]
@@ -771,7 +771,7 @@ class TestImport(TestCase):
                         "file_size": 1160,
                         "file_hash": "45c5db99aea04378498883b008ee07528f5ae416",
                         "tags": "[]",
-                        "tagged_items": "[]"
+                        "tagged_items": []
                     }
                 }
             ]
@@ -851,7 +851,7 @@ class TestImport(TestCase):
                         "file_size": 27,
                         "file_hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada",
                         "tags": "[]",
-                        "tagged_items": "[]"
+                        "tagged_items": []
                     }
                 }
             ]
