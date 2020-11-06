@@ -183,6 +183,8 @@ class PageChooserAPIViewSet(PagesAdminAPIViewSet):
 def chooser_api_proxy(request, source_name, path):
     source_config = getattr(settings, 'WAGTAILTRANSFER_SOURCES', {}).get(source_name)
 
+    api_proxy_timeout_seconds = getattr(settings, 'WAGTAILTRANSFER_CHOOSER_API_PROXY_TIMEOUT', 5)
+
     if source_config is None:
         raise Http404("Source does not exist")
 
@@ -194,7 +196,7 @@ def chooser_api_proxy(request, source_name, path):
 
     response = requests.get(f"{base_url}{path}?{request.GET.urlencode()}", headers={
         'Accept': request.META['HTTP_ACCEPT'],
-    }, timeout=5)
+    }, timeout=api_proxy_timeout_seconds)
 
     return HttpResponse(response.content, status=response.status_code)
 

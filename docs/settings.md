@@ -87,6 +87,7 @@ that object will end up with unresolved references, to be handled by the same se
 Note that these settings do not accept models that are defined as subclasses through multi-table inheritance - in 
 particular, they cannot be used to define behaviour that only applies to specific subclasses of Page.
 
+
 ### `WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS`
 
 ```python
@@ -99,6 +100,16 @@ By default, Wagtail Transfer will not follow reverse relations (other than impor
 encountering that model and relation, Wagtail Transfer will follow the reverse relationship from the specified model and add the models found to the import if they do not exist on the destination site. This is typically useful in cases such as tags on non-Page models. The `track_deletions` boolean,
 if `True`, will delete any models in the reverse relation on the destination site that do not exist in the source site's reverse relation. As a result,
 it should only be used for models that behave strictly like child models but do not use `ParentalKey` - for example, tags, where importing an image with deleted tags should delete those tag linking models on the destination site as well.
+
+
+### `WAGTAILTRANSFER_CHOOSER_API_PROXY_TIMEOUT`
+
+```python
+WAGTAILTRANSFER_CHOOSER_API_PROXY_TIMEOUT = 5
+```
+
+  By default, each API call made to browse the page tree on the source server has a timeout limit of 5 seconds. If you find this threshold is too low, you can increase it. This may be of particular use if you are running two local runservers to test or extend Wagtail Transfer.
+
 
 ## Hooks
 
