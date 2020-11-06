@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.6 (6.11.2020)
+~~~~~~~~~~~~~~~~~~
+
+ * Automatically import child models when models use multi table inheritance (Jacob Topp-Mugglestone)
+ * Fix import of page tags and other child models (Jacob Topp-Mugglestone)
+ * Add setting for optionally following reverse relations when importing models (Jacob Topp-Mugglestone)
+ * Add support for GenericForeignKey (Jacob Topp-Mugglestone)
+ * Support a configurable timeout for the API chooser proxy (Steve Jalim)
+
 0.5.1 (24.09.2020)
 ~~~~~~~~~~~~~~~~~~
 
