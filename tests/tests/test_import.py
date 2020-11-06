@@ -1,3 +1,4 @@
+import importlib
 import os.path
 import shutil
 from unittest import mock
@@ -5,7 +6,7 @@ from unittest import mock
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.images import ImageFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from wagtail.core.models import Collection, Page
 from wagtail.images.models import Image
 
@@ -307,28 +308,27 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "how-to-boil-an-egg",
                         "intro": "This is how to boil an egg",
-                        "sections": [
-                            {
-                                "model": "tests.sectionedpagesection",
-                                "pk": 101,
-                                "fields": {
-                                    "sort_order": 0,
-                                    "title": "Boil the outside of the egg",
-                                    "body": "...",
-                                    "page": 100
-                                }
-                            },
-                            {
-                                "model": "tests.sectionedpagesection",
-                                "pk": 102,
-                                "fields": {
-                                    "sort_order": 1,
-                                    "title": "Boil the rest of the egg",
-                                    "body": "...",
-                                    "page": 100
-                                }
-                            }
-                        ]
+                        "sections": [101, 102]
+                    }
+                },
+                {
+                    "model": "tests.sectionedpagesection",
+                    "pk": 101,
+                    "fields": {
+                        "sort_order": 0,
+                        "title": "Boil the outside of the egg",
+                        "body": "...",
+                        "page": 100
+                    }
+                },
+                {
+                    "model": "tests.sectionedpagesection",
+                    "pk": 102,
+                    "fields": {
+                        "sort_order": 1,
+                        "title": "Boil the rest of the egg",
+                        "body": "...",
+                        "page": 100
                     }
                 }
             ]
@@ -370,28 +370,27 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "how-to-boil-an-egg",
                         "intro": "This is still how to boil an egg",
-                        "sections": [
-                            {
-                                "model": "tests.sectionedpagesection",
-                                "pk": 102,
-                                "fields": {
-                                    "sort_order": 0,
-                                    "title": "Boil the egg",
-                                    "body": "...",
-                                    "page": 100
-                                }
-                            },
-                            {
-                                "model": "tests.sectionedpagesection",
-                                "pk": 103,
-                                "fields": {
-                                    "sort_order": 1,
-                                    "title": "Eat the egg",
-                                    "body": "...",
-                                    "page": 100
-                                }
-                            }
-                        ]
+                        "sections": [102, 103]
+                    }
+                },
+                {
+                    "model": "tests.sectionedpagesection",
+                    "pk": 102,
+                    "fields": {
+                        "sort_order": 0,
+                        "title": "Boil the egg",
+                        "body": "...",
+                        "page": 100
+                    }
+                },
+                {
+                    "model": "tests.sectionedpagesection",
+                    "pk": 103,
+                    "fields": {
+                        "sort_order": 1,
+                        "title": "Eat the egg",
+                        "body": "...",
+                        "page": 100
                     }
                 }
             ]
@@ -622,7 +621,7 @@ class TestImport(TestCase):
                         "file_size": 18521,
                         "file_hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada",
                         "tags": "[]",
-                        "tagged_items": "[]"
+                        "tagged_items": []
                     }
                 }
             ]
@@ -686,7 +685,7 @@ class TestImport(TestCase):
                         "file_size": 18521,
                         "file_hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada",
                         "tags": "[]",
-                        "tagged_items": "[]"
+                        "tagged_items": []
                     }
                 }
             ]
@@ -773,7 +772,7 @@ class TestImport(TestCase):
                         "file_size": 1160,
                         "file_hash": "45c5db99aea04378498883b008ee07528f5ae416",
                         "tags": "[]",
-                        "tagged_items": "[]"
+                        "tagged_items": []
                     }
                 }
             ]
@@ -853,7 +852,7 @@ class TestImport(TestCase):
                         "file_size": 27,
                         "file_hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada",
                         "tags": "[]",
-                        "tagged_items": "[]"
+                        "tagged_items": []
                     }
                 }
             ]
@@ -1415,3 +1414,161 @@ class TestImport(TestCase):
         self.assertIsNotNone(imported_ad)
         self.assertEqual(imported_ad.slogan, "test")
         self.assertEqual(imported_ad.description, "longertest")
+
+    def test_import_model_with_generic_foreign_key(self):
+        # test importing a model with a generic foreign key by importing a model that implements tagging using standard taggit (not ParentalKey)
+        data = """{
+            "ids_for_import": [["tests.advert", 4]],
+            "mappings": [
+                ["taggit.tag", 152, "ac92b2ba-0fa6-11eb-800b-287fcf66f689"],
+                ["tests.advert", 4, "ac931726-0fa6-11eb-800c-287fcf66f689"],
+                ["taggit.taggeditem", 150, "ac938e5a-0fa6-11eb-800d-287fcf66f689"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.advert",
+                    "pk": 4,
+                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test", "tags": "[<Tag: test_tag>]", "tagged_items": null}
+                },
+                {
+                    "model": "taggit.taggeditem",
+                    "pk": 150,
+                    "fields": {"content_object": ["tests.advert", 4], "tag": 152}
+                },
+                {
+                    "model": "taggit.tag",
+                    "pk": 152,
+                    "fields": {"name": "test_tag", "slug": "testtag"}
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+
+        imported_ad = Advert.objects.filter(id=4).first()
+        self.assertIsNotNone(imported_ad)
+        self.assertEqual(imported_ad.tags.first().name, "test_tag")
+
+    def test_import_model_with_deleted_reverse_related_models(self):
+        # test re-importing a model where WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS is used to track tag deletions
+        # will delete tags correctly
+        data = """{
+            "ids_for_import": [["tests.advert", 4]],
+            "mappings": [
+                ["taggit.tag", 152, "ac92b2ba-0fa6-11eb-800b-287fcf66f689"],
+                ["tests.advert", 4, "ac931726-0fa6-11eb-800c-287fcf66f689"],
+                ["taggit.taggeditem", 150, "ac938e5a-0fa6-11eb-800d-287fcf66f689"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.advert",
+                    "pk": 4,
+                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test", "tags": "[<Tag: test_tag>]", "tagged_items": [150]}
+                },
+                {
+                    "model": "taggit.taggeditem",
+                    "pk": 150,
+                    "fields": {"content_object": ["tests.advert", 4], "tag": 152}
+                },
+                {
+                    "model": "taggit.tag",
+                    "pk": 152,
+                    "fields": {"name": "test_tag", "slug": "testtag"}
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+
+        imported_ad = Advert.objects.filter(id=4).first()
+        self.assertIsNotNone(imported_ad)
+        self.assertEqual(imported_ad.tags.first().name, "test_tag")
+
+        data = """{
+            "ids_for_import": [["tests.advert", 4]],
+            "mappings": [
+                ["tests.advert", 4, "ac931726-0fa6-11eb-800c-287fcf66f689"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.advert",
+                    "pk": 4,
+                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test", "tags": "[]", "tagged_items": []}
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+
+        imported_ad = Advert.objects.filter(id=4).first()
+        self.assertIsNotNone(imported_ad)
+        self.assertIsNone(imported_ad.tags.first())
+
+    @override_settings(WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS=[('tests.advert', 'tagged_items', False)])
+    def test_import_model_with_untracked_deleted_reverse_related_models(self):
+        # test re-importing a model where WAGTAILTRANFER_FOLLOWED_REVERSE_RELATIONS is not used to track tag deletions
+        # will not delete tags
+        from wagtail_transfer import field_adapters
+        importlib.reload(field_adapters)
+        # force reload field adapters as followed/deleted variables are set on module load, so will not get new setting
+        data = """{
+            "ids_for_import": [["tests.advert", 4]],
+            "mappings": [
+                ["taggit.tag", 152, "ac92b2ba-0fa6-11eb-800b-287fcf66f689"],
+                ["tests.advert", 4, "ac931726-0fa6-11eb-800c-287fcf66f689"],
+                ["taggit.taggeditem", 150, "ac938e5a-0fa6-11eb-800d-287fcf66f689"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.advert",
+                    "pk": 4,
+                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test", "tags": "[<Tag: test_tag>]", "tagged_items": [150]}
+                },
+                {
+                    "model": "taggit.taggeditem",
+                    "pk": 150,
+                    "fields": {"content_object": ["tests.advert", 4], "tag": 152}
+                },
+                {
+                    "model": "taggit.tag",
+                    "pk": 152,
+                    "fields": {"name": "test_tag", "slug": "testtag"}
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+
+        imported_ad = Advert.objects.filter(id=4).first()
+        self.assertIsNotNone(imported_ad)
+        self.assertEqual(imported_ad.tags.first().name, "test_tag")
+
+        data = """{
+            "ids_for_import": [["tests.advert", 4]],
+            "mappings": [
+                ["tests.advert", 4, "ac931726-0fa6-11eb-800c-287fcf66f689"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.advert",
+                    "pk": 4,
+                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test", "tags": "[]", "tagged_items": []}
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+
+        imported_ad = Advert.objects.filter(id=4).first()
+        self.assertIsNotNone(imported_ad)
+        self.assertIsNotNone(imported_ad.tags.first())

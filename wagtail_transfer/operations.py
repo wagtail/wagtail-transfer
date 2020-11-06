@@ -1,4 +1,5 @@
 import json
+from copy import copy
 
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
@@ -206,11 +207,29 @@ class ImportPlanner:
         """
         data = json.loads(json_data)
 
-        # add source id -> uid mappings to the uids_by_source dict
+        # for each ID in the import list, add to base_import_ids as an object explicitly selected
+        # for import
+        for model_path, source_id in data['ids_for_import']:
+            model = get_base_model_for_path(model_path)
+            self.base_import_ids.add((model, source_id))
+
+        # add source id -> uid mappings to the uids_by_source dict, and add objectives 
+        # for importing referenced models
         for model_path, source_id, jsonish_uid in data['mappings']:
             model = get_base_model_for_path(model_path)
             uid = get_locator_for_model(model).uid_from_json(jsonish_uid)
             self.context.uids_by_source[(model, source_id)] = uid
+
+            base_import = (model, source_id) in self.base_import_ids
+
+            if base_import or model_path not in NO_FOLLOW_MODELS:
+                objective = Objective(
+                    model, source_id, self.context,
+                    must_update=(base_import or model_path in UPDATE_RELATED_MODELS)
+                )
+
+                # add to the set of objectives that need handling
+                self._add_objective(objective)
 
         # add object data to the object_data_by_source dict
         for obj_data in data['objects']:
@@ -219,16 +238,6 @@ class ImportPlanner:
         # retry tasks that were previously postponed due to missing object data
         self._retry_tasks()
 
-        # for each ID in the import list, add to base_import_ids as an object explicitly selected
-        # for import, and add an objective to specify that we want an up-to-date copy of that
-        # object on the destination site
-        for model_path, source_id in data['ids_for_import']:
-            model = get_base_model_for_path(model_path)
-            self.base_import_ids.add((model, source_id))
-            objective = Objective(model, source_id, self.context, must_update=True)
-
-            # add to the set of objectives that need handling
-            self._add_objective(objective)
 
         # Process all unhandled objectives - which may trigger new objectives as dependencies of
         # the resulting operations - until no unhandled objectives remain
@@ -243,10 +252,29 @@ class ImportPlanner:
 
     def _add_objective(self, objective):
         # add to the set of objectives that need handling, unless it's one we've already seen
-        # (in which case it's either in the queue to be handled, or has been handled already)
-        if objective not in self.objectives:
-            self.objectives.add(objective)
-            self.unhandled_objectives.add(objective)
+        # (in which case it's either in the queue to be handled, or has been handled already).
+        # An objective to update a model supercedes an objective to ensure it exists
+
+        if not objective.must_update:
+            update_objective = copy(objective)
+            update_objective.must_update = True
+        else:
+            update_objective = objective
+
+        if update_objective in self.objectives:
+            # We're already updating the model, so this objective isn't relevant
+            return
+        elif objective.must_update:
+            # We're going to add a new objective to update the model
+            # so we should remove any existing objective that doesn't update the model
+            no_update_objective = copy(objective)
+            no_update_objective.must_update = False
+            self.objectives.discard(no_update_objective)
+            self.unhandled_objectives.discard(no_update_objective)
+        
+        self.objectives.add(objective)
+        self.unhandled_objectives.add(objective)
+
 
     def _handle_objective(self, objective):
         if not objective.exists_at_destination:
@@ -355,34 +383,15 @@ class ImportPlanner:
                 related_base_model = get_base_model(rel.related_model)
                 child_uids = set()
 
-                for child_obj_data in object_data['fields'][rel.name]:
-                    # Add child object data to the object_data_by_source lookup
-                    self._add_object_data_to_lookup(child_obj_data)
+                for child_obj_pk in object_data['fields'][rel.name]:
 
                     # Add an objective for handling the child object. Regardless of whether
                     # this is a 'create' or 'update' task, we want the child objects to be at
                     # their most up-to-date versions, so set the objective to 'must update'
+
                     self._add_objective(
-                        Objective(related_base_model, child_obj_data['pk'], self.context, must_update=True)
+                        Objective(related_base_model, child_obj_pk, self.context, must_update=True)
                     )
-
-                    # look up the child object's UID
-                    uid = self.context.uids_by_source[(related_base_model, child_obj_data['pk'])]
-                    child_uids.add(uid)
-
-                if action == 'update':
-                    # delete any child objects on the existing object if they can't be mapped back
-                    # to one of the uids in the new set
-                    locator = get_locator_for_model(related_base_model)
-                    matched_destination_ids = set()
-                    for uid in child_uids:
-                        child = locator.find(uid)
-                        if child is not None:
-                            matched_destination_ids.add(child.pk)
-
-                    for child in getattr(obj, rel.name).all():
-                        if child.pk not in matched_destination_ids:
-                            self.operations.add(DeleteModel(child))
 
         if operation is not None:
             self.operations.add(operation)
@@ -409,6 +418,9 @@ class ImportPlanner:
                 self._add_objective(
                     Objective(model, source_id, self.context, must_update=(model._meta.label_lower in UPDATE_RELATED_MODELS))
                 )
+
+            for instance in operation.deletions(self.context):
+                self.operations.add(DeleteModel(instance))
 
     def _retry_tasks(self):
         """
@@ -449,6 +461,13 @@ class ImportPlanner:
         with transaction.atomic():
             for operation in operation_order:
                 operation.run(self.context)
+            
+            # pages must only have revisions saved after all child objects have been updated, imported, or deleted, otherwise
+            # they will capture outdated versions of child objects in the revision
+            for operation in operation_order:
+                if isinstance(operation.instance, Page):
+                    operation.instance.save_revision()
+
 
     def _check_satisfiable(self, operation, statuses):
         # Check whether the given operation's dependencies are satisfiable. statuses is a dict of
@@ -556,6 +575,10 @@ class Operation:
         """
         return set()
 
+    def deletions(self, context):
+        # the set of objects that must be deleted when we import this object
+        return set()
+
 
 class SaveOperationMixin:
     """
@@ -574,16 +597,15 @@ class SaveOperationMixin:
 
     def _populate_fields(self, context):
         for field in self.model._meta.get_fields():
-            if not isinstance(field, models.Field):
-                # populate data for actual fields only; ignore reverse relations
-                continue
-
             try:
                 value = self.object_data['fields'][field.name]
             except KeyError:
                 continue
 
-            adapter_registry.get_field_adapter(field).populate_field(self.instance, value, context)
+            adapter = adapter_registry.get_field_adapter(field)
+
+            if adapter:
+                adapter.populate_field(self.instance, value, context)
 
     def _populate_many_to_many_fields(self, context):
         save_needed = False
@@ -624,11 +646,24 @@ class SaveOperationMixin:
         deps = super().dependencies
 
         for field in self.model._meta.get_fields():
-            if isinstance(field, models.Field):
-                val = self.object_data['fields'].get(field.name)
-                deps.update(adapter_registry.get_field_adapter(field).get_dependencies(val))
+            val = self.object_data['fields'].get(field.name)
+            adapter = adapter_registry.get_field_adapter(field)
+            if adapter:
+                deps.update(adapter.get_dependencies(val))
 
         return deps
+
+    def deletions(self, context):
+        # the set of objects that must be deleted when we import this object
+
+        deletions = super().deletions(context)
+        for field in self.model._meta.get_fields():
+            val = self.object_data['fields'].get(field.name)
+            adapter = adapter_registry.get_field_adapter(field)
+            if adapter:
+                deletions.update(adapter.get_object_deletions(self.instance, val, context))
+
+        return deletions
 
 
 class CreateModel(SaveOperationMixin, Operation):
@@ -685,10 +720,6 @@ class CreateTreeModel(CreateModel):
         # Add the page to the database as a child of parent
         parent.add_child(instance=self.instance)
 
-        if isinstance(self.instance, Page):
-            # Also save this as a revision, so that it exists in revision history
-            self.instance.save_revision(changed=False)
-
 
 class UpdateModel(SaveOperationMixin, Operation):
     def __init__(self, instance, object_data):
@@ -700,15 +731,6 @@ class UpdateModel(SaveOperationMixin, Operation):
         self._populate_fields(context)
         self._save(context)
         self._populate_many_to_many_fields(context)
-
-    def _save(self, context):
-        super()._save(context)
-        if isinstance(self.instance, Page):
-            # Also save this as a revision, so that:
-            # * the edit-page view will pick up this imported version rather than any currently-existing drafts
-            # * it exists in revision history
-            # * the Page.draft_title field (as used in page listings in the admin) is updated to match the real title
-            self.instance.save_revision(changed=False)
 
 
 class DeleteModel(Operation):

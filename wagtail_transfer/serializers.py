@@ -77,30 +77,24 @@ class ModelSerializer:
         self.model = model
         self.base_model = get_base_model(model)
 
-        self.field_adapters = []
+        field_adapters = []
+        adapter_managed_fields = []
         for field in self.model._meta.get_fields():
             if field.name in self.ignored_fields:
                 continue
 
-            if isinstance(field, models.Field):
-                # this is a genuine field rather than a reverse relation
-
-                # ignore primary keys (including MTI parent pointers)
-                if field.primary_key:
-                    continue
-            else:
-                # this is probably a reverse relation, so fetch its related field
-                try:
-                    related_field = field.field
-                except AttributeError:
-                    # we don't know what sort of pseudo-field this is, so skip it
+            # ignore primary keys (including MTI parent pointers)
+            if getattr(field, 'primary_key', False):
                     continue
 
-                # ignore relations other than ParentalKey
-                if not isinstance(related_field, ParentalKey):
-                    continue
+            adapter = adapter_registry.get_field_adapter(field)
 
-            self.field_adapters.append(adapter_registry.get_field_adapter(field))
+            if adapter:
+                adapter_managed_fields = adapter_managed_fields + adapter.get_managed_fields()
+                field_adapters.append(adapter)
+
+        self.field_adapters = [adapter for adapter in field_adapters if adapter.name not in adapter_managed_fields]
+
 
     def get_objects_by_ids(self, ids):
         """
@@ -133,6 +127,12 @@ class ModelSerializer:
         for f in self.field_adapters:
             refs.update(f.get_object_references(instance))
         return refs
+
+    def get_objects_to_serialize(self, instance):
+        objects = set()
+        for f in self.field_adapters:
+            objects.update(f.get_objects_to_serialize(instance))
+        return objects
 
 
 class TreeModelSerializer(ModelSerializer):

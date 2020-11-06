@@ -195,15 +195,17 @@ class TestPagesApi(TestCase):
         data = json.loads(response.content)
 
         page_data = None
+        section_data = []
         for obj in data['objects']:
             if obj['model'] == 'tests.sectionedpage' and obj['pk'] == page.pk:
                 page_data = obj
-                break
+            if obj['model'] == 'tests.sectionedpagesection':
+                section_data.append(obj)
 
         self.assertEqual(len(page_data['fields']['sections']), 2)
-        self.assertEqual(page_data['fields']['sections'][0]['model'], 'tests.sectionedpagesection')
-        self.assertEqual(page_data['fields']['sections'][0]['fields']['title'], "Create the universe")
-        section_id = page_data['fields']['sections'][0]['pk']
+        self.assertEqual(section_data[0]['model'], 'tests.sectionedpagesection')
+        self.assertTrue(section_data[0]['fields']['title'] == "Create the universe")
+        section_id = page_data['fields']['sections'][0]
 
         # there should also be a uid mapping for the section
         matching_uids = [
@@ -528,6 +530,21 @@ class TestObjectsApi(TestCase):
 
         self.assertEqual(data['objects'][0]['model'], 'tests.longadvert')
         # the child object should be serialized
+
+    def test_model_with_tags(self):
+        # test that a reverse relation such as tagged_items is followed to obtain references to the
+        # tagged_items, if the model and relationship are specified in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS
+        ad = Advert.objects.create(slogan='test')
+        ad.tags.add('test_tag')
+
+        response = self.get({
+            'tests.advert': [ad.pk]
+        })
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+
+        mapped_models = {mapping[0] for mapping in data['mappings']}
+        self.assertIn('taggit.taggeditem', mapped_models)
 
     def test_image(self):
         with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:

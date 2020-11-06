@@ -1,5 +1,6 @@
 from django.db import models
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
+from taggit.managers import TaggableManager
 from wagtail.core.fields import RichTextField, StreamField
 from wagtail.core.models import Orderable, Page
 from wagtail.snippets.models import register_snippet
@@ -13,6 +14,7 @@ class SimplePage(Page):
 
 class Advert(models.Model):
     slogan = models.CharField(max_length=255)
+    tags = TaggableManager()
 
 
 class LongAdvert(Advert):

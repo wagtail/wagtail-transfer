@@ -38,10 +38,15 @@ def pages_for_export(request, root_page_id):
     objects = []
     object_references = set()
 
-    for page in pages:
-        serializer = get_model_serializer(type(page))
-        objects.append(serializer.serialize(page))
-        object_references.update(serializer.get_object_references(page))
+    models_to_serialize = set(pages)
+    serialized_models = set()
+
+    while models_to_serialize:
+        model = models_to_serialize.pop()
+        serializer = get_model_serializer(type(model))
+        objects.append(serializer.serialize(model))
+        object_references.update(serializer.get_object_references(model))
+        models_to_serialize.update(serializer.get_objects_to_serialize(model).difference(serialized_models))
 
     mappings = []
     for model, pk in object_references:
@@ -82,10 +87,15 @@ def models_for_export(request, model_path, object_id=None):
     objects = []
     object_references = set()
 
-    for model_object in model_objects:
-        serializer = get_model_serializer(type(model_object))
-        objects.append(serializer.serialize(model_object))
-        object_references.update(serializer.get_object_references(model_object))
+    models_to_serialize = set(model_objects)
+    serialized_models = set()
+
+    while models_to_serialize:
+        model = models_to_serialize.pop()
+        serializer = get_model_serializer(type(model))
+        objects.append(serializer.serialize(model))
+        object_references.update(serializer.get_object_references(model))
+        models_to_serialize.update(serializer.get_objects_to_serialize(model).difference(serialized_models))
 
     mappings = []
     for model, pk in object_references:
@@ -119,15 +129,20 @@ def objects_for_export(request):
 
     objects = []
     object_references = set()
+    serialized_models = set()
+    models_to_serialize = set()
 
     for model_path, ids in request_data.items():
         model = get_model_for_path(model_path)
         serializer = get_model_serializer(model)
 
-        for obj in serializer.get_objects_by_ids(ids):
-            instance_serializer = get_model_serializer(type(obj))  # noqa
-            objects.append(instance_serializer.serialize(obj))
-            object_references.update(instance_serializer.get_object_references(obj))
+        models_to_serialize.update(serializer.get_objects_by_ids(ids))
+        while models_to_serialize:
+            instance = models_to_serialize.pop()
+            serializer = get_model_serializer(type(instance))
+            objects.append(serializer.serialize(instance))
+            object_references.update(serializer.get_object_references(instance))
+            models_to_serialize.update(serializer.get_objects_to_serialize(instance).difference(serialized_models))
 
     mappings = []
     for model, pk in object_references:
