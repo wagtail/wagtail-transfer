@@ -19,7 +19,9 @@ UUID_SEQUENCE = 0
 
 # dict of models that should be located by field values using FieldLocator,
 # rather than by UUID mapping
-LOOKUP_FIELDS = {}
+LOOKUP_FIELDS = {
+    'taggit.tag': ['slug'],  # sensible default for taggit; can still be overridden 
+}
 for model_label, fields in getattr(settings, 'WAGTAILTRANSFER_LOOKUP_FIELDS', {}).items():
     LOOKUP_FIELDS[model_label.lower()] = fields
 
