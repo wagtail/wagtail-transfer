@@ -16,7 +16,7 @@ from .auth import check_digest, digest_for_source
 from .locators import get_locator_for_model
 from .models import get_model_for_path
 from .operations import ImportPlanner
-from .serializers import get_model_serializer
+from .serializers import serializer_registry
 from .vendor.wagtail_admin_api.serializers import AdminPageSerializer
 from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
 
@@ -43,7 +43,7 @@ def pages_for_export(request, root_page_id):
 
     while models_to_serialize:
         model = models_to_serialize.pop()
-        serializer = get_model_serializer(type(model))
+        serializer = serializer_registry.get_model_serializer(type(model))
         objects.append(serializer.serialize(model))
         object_references.update(serializer.get_object_references(model))
         models_to_serialize.update(serializer.get_objects_to_serialize(model).difference(serialized_models))
@@ -92,7 +92,7 @@ def models_for_export(request, model_path, object_id=None):
 
     while models_to_serialize:
         model = models_to_serialize.pop()
-        serializer = get_model_serializer(type(model))
+        serializer = serializer_registry.get_model_serializer(type(model))
         objects.append(serializer.serialize(model))
         object_references.update(serializer.get_object_references(model))
         models_to_serialize.update(serializer.get_objects_to_serialize(model).difference(serialized_models))
@@ -134,12 +134,12 @@ def objects_for_export(request):
 
     for model_path, ids in request_data.items():
         model = get_model_for_path(model_path)
-        serializer = get_model_serializer(model)
+        serializer = serializer_registry.get_model_serializer(model)
 
         models_to_serialize.update(serializer.get_objects_by_ids(ids))
         while models_to_serialize:
             instance = models_to_serialize.pop()
-            serializer = get_model_serializer(type(instance))
+            serializer = serializer_registry.get_model_serializer(type(instance))
             objects.append(serializer.serialize(instance))
             object_references.update(serializer.get_object_references(instance))
             models_to_serialize.update(serializer.get_objects_to_serialize(instance).difference(serialized_models))

@@ -3,8 +3,8 @@ from functools import lru_cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models.constants import LOOKUP_SEP
-from modelcluster.fields import ParentalKey
 from treebeard.mp_tree import MP_Node
+from wagtail.core import hooks
 from wagtail.core.models import Page
 
 from .field_adapters import adapter_registry
@@ -85,7 +85,7 @@ class ModelSerializer:
 
             # ignore primary keys (including MTI parent pointers)
             if getattr(field, 'primary_key', False):
-                    continue
+                continue
 
             adapter = adapter_registry.get_field_adapter(field)
 
@@ -94,7 +94,6 @@ class ModelSerializer:
                 field_adapters.append(adapter)
 
         self.field_adapters = [adapter for adapter in field_adapters if adapter.name not in adapter_managed_fields]
-
 
     def get_objects_by_ids(self, ids):
         """
@@ -169,17 +168,37 @@ class PageSerializer(TreeModelSerializer):
         return self.model.objects.filter(pk__in=ids).specific()
 
 
-SERIALIZERS_BY_MODEL_CLASS = {
-    models.Model: ModelSerializer,
-    MP_Node: TreeModelSerializer,
-    Page: PageSerializer,
-}
+class SerializerRegistry:
+    BASE_SERIALIZERS_BY_MODEL_CLASS = {
+        models.Model: ModelSerializer,
+        MP_Node: TreeModelSerializer,
+        Page: PageSerializer,
+    }
+
+    def __init__(self):
+        self._scanned_for_serializers = False
+        self.serializers_by_model_class = {}
+
+    def _scan_for_serializers(self):
+        serializers = dict(self.BASE_SERIALIZERS_BY_MODEL_CLASS)
+
+        for fn in hooks.get_hooks('register_custom_serializers'):
+            serializers.update(fn())
+
+        self.serializers_by_model_class = serializers
+        self._scanned_for_serializers = True
+
+    @lru_cache(maxsize=None)
+    def get_model_serializer(self, model):
+        # find the serializer class for the most specific class in the model's inheritance tree
+
+        if not self._scanned_for_serializers:
+            self._scan_for_serializers()
+
+        for cls in model.__mro__:
+            if cls in self.serializers_by_model_class:
+                serializer_class = self.serializers_by_model_class[cls]
+                return serializer_class(model)
 
 
-@lru_cache(maxsize=None)
-def get_model_serializer(model):
-    # find the serializer class for the most specific class in the model's inheritance tree
-    for cls in model.__mro__:
-        if cls in SERIALIZERS_BY_MODEL_CLASS:
-            serializer_class = SERIALIZERS_BY_MODEL_CLASS[cls]
-            return serializer_class(model)
+serializer_registry = SerializerRegistry()
