@@ -90,7 +90,7 @@ class FieldAdapter:
         as returned by `serialize`
         """
         value = self.update_object_references(value, context.destination_ids_by_source)
-        setattr(instance, self.field.get_attname(), value)
+        setattr(instance, self.field.get_attname(), self.field.to_python(value))
 
     def get_managed_fields(self):
         """
