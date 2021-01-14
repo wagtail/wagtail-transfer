@@ -481,7 +481,7 @@ class TestImport(TestCase):
     def test_do_not_import_pages_outside_of_selected_root(self):
         # Source page 13 is a page we don't have at the destination, but it's not in ids_for_import
         # (i.e. it's outside of the selected import root), so we shouldn't import it, and should
-        # leave references in rich text unchanged
+        # remove links in rich text
         data = """{
             "ids_for_import": [
                 ["wagtailcore.page", 15]
@@ -513,8 +513,8 @@ class TestImport(TestCase):
 
         page = PageWithRichText.objects.get(slug="imported-rich-text-page")
 
-        # tests that the page link id is unchanged
-        self.assertEqual(page.body, '<p>But I have a <a id="13" linktype="page">link</a></p>')
+        # tests that the page link tag is removed, as the page does not exist on the destination
+        self.assertEqual(page.body, '<p>But I have a link</p>')
 
     def test_import_page_with_streamfield_page_links(self):
         data = """{
