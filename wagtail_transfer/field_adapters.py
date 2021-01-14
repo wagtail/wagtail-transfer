@@ -266,7 +266,7 @@ class StreamFieldAdapter(FieldAdapter):
 
     def get_dependencies(self, value):
         return {
-            (model, id, False)  # references in rich text are soft dependencies
+            (model, id, False)  # references in streamfield are soft dependencies
             for model, id in get_object_references(self.stream_block, json.loads(value))
         }
 

@@ -112,7 +112,7 @@ class ChooserBlockHandler(BaseBlockHandler):
         return set()
 
     def update_ids(self, value, destination_ids_by_source):
-        value = destination_ids_by_source.get((get_base_model(self.block.target_model), value), value)
+        value = destination_ids_by_source.get((get_base_model(self.block.target_model), value))
         return value
 
 
