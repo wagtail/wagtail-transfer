@@ -69,31 +69,35 @@ class BaseBlockHandler:
 
 class ListBlockHandler(BaseBlockHandler):
     def map_over_json(self, stream, func):
+        updated_stream = []
         new_block = self.block.child_block
         new_block_handler = get_block_handler(new_block)
-        for index, element in enumerate(stream):
-            stream[index] = new_block_handler.map_over_json(element, func)
-        return stream
+        for element in stream:
+            updated_stream.append(new_block_handler.map_over_json(element, func))
+        return updated_stream
 
 
 class StreamBlockHandler(BaseBlockHandler):
     def map_over_json(self, stream, func):
+        updated_stream = []
         for element in stream:
             new_block = self.block.child_blocks.get(element['type'])
             new_block_handler = get_block_handler(new_block)
             new_stream = element['value']
-            element['value'] = new_block_handler.map_over_json(new_stream, func)
-        return stream
+            updated_stream.append({'type': element['type'], 'value': new_block_handler.map_over_json(new_stream, func), 'id': element['id']})
+        return updated_stream
 
 
 class StructBlockHandler(BaseBlockHandler):
     def map_over_json(self, stream, func):
+        updated_stream = {}
         for key in stream:
             new_block = self.block.child_blocks.get(key)
             new_block_handler = get_block_handler(new_block)
             new_stream = stream[key]
-            stream[key] = new_block_handler.map_over_json(new_stream, func)
-        return stream
+            new_value = new_block_handler.map_over_json(new_stream, func)
+            updated_stream[key] = new_value
+        return updated_stream
 
 
 class RichTextBlockHandler(BaseBlockHandler):
