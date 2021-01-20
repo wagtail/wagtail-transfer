@@ -139,3 +139,36 @@ def register_my_custom_adapter():
     return {models.Field: MyCustomAdapter}
 
 ```
+
+
+### `register_custom_serializers`
+
+In exceptional cases, such as limiting the fields you export to only a subset of the content, you may need to use a custom serializer instead of the default `PageSerializer`.
+You can register a custom serializer by using the `register_custom_serializers` hook.
+A function registered with this hook should return a dictionary which maps model classes to serializer classes (note that with inheritance, the serializer registered with the closest ancestor class will be used).
+For example, to register a custom serializer against `myapp.MyModel`:
+
+```python
+# <my_app>/wagtail_hooks.py
+
+
+from wagtail.core import hooks
+from wagtail_transfer.serializers import PageSerializer
+
+from myapp.models import MyModel
+
+class MyModelCustomSerializer(PageSerializer):
+
+    ignored_fields = PageSerializer.ignored_fields + [
+        'secret_field_1',
+        'environment_specific_data_field_123',
+        ...
+    ]
+    pass
+
+
+@hooks.register('register_custom_serializers')
+def register_my_custom_serializer():
+    return {MyModel: MyModelCustomSerializer}
+
+```

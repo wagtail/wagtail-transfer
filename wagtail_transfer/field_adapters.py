@@ -230,7 +230,7 @@ class ManyToOneRelAdapter(FieldAdapter):
 
             return {child for child in self._get_related_objects(instance) if child.pk not in matched_destination_ids}
         return set()
-    
+
     def get_objects_to_serialize(self, instance):
         if self.is_parental:
             return getattr(instance, self.name).all()
@@ -372,14 +372,15 @@ class AdapterRegistry:
     def __init__(self):
         self._scanned_for_adapters = False
         self.adapters_by_field_class = {}
-    
+
     def _scan_for_adapters(self):
         adapters = dict(self.BASE_ADAPTERS_BY_FIELD_CLASS)
 
         for fn in hooks.get_hooks('register_field_adapters'):
             adapters.update(fn())
-    
+
         self.adapters_by_field_class = adapters
+        self._scanned_for_adapters = True
 
     @lru_cache(maxsize=None)
     def get_field_adapter(self, field):
