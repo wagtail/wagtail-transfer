@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.7 (20.01.2021)
+~~~~~~~~~~~~~~~~~~
+
+ * Remove links and streamfield blocks when the linked objects are not imported (Jacob Topp-Mugglestone)
+ * Add Locale to default LOOKUP_FIELDS setting for 2.11 compatibility (Jacob Topp-Mugglestone)
+ * Add support for registering custom serializers (Steve Jalim)
+ * Convert field data to correct python types before saving (Daniel Kirkham)
+ * Add Tag to default LOOKUP_FIELDS setting (Steve Jalim)
+
 0.6 (6.11.2020)
 ~~~~~~~~~~~~~~~~~~
 
