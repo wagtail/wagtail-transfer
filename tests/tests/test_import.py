@@ -2,6 +2,7 @@ import importlib
 import os.path
 import shutil
 from unittest import mock
+from datetime import datetime, timezone
 
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
@@ -172,7 +173,9 @@ class TestImport(TestCase):
                     "model": "tests.advert",
                     "pk": 11,
                     "fields": {
-                        "slogan": "put a leopard in your tank"
+                        "slogan": "put a leopard in your tank",
+                        "run_until": "2020-12-23T21:05:43Z",
+                        "run_from": null
                     }
                 },
                 {
@@ -193,7 +196,9 @@ class TestImport(TestCase):
                     "model": "tests.advert",
                     "pk": 8,
                     "fields": {
-                        "slogan": "go to work on an egg"
+                        "slogan": "go to work on an egg",
+                        "run_until": "2020-12-23T01:23:45Z",
+                        "run_from": null
                     }
                 },
                 {
@@ -215,12 +220,16 @@ class TestImport(TestCase):
         self.assertEqual(updated_page.intro, "yay fossil fuels and climate change")
         # advert is listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so changes to the advert should have been pulled in too
         self.assertEqual(updated_page.advert.slogan, "put a leopard in your tank")
+        self.assertEqual(updated_page.advert.run_until, datetime(2020, 12, 23, 21, 5, 43, tzinfo=timezone.utc))
+        self.assertEqual(updated_page.advert.run_from, None)
         # author is not listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so should be left unchanged
         self.assertEqual(updated_page.author.bio, "Jack Kerouac's car has broken down.")
 
         created_page = SponsoredPage.objects.get(url_path='/home/eggs-are-great-too/')
         self.assertEqual(created_page.intro, "you can make cakes with them")
         self.assertEqual(created_page.advert.slogan, "go to work on an egg")
+        self.assertEqual(created_page.advert.run_until, datetime(2020, 12, 23, 1, 23, 45, tzinfo=timezone.utc))
+        self.assertEqual(created_page.advert.run_from, None)
 
     def test_import_pages_with_orphaned_uid(self):
         # the author UID listed here exists in the destination's IDMapping table, but
@@ -255,7 +264,9 @@ class TestImport(TestCase):
                     "model": "tests.advert",
                     "pk": 11,
                     "fields": {
-                        "slogan": "put a leopard in your tank"
+                        "slogan": "put a leopard in your tank",
+                        "run_until": "2020-12-23T21:05:43Z",
+                        "run_from": null
                     }
                 },
                 {
@@ -1006,12 +1017,12 @@ class TestImport(TestCase):
                 {
                     "model": "tests.advert",
                     "pk": 200,
-                    "fields": {"slogan": "Buy a thing you definitely need!"}
+                    "fields": {"slogan": "Buy a thing you definitely need!", "run_until": "2021-04-01T12:00:00Z", "run_from": null}
                 },
                 {
                     "model": "tests.advert",
                     "pk": 300,
-                    "fields": {"slogan": "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!"}
+                    "fields": {"slogan": "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!", "run_until": "1937-05-06T23:25:12Z", "run_from": null}
                 }
             ]}
         """
@@ -1029,6 +1040,8 @@ class TestImport(TestCase):
 
         # advert is listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so changes to the advert should have been pulled in too
         self.assertEqual(advert_3.slogan, "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!")
+        self.assertEqual(advert_3.run_until, datetime(1937, 5, 6, 23, 25, 12, tzinfo=timezone.utc))
+        self.assertEqual(advert_3.run_from, None)
 
     def test_import_object_with_many_to_many(self):
         # Test that an imported object with a ManyToManyField has its ids converted to the destination site's
@@ -1044,12 +1057,12 @@ class TestImport(TestCase):
                 {
                     "model": "tests.advert",
                     "pk": 200,
-                    "fields": {"slogan": "Buy a thing you definitely need!"}
+                    "fields": {"slogan": "Buy a thing you definitely need!", "run_until": "2021-04-01T12:00:00Z", "run_from": null}
                 },
                 {
                     "model": "tests.advert",
                     "pk": 300,
-                    "fields": {"slogan": "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!"}
+                    "fields": {"slogan": "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!", "run_until": "1937-05-06T23:25:12Z", "run_from": null}
                 }
             ]}"""
 
@@ -1064,6 +1077,8 @@ class TestImport(TestCase):
 
         # advert is listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so changes to the advert should have been pulled in too
         self.assertEqual(advert_3.slogan, "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!")
+        self.assertEqual(advert_3.run_until, datetime(1937, 5, 6, 23, 25, 12, tzinfo=timezone.utc))
+        self.assertEqual(advert_3.run_from, None)
 
     def test_import_with_field_based_lookup(self):
         data = """{
@@ -1097,7 +1112,9 @@ class TestImport(TestCase):
                     "model": "tests.advert",
                     "pk": 11,
                     "fields": {
-                        "slogan": "put a leopard in your tank"
+                        "slogan": "put a leopard in your tank",
+                        "run_until": "2020-12-23T21:05:43Z",
+                        "run_from": null
                     }
                 },
                 {
@@ -1446,6 +1463,8 @@ class TestImport(TestCase):
                     "pk": 4,
                     "fields": {
                         "slogan": "test",
+                        "run_until": "2020-12-23T12:34:56Z",
+                        "run_from": null,
                         "description": "longertest"
                     }
                 }
@@ -1459,6 +1478,7 @@ class TestImport(TestCase):
         imported_ad = LongAdvert.objects.filter(id=4).first()
         self.assertIsNotNone(imported_ad)
         self.assertEqual(imported_ad.slogan, "test")
+        self.assertEqual(imported_ad.run_until, datetime(2020, 12, 23, 12, 34, 56, tzinfo=timezone.utc))
         self.assertEqual(imported_ad.description, "longertest")
 
     def test_import_model_with_generic_foreign_key(self):
@@ -1474,7 +1494,8 @@ class TestImport(TestCase):
                 {
                     "model": "tests.advert",
                     "pk": 4,
-                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test", "tags": "[<Tag: test_tag>]", "tagged_items": null}
+                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test",
+                        "run_until": "2021-12-23T12:34:56Z", "run_from": null, "tags": "[<Tag: test_tag>]", "tagged_items": null}
                 },
                 {
                     "model": "taggit.taggeditem",
@@ -1511,7 +1532,8 @@ class TestImport(TestCase):
                 {
                     "model": "tests.advert",
                     "pk": 4,
-                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test", "tags": "[<Tag: test_tag>]", "tagged_items": [150]}
+                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test",
+                        "run_until": "2021-12-23T12:00:00Z", "run_from": null, "tags": "[<Tag: test_tag>]", "tagged_items": [150]}
                 },
                 {
                     "model": "taggit.taggeditem",
@@ -1543,7 +1565,8 @@ class TestImport(TestCase):
                 {
                     "model": "tests.advert",
                     "pk": 4,
-                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test", "tags": "[]", "tagged_items": []}
+                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test",
+                        "run_until": "2021-12-23T12:00:00Z", "run_from": null, "tags": "[]", "tagged_items": []}
                 }
             ]
         }"""
@@ -1574,7 +1597,8 @@ class TestImport(TestCase):
                 {
                     "model": "tests.advert",
                     "pk": 4,
-                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test", "tags": "[<Tag: test_tag>]", "tagged_items": [150]}
+                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test",
+                        "run_until": "2021-12-23T12:00:00Z", "run_from": null, "tags": "[<Tag: test_tag>]", "tagged_items": [150]}
                 },
                 {
                     "model": "taggit.taggeditem",
@@ -1606,7 +1630,8 @@ class TestImport(TestCase):
                 {
                     "model": "tests.advert",
                     "pk": 4,
-                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test", "tags": "[]", "tagged_items": []}
+                    "fields": {"longadvert": null, "sponsoredpage": null, "slogan": "test",
+                            "run_until": "2021-12-23T12:00:00Z", "run_from": null, "tags": "[]", "tagged_items": []}
                 }
             ]
         }"""

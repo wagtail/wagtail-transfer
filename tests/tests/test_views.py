@@ -1,5 +1,6 @@
 import json
 from unittest import mock
+from datetime import datetime, date, timezone
 
 from django.test import TestCase
 
@@ -99,14 +100,18 @@ class TestImportView(TestCase):
                     "model": "tests.advert",
                     "pk": 11,
                     "fields": {
-                        "slogan": "put a leopard in your tank"
+                        "slogan": "put a leopard in your tank",
+                        "run_until": "2020-12-23T01:23:45Z",
+                        "run_from": "2020-01-21"
                     }
                 },
                 {
                     "model": "tests.advert",
                     "pk": 8,
                     "fields": {
-                        "slogan": "go to work on an egg"
+                        "slogan": "go to work on an egg",
+                        "run_until": "2020-01-23T01:23:45Z",
+                        "run_from": null
                     }
                 }
             ]
@@ -137,10 +142,14 @@ class TestImportView(TestCase):
         updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
         self.assertEqual(updated_page.intro, "yay fossil fuels and climate change")
         self.assertEqual(updated_page.advert.slogan, "put a leopard in your tank")
+        self.assertEqual(updated_page.advert.run_until, datetime(2020, 12, 23, 1, 23, 45, tzinfo=timezone.utc))
+        self.assertEqual(updated_page.advert.run_from, date(2020, 1, 21))
 
         created_page = SponsoredPage.objects.get(url_path='/home/eggs-are-great-too/')
         self.assertEqual(created_page.intro, "you can make cakes with them")
         self.assertEqual(created_page.advert.slogan, "go to work on an egg")
+        self.assertEqual(created_page.advert.run_until, datetime(2020, 1, 23, 1, 23, 45, tzinfo=timezone.utc))
+        self.assertEqual(created_page.advert.run_from, None)
 
     def test_missing_related_object(self, get, post):
         # If an imported object contains references to an object which does not exist at the source
@@ -218,7 +227,9 @@ class TestImportView(TestCase):
                     "model": "tests.advert",
                     "pk": 11,
                     "fields": {
-                        "slogan": "put a leopard in your tank"
+                        "slogan": "put a leopard in your tank",
+                        "run_until": "2020-12-23T01:23:45Z",
+                        "run_from": null
                     }
                 }
             ]
@@ -249,6 +260,8 @@ class TestImportView(TestCase):
         updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
         self.assertEqual(updated_page.intro, "yay fossil fuels and climate change")
         self.assertEqual(updated_page.advert.slogan, "put a leopard in your tank")
+        self.assertEqual(updated_page.advert.run_until, datetime(2020, 12, 23, 1, 23, 45, tzinfo=timezone.utc))
+        self.assertEqual(updated_page.advert.run_from, None)
 
         # The egg advert was missing in the object-api response, and the FK on SponsoredPage is
         # nullable, so it should create the egg page without the advert

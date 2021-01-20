@@ -3,6 +3,7 @@ import os.path
 import shutil
 import uuid
 from unittest import mock
+from datetime import datetime, timezone
 
 from django.conf import settings
 from django.core.files import File
@@ -448,6 +449,8 @@ class TestObjectsApi(TestCase):
         self.assertEqual(data['ids_for_import'], [])
         self.assertEqual(data['objects'][0]['model'], 'tests.advert')
         self.assertEqual(data['objects'][0]['fields']['slogan'], "put a tiger in your tank")
+        self.assertEqual(data['objects'][0]['fields']['run_until'], "2020-12-23T21:00:00Z")
+        self.assertEqual(data['objects'][0]['fields']['run_from'], None)
 
         self.assertEqual(data['mappings'], [['tests.advert', 1, 'adadadad-1111-1111-1111-111111111111']])
 
@@ -517,7 +520,7 @@ class TestObjectsApi(TestCase):
     def test_model_with_multi_table_inheritance(self):
         # LongAdvert inherits from Advert. Fetching the base instance over the objects api should
         # return a LongAdvert model
-        long_ad = LongAdvert.objects.create(slogan='test', description='longertest')
+        long_ad = LongAdvert.objects.create(slogan='test', run_until=datetime.now(timezone.utc), description='longertest')
 
         response = self.get({
             'tests.advert': [long_ad.pk]
@@ -534,7 +537,7 @@ class TestObjectsApi(TestCase):
     def test_model_with_tags(self):
         # test that a reverse relation such as tagged_items is followed to obtain references to the
         # tagged_items, if the model and relationship are specified in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS
-        ad = Advert.objects.create(slogan='test')
+        ad = Advert.objects.create(slogan='test', run_until=datetime.now(timezone.utc))
         ad.tags.add('test_tag')
 
         response = self.get({

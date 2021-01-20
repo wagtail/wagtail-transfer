@@ -147,7 +147,8 @@
     "pk": 1,
     "model": "tests.advert",
     "fields": {
-        "slogan": "put a tiger in your tank"
+        "slogan": "put a tiger in your tank",
+        "run_until": "2020-12-23T21:00:00Z"
     }
 },
 {
@@ -207,14 +208,16 @@
     "pk": 2,
     "model": "tests.advert",
     "fields": {
-        "slogan": "Buy a thing you definitely need!"
+        "slogan": "Buy a thing you definitely need!",
+        "run_until": "2021-04-01T12:00:00Z"
     }
 },
 {
     "pk": 3,
     "model": "tests.advert",
     "fields": {
-        "slogan": "Buy a full-scale authentically hydrogen-filled replica of the Hindenburg!"
+        "slogan": "Buy a full-scale authentically hydrogen-filled replica of the Hindenburg!",
+        "run_until": "1937-05-06T23:25:00Z"
     }
 },
 {

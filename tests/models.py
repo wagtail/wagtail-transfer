@@ -15,6 +15,8 @@ class SimplePage(Page):
 class Advert(models.Model):
     slogan = models.CharField(max_length=255)
     tags = TaggableManager()
+    run_from = models.DateField(blank=True, null=True)
+    run_until = models.DateTimeField()
 
 
 class LongAdvert(Advert):
