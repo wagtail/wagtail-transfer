@@ -6,7 +6,7 @@ from wagtail.core.rich_text.rewriters import extract_attrs
 
 from .models import get_base_model
 
-FIND_A_TAG = re.compile(r'<a(\b[^>]*)>')
+FIND_A_TAG = re.compile(r'<a(\b[^>]*)>(.*?)</a>')
 FIND_EMBED_TAG = re.compile(r'<embed(\b[^>]*)/>')
 FIND_ID = re.compile(r'id="([^"]*)"')
 
@@ -16,6 +16,9 @@ class RichTextReferenceHandler:
     Handles updating ids and retrieving object references for <tag type_attribute="foo" id="my_id" /> tags representing references within rich text. Tags are found using a regex tag_matcher, and their
     specific handler (eg PageLinkHandler) is looked up using a dict, handlers, which maps the value of type_attribute (where type_attribute might be emebedtype)
     to a specific handler.
+
+    The tag matcher must be a compiled regular expression where the first matching group is the tag's body (ie its attributes) and the second the tag's inner contents (if any).
+    Note this only works for tags which cannot be nested inside the same tag, so this works fine for eg matching <a> tags since nested <a> tags are illegal.
     """
     def __init__(self, handlers, tag_matcher, type_attribute, destination_ids_by_source={}):
         self.handlers = handlers
@@ -24,13 +27,25 @@ class RichTextReferenceHandler:
         self.destination_ids_by_source = destination_ids_by_source
 
     def update_tag_id(self, match, destination_ids_by_source):
-        # Updates a specific tag's id from source to destination Wagtail instance
-        attrs = extract_attrs(match.group(1))
+        # Updates a specific tag's id from source to destination Wagtail instance, or removes the tag if no id mapping exists
+        tag_body = match.group(1)
+        attrs = extract_attrs(tag_body)
         try:
             handler = self.handlers[attrs[self.type_attribute]]
             target_model = get_base_model(handler.get_model())
-            new_id = destination_ids_by_source.get((target_model, int(attrs['id'])), int(attrs['id']))
-            return FIND_ID.sub('id="{0}"'.format(str(new_id)), match.group(0))
+            new_id = destination_ids_by_source.get((target_model, int(attrs['id'])))
+            if new_id is None:
+                # Return the tag's inner contents, effectively removing the tag
+                try:
+                    return match.group(2)
+                except IndexError:
+                    # The tag has no inner content, return a blank string instead
+                    return ''
+            # Otherwise update the id and construct the new tag string
+            new_tag_body = FIND_ID.sub('id="{0}"'.format(str(new_id)), tag_body)
+            tag_body_offset = match.start(0)
+            new_tag_string = match.group(0)[:(match.start(1)-tag_body_offset)] + new_tag_body + match.group(0)[(match.end(1)-tag_body_offset):]
+            return new_tag_string
         except KeyError:
             # If the relevant handler cannot be found, don't update the tag id
             pass
