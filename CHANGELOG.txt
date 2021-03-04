@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.7.1 (04.03.2021)
+~~~~~~~~~~~~~~~~~~
+
+ * Fix accidental deletion of blocks from transferred data when the block is set as required, but has a 'falsy' value (Jacob Topp-Mugglestone)
+
 0.7 (20.01.2021)
 ~~~~~~~~~~~~~~~~~~
 
