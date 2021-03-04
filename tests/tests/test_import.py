@@ -589,7 +589,7 @@ class TestImport(TestCase):
                             "seo_title": "",
                             "show_in_menus": false,
                             "search_description": "",
-                            "body": "[{\\"type\\": \\"link_block\\", \\"value\\": {\\"page\\": 100, \\"text\\": \\"Test\\"}, \\"id\\": \\"fc3b0d3d-d316-4271-9e31-84919558188a\\"}, {\\"type\\": \\"page\\", \\"value\\": 200, \\"id\\": \\"c6d07d3a-72d4-445e-8fa5-b34107291176\\"}, {\\"type\\": \\"stream\\", \\"value\\": [{\\"type\\": \\"page\\", \\"value\\": 300, \\"id\\": \\"8c0d7de7-4f77-4477-be67-7d990d0bfb82\\"}], \\"id\\": \\"21ffe52a-c0fc-4ecc-92f1-17b356c9cc94\\"}, {\\"type\\": \\"list_of_pages\\", \\"value\\": [500], \\"id\\": \\"17b972cb-a952-4940-87e2-e4eb00703997\\"}]"},
+                            "body": "[{\\"type\\": \\"integer\\", \\"value\\": 0, \\"id\\": \\"aad07d3a-72d4-445e-8fa5-b34107291199\\"}, {\\"type\\": \\"link_block\\", \\"value\\": {\\"page\\": 100, \\"text\\": \\"Test\\"}, \\"id\\": \\"fc3b0d3d-d316-4271-9e31-84919558188a\\"}, {\\"type\\": \\"page\\", \\"value\\": 200, \\"id\\": \\"c6d07d3a-72d4-445e-8fa5-b34107291176\\"}, {\\"type\\": \\"stream\\", \\"value\\": [{\\"type\\": \\"page\\", \\"value\\": 300, \\"id\\": \\"8c0d7de7-4f77-4477-be67-7d990d0bfb82\\"}], \\"id\\": \\"21ffe52a-c0fc-4ecc-92f1-17b356c9cc94\\"}, {\\"type\\": \\"list_of_pages\\", \\"value\\": [500], \\"id\\": \\"17b972cb-a952-4940-87e2-e4eb00703997\\"}]"},
                             "parent_id": 300
                         }
                     ]
@@ -604,6 +604,9 @@ class TestImport(TestCase):
 
         # The PageChooserBlock has required=True, so when its value is removed, the block should also be removed
         self.assertNotIn({'type': 'page', 'value': None, 'id': 'c6d07d3a-72d4-445e-8fa5-b34107291176'}, imported_streamfield)
+
+        # Test that 0 values are not removed, only None
+        self.assertIn({'type': 'integer', 'value': 0, 'id': 'aad07d3a-72d4-445e-8fa5-b34107291199'}, imported_streamfield)
 
         # By contrast, the PageChooserBlock in the link_block has required=False, so just the block's value should be removed instead
         self.assertIn({'type': 'link_block', 'value': {'page': None, 'text': 'Test'}, 'id': 'fc3b0d3d-d316-4271-9e31-84919558188a'}, imported_streamfield)
