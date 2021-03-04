@@ -76,7 +76,7 @@ class BaseBlockHandler:
         list of dicts (imported json) format and return a copy of the rewritten streamfield.
         """
         value = func(self.block, stream)
-        if self.block.required and not value:
+        if self.block.required and value is None:
             raise ValidationError('This block requires a value')
         return value
 
