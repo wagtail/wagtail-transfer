@@ -87,7 +87,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "imported-child-page",
-                        "intro": "This page is imported from the source site"
+                        "intro": "This page is imported from the source site",
+                        "comments": []
                     }
                 },
                 {
@@ -99,7 +100,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "home",
-                        "intro": "This is the updated homepage"
+                        "intro": "This is the updated homepage",
+                        "comments": []
                     }
                 }
             ]
@@ -151,7 +153,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "home",
-                        "intro": "This is the updated homepage"
+                        "intro": "This is the updated homepage",
+                        "comments": []
                     }
                 },
                 {
@@ -166,7 +169,8 @@ class TestImport(TestCase):
                         "advert": 11,
                         "intro": "yay fossil fuels and climate change",
                         "author": 100,
-                        "categories": []
+                        "categories": [],
+                        "comments": []
                     }
                 },
                 {
@@ -189,7 +193,8 @@ class TestImport(TestCase):
                         "slug": "eggs-are-great-too",
                         "advert": 8,
                         "intro": "you can make cakes with them",
-                        "categories": []
+                        "categories": [],
+                        "comments": []
                     }
                 },
                 {
@@ -257,7 +262,8 @@ class TestImport(TestCase):
                         "advert": 11,
                         "intro": "yay fossil fuels and climate change",
                         "author": 100,
-                        "categories": []
+                        "categories": [],
+                        "comments": []
                     }
                 },
                 {
@@ -319,7 +325,8 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "how-to-boil-an-egg",
                         "intro": "This is how to boil an egg",
-                        "sections": [101, 102]
+                        "sections": [101, 102],
+                        "comments": []
                     }
                 },
                 {
@@ -381,7 +388,8 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "how-to-boil-an-egg",
                         "intro": "This is still how to boil an egg",
-                        "sections": [102, 103]
+                        "sections": [102, 103],
+                        "comments": []
                     }
                 },
                 {
@@ -421,6 +429,77 @@ class TestImport(TestCase):
         self.assertNotEqual(new_sections[1].id, section_1_id)
         self.assertEqual(new_sections[1].title, "Eat the egg")
 
+    def test_import_page_with_comments(self):
+        try:
+            from wagtail.core.models import Comment
+        except ImportError:
+            self.skipTest("Comments not available on this version of Wagtail")
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 100]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 100, "10000000-1000-1000-1000-100000000000"],
+                ["wagtailcore.comment", 101, "10100000-1010-1010-1010-101000000000"],
+                ["wagtailcore.commentreply", 102, "10200000-1020-1020-1020-102000000000"],
+                ["auth.user", 1, "76a4de62-a697-11eb-8025-02b46b8cb81a"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.simplepage",
+                    "pk": 100,
+                    "parent_id": 1,
+                    "fields": {
+                        "title": "How to boil an egg",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "how-to-boil-an-egg",
+                        "intro": "This is how to boil an egg",
+                        "comments": [101]
+                    }
+                },
+                {
+                    "model": "wagtailcore.comment",
+                    "pk": 101,
+                    "fields": {
+                        "text": "Not a fan",
+                        "contentpath": "intro",
+                        "page": 100,
+                        "user": 1,
+                        "created_at": "2021-04-26T13:58:07.892Z",
+                        "updated_at": "2021-04-26T13:58:07.892Z",
+                        "replies": [102]
+                    }
+                },
+                {
+                    "model": "wagtailcore.commentreply",
+                    "pk": 102,
+                    "fields": {
+                        "text": "Actually, changed my mind",
+                        "comment": 101,
+                        "user": 1,
+                        "created_at": "2021-05-26T13:58:07.892Z",
+                        "updated_at": "2021-05-26T13:58:07.892Z"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=100, destination_parent_id=2)
+        importer.add_json(data)
+        importer.run()
+
+        page = SimplePage.objects.get(url_path='/home/how-to-boil-an-egg/')
+
+        self.assertEqual(page.comments.count(), 1)
+
+        comment = page.comments.first()
+        self.assertEqual(comment.replies.count(), 1)
+
+        self.assertEqual(comment.contentpath, "intro")
+        self.assertEqual(comment.text, "Not a fan")
+        self.assertEqual(comment.replies.first().text, "Actually, changed my mind")
+
     def test_import_page_with_rich_text_link(self):
         data = """{
             "ids_for_import": [
@@ -440,7 +519,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "imported-rich-text-page",
-                        "body": "<p>But I have a <a id=\\"12\\" linktype=\\"page\\">link</a></p>"
+                        "body": "<p>But I have a <a id=\\"12\\" linktype=\\"page\\">link</a></p>",
+                        "comments": []
                     }
                 }
             ]
@@ -476,7 +556,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "imported-rich-text-page",
-                        "body": null
+                        "body": null,
+                        "comments": []
                     }
                 }
             ]
@@ -512,7 +593,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "imported-rich-text-page",
-                        "body": "<p>But I have a <a id=\\"13\\" linktype=\\"page\\">link</a></p>"
+                        "body": "<p>But I have a <a id=\\"13\\" linktype=\\"page\\">link</a></p>",
+                        "comments": []
                     }
                 }
             ]
@@ -549,6 +631,7 @@ class TestImport(TestCase):
                             "live": true,
                             "seo_title": "",
                             "show_in_menus": false,
+                            "comments": [],
                             "search_description": "",
                             "body": "[{\\"type\\": \\"link_block\\", \\"value\\": {\\"page\\": 100, \\"text\\": \\"Test\\"}, \\"id\\": \\"fc3b0d3d-d316-4271-9e31-84919558188a\\"}, {\\"type\\": \\"page\\", \\"value\\": 200, \\"id\\": \\"c6d07d3a-72d4-445e-8fa5-b34107291176\\"}, {\\"type\\": \\"stream\\", \\"value\\": [{\\"type\\": \\"page\\", \\"value\\": 300, \\"id\\": \\"8c0d7de7-4f77-4477-be67-7d990d0bfb82\\"}], \\"id\\": \\"21ffe52a-c0fc-4ecc-92f1-17b356c9cc94\\"}, {\\"type\\": \\"list_of_pages\\", \\"value\\": [500], \\"id\\": \\"17b972cb-a952-4940-87e2-e4eb00703997\\"}]"},
                             "parent_id": 300
@@ -588,6 +671,7 @@ class TestImport(TestCase):
                             "live": true,
                             "seo_title": "",
                             "show_in_menus": false,
+                            "comments": [],
                             "search_description": "",
                             "body": "[{\\"type\\": \\"integer\\", \\"value\\": 0, \\"id\\": \\"aad07d3a-72d4-445e-8fa5-b34107291199\\"}, {\\"type\\": \\"link_block\\", \\"value\\": {\\"page\\": 100, \\"text\\": \\"Test\\"}, \\"id\\": \\"fc3b0d3d-d316-4271-9e31-84919558188a\\"}, {\\"type\\": \\"page\\", \\"value\\": 200, \\"id\\": \\"c6d07d3a-72d4-445e-8fa5-b34107291176\\"}, {\\"type\\": \\"stream\\", \\"value\\": [{\\"type\\": \\"page\\", \\"value\\": 300, \\"id\\": \\"8c0d7de7-4f77-4477-be67-7d990d0bfb82\\"}], \\"id\\": \\"21ffe52a-c0fc-4ecc-92f1-17b356c9cc94\\"}, {\\"type\\": \\"list_of_pages\\", \\"value\\": [500], \\"id\\": \\"17b972cb-a952-4940-87e2-e4eb00703997\\"}]"},
                             "parent_id": 300
@@ -618,7 +702,7 @@ class TestImport(TestCase):
     def test_import_page_with_streamfield_rich_text_block(self):
         # Check that ids in RichTextBlock within a StreamField are converted properly
 
-        data = """{"ids_for_import": [["wagtailcore.page", 6]], "mappings": [["wagtailcore.page", 6, "a231303a-1754-11ea-8000-0800278dc04d"], ["wagtailcore.page", 100, "11111111-1111-1111-1111-111111111111"]], "objects": [{"model": "tests.pagewithstreamfield", "pk": 6, "fields": {"title": "My streamfield rich text block has a link", "slug": "my-streamfield-rich-text-block-has-a-link", "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "body": "[{\\"type\\": \\"rich_text\\", \\"value\\": \\"<p>I link to a <a id=\\\\\\"100\\\\\\" linktype=\\\\\\"page\\\\\\">page</a>.</p>\\", \\"id\\": \\"7d4ee3d4-9213-4319-b984-45be4ded8853\\"}]"}, "parent_id": 100}]}"""
+        data = """{"ids_for_import": [["wagtailcore.page", 6]], "mappings": [["wagtailcore.page", 6, "a231303a-1754-11ea-8000-0800278dc04d"], ["wagtailcore.page", 100, "11111111-1111-1111-1111-111111111111"]], "objects": [{"model": "tests.pagewithstreamfield", "pk": 6, "fields": {"title": "My streamfield rich text block has a link", "slug": "my-streamfield-rich-text-block-has-a-link", "comments": [], "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "body": "[{\\"type\\": \\"rich_text\\", \\"value\\": \\"<p>I link to a <a id=\\\\\\"100\\\\\\" linktype=\\\\\\"page\\\\\\">page</a>.</p>\\", \\"id\\": \\"7d4ee3d4-9213-4319-b984-45be4ded8853\\"}]"}, "parent_id": 100}]}"""
         importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
@@ -1016,7 +1100,7 @@ class TestImport(TestCase):
                 ["tests.advert", 300, "adadadad-3333-3333-3333-333333333333"]
             ],
             "objects": [
-                {"model": "tests.pagewithparentalmanytomany", "pk": 6, "fields": {"title": "This page has lots of ads!", "slug": "this-page-has-lots-of-ads", "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "ads": [200, 300]}, "parent_id": 1},
+                {"model": "tests.pagewithparentalmanytomany", "pk": 6, "fields": {"title": "This page has lots of ads!", "slug": "this-page-has-lots-of-ads", "comments": [], "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "ads": [200, 300]}, "parent_id": 1},
                 {
                     "model": "tests.advert",
                     "pk": 200,
@@ -1108,7 +1192,8 @@ class TestImport(TestCase):
                         "advert": 11,
                         "intro": "yay fossil fuels and climate change",
                         "author": 100,
-                        "categories": [101, 102]
+                        "categories": [101, 102],
+                        "comments": []
                     }
                 },
                 {
@@ -1181,7 +1266,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "hard-dependency-test",
-                        "intro": "Testing hard dependencies on pages outside the imported root"
+                        "intro": "Testing hard dependencies on pages outside the imported root",
+                        "comments": []
                     }
                 },
                 {
@@ -1193,7 +1279,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "redirect-to-oil-page",
-                        "redirect_to": 30
+                        "redirect_to": 30,
+                        "comments": []
                     }
                 },
                 {
@@ -1205,7 +1292,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "redirect-to-unimported-page",
-                        "redirect_to": 31
+                        "redirect_to": 31,
+                        "comments": []
                     }
                 },
                 {
@@ -1217,7 +1305,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "redirect-to-redirect-to-oil-page",
-                        "redirect_to": 21
+                        "redirect_to": 21,
+                        "comments": []
                     }
                 },
                 {
@@ -1229,7 +1318,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "redirect-to-redirect-to-unimported-page",
-                        "redirect_to": 23
+                        "redirect_to": 23,
+                        "comments": []
                     }
                 },
                 {
@@ -1241,7 +1331,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "pork-redirecting-to-lamb",
-                        "redirect_to": 27
+                        "redirect_to": 27,
+                        "comments": []
                     }
                 },
                 {
@@ -1253,7 +1344,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "lamb-redirecting-to-pork",
-                        "redirect_to": 26
+                        "redirect_to": 26,
+                        "comments": []
                     }
                 }
             ]
@@ -1303,7 +1395,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "circular-dependency-test",
-                        "intro": "Testing circular dependencies in rich text links"
+                        "intro": "Testing circular dependencies in rich text links",
+                        "comments": []
                     }
                 },
                 {
@@ -1315,7 +1408,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "bill",
-                        "body": "<p>Have you met my friend <a id=\\"23\\" linktype=\\"page\\">Ben</a>?</p>"
+                        "body": "<p>Have you met my friend <a id=\\"23\\" linktype=\\"page\\">Ben</a>?</p>",
+                        "comments": []
                     }
                 },
                 {
@@ -1327,7 +1421,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "ben",
-                        "body": "<p>Have you met my friend <a id=\\"21\\" linktype=\\"page\\">Bill</a>?</p>"
+                        "body": "<p>Have you met my friend <a id=\\"21\\" linktype=\\"page\\">Bill</a>?</p>",
+                        "comments": []
                     }
                 }
             ]
@@ -1372,7 +1467,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "m2m-reference-test",
-                        "intro": "Testing references and dependencies on m2m relations"
+                        "intro": "Testing references and dependencies on m2m relations",
+                        "comments": []
                     }
                 },
                 {
@@ -1384,7 +1480,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "vinegar",
-                        "intro": "it's pickling time"
+                        "intro": "it's pickling time",
+                        "comments": []
                     }
                 },
                 {
@@ -1396,7 +1493,8 @@ class TestImport(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "salad-dressing",
-                        "related_pages": [21,30,31]
+                        "related_pages": [21,30,31],
+                        "comments": []
                     }
                 }
             ]

@@ -53,7 +53,8 @@ class TestImportView(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "home",
-                        "intro": "This is the updated homepage"
+                        "intro": "This is the updated homepage",
+                        "comments": []
                     }
                 },
                 {
@@ -67,7 +68,8 @@ class TestImportView(TestCase):
                         "slug": "oil-is-still-great",
                         "advert": 11,
                         "intro": "yay fossil fuels and climate change",
-                        "categories": []
+                        "categories": [],
+                        "comments": []
                     }
                 },
                 {
@@ -81,7 +83,8 @@ class TestImportView(TestCase):
                         "slug": "eggs-are-great-too",
                         "advert": 8,
                         "intro": "you can make cakes with them",
-                        "categories": []
+                        "categories": [],
+                        "comments": []
                     }
                 }
             ]
@@ -181,7 +184,8 @@ class TestImportView(TestCase):
                         "show_in_menus": false,
                         "live": true,
                         "slug": "home",
-                        "intro": "This is the updated homepage"
+                        "intro": "This is the updated homepage",
+                        "comments": []
                     }
                 },
                 {
@@ -195,7 +199,8 @@ class TestImportView(TestCase):
                         "slug": "oil-is-still-great",
                         "advert": 11,
                         "intro": "yay fossil fuels and climate change",
-                        "categories": []
+                        "categories": [],
+                        "comments": []
                     }
                 },
                 {
@@ -209,7 +214,8 @@ class TestImportView(TestCase):
                         "slug": "eggs-are-great-too",
                         "advert": 8,
                         "intro": "you can make cakes with them",
-                        "categories": []
+                        "categories": [],
+                        "comments": []
                     }
                 }
             ]
