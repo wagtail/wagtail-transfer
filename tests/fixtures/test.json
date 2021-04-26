@@ -159,6 +159,14 @@
         "local_id": 1
     }
 },
+{
+    "pk": "76a4de62-a697-11eb-8025-02b46b8cb81a",
+    "model": "wagtail_transfer.idmapping",
+    "fields": {
+        "content_type": ["auth", "user"],
+        "local_id": 1
+    }
+},
 
 {
     "pk": 1,
