@@ -1,11 +1,10 @@
 import json
+from datetime import date, datetime, timezone
 from unittest import mock
-from datetime import datetime, date, timezone
 
 from django.test import TestCase
 
-from wagtail_transfer.operations import ImportPlanner
-from tests.models import PageWithRichText, SectionedPage, SimplePage, SponsoredPage
+from tests.models import SponsoredPage
 
 
 class TestChooseView(TestCase):

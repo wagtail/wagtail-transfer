@@ -6,8 +6,6 @@ from wagtail.core import hooks
 
 from . import admin_urls
 
-from django.utils.html import format_html
-
 try:
     # Django 2
     from django.contrib.staticfiles.templatetags.staticfiles import static
