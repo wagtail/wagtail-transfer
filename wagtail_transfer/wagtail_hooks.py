@@ -3,6 +3,7 @@ from django.conf.urls import include, url
 from django.urls import reverse
 from wagtail.admin.menu import MenuItem
 from wagtail.core import hooks
+from django.contrib.auth.models import Permission
 
 from . import admin_urls
 
@@ -23,9 +24,21 @@ def register_admin_urls():
 
 class WagtailTransferMenuItem(MenuItem):
     def is_shown(self, request):
-        return bool(getattr(settings, 'WAGTAILTRANSFER_SOURCES', None))
+        return all(
+            [
+                request.user.has_perm("wagtailcore.wagtailtransfer_can_import"),
+                bool(getattr(settings, "WAGTAILTRANSFER_SOURCES", None)),
+            ]
+        )
 
 
 @hooks.register('register_admin_menu_item')
 def register_admin_menu_item():
     return WagtailTransferMenuItem('Import', reverse('wagtail_transfer_admin:choose_page'), classnames='icon icon-doc-empty-inverse', order=10000)
+
+
+@hooks.register("register_permissions")
+def register_wagtail_transfer_permission():
+    return Permission.objects.filter(
+        content_type__app_label="wagtailcore", codename="wagtailtransfer_can_import",
+    )
