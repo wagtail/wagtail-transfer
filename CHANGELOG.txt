@@ -1,6 +1,11 @@
 Changelog
 =========
 
+0.8 (17.05.2021)
+~~~~~~~~~~~~~~~~~~
+
+ * Add a permission required to import content (Nick Smith)
+
 0.7.1 (04.03.2021)
 ~~~~~~~~~~~~~~~~~~
 
