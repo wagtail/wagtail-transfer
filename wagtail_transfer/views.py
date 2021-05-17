@@ -181,6 +181,9 @@ class PageChooserAPIViewSet(PagesAdminAPIViewSet):
     ]
 
 
+@permission_required(
+    "wagtailcore.wagtailtransfer_can_import", login_url="wagtailadmin_login"
+)
 def chooser_api_proxy(request, source_name, path):
     source_config = getattr(settings, 'WAGTAILTRANSFER_SOURCES', {}).get(source_name)
 
