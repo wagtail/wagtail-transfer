@@ -42,6 +42,7 @@ Developed by [Torchbox](https://torchbox.com/) and sponsored by [The Motley Fool
 
   `WAGTAILTRANSFER_SECRET_KEY` and the per-source `SECRET_KEY` settings are used to authenticate the communication between the source and destination instances; this prevents unauthorised users from using this API to retrieve sensitive data such as password hashes. The `SECRET_KEY` for each entry in `WAGTAILTRANSFER_SOURCES` must match that instance's `WAGTAILTRANSFER_SECRET_KEY`.
 
+* Create a user group (Wagtail admin > Settings > Groups > Add a group) with the permission "Can import pages and snippets from other sites". The "Import" menu item, and the associated import views, will only be available to members of this group (and superusers).
 
 ## Configuration
 

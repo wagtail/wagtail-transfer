@@ -1,11 +1,15 @@
 import json
+from datetime import date, datetime, timezone
 from unittest import mock
-from datetime import datetime, date, timezone
 
+from django.contrib.auth.models import AnonymousUser, Group, Permission, User
+from django.contrib.contenttypes.models import ContentType
+from django.shortcuts import redirect
 from django.test import TestCase
+from django.urls import reverse
 
-from wagtail_transfer.operations import ImportPlanner
-from tests.models import PageWithRichText, SectionedPage, SimplePage, SponsoredPage
+from tests.models import SponsoredPage
+from wagtail_transfer.models import IDMapping
 
 
 class TestChooseView(TestCase):
@@ -286,3 +290,138 @@ class TestImportView(TestCase):
         snippet = content['items'][0]
         self.assertEqual(snippet['model_label'], 'tests.category')
         self.assertEqual(snippet['name'], 'Category')
+
+
+class ImportPermissionsTests(TestCase):
+    fixtures = ["test.json"]
+
+    def setUp(self):
+        idmapping_content_type = ContentType.objects.get_for_model(IDMapping)
+        can_import_permission = Permission.objects.get(
+            content_type=idmapping_content_type, codename="wagtailtransfer_can_import",
+        )
+        can_access_admin_permission = Permission.objects.get(
+            content_type=ContentType.objects.get(
+                app_label="wagtailadmin", model="admin",
+            ),
+            codename="access_admin",
+        )
+
+        page_importers_group = Group.objects.create(name="Page importers")
+        page_importers_group.permissions.add(can_import_permission)
+        page_importers_group.permissions.add(can_access_admin_permission)
+
+        editors = Group.objects.get(name="Editors")
+
+        self.superuser = User.objects.create_superuser(
+            username="superuser", email="superuser@example.com", password="password",
+        )
+        self.inactive_superuser = User.objects.create_superuser(
+            username="inactivesuperuser",
+            email="inactivesuperuser@example.com",
+            password="password",
+        )
+        self.inactive_superuser.is_active = False
+        self.inactive_superuser.save()
+
+        # a user with can_import_pages permission through the 'Page importers' group
+        self.page_importer = User.objects.create_user(
+            username="pageimporter",
+            email="pageimporter@example.com",
+            password="password",
+        )
+        self.page_importer.groups.add(page_importers_group)
+        self.page_importer.groups.add(editors)
+
+        # a user with can_import_pages permission through user_permissions
+        self.oneoff_page_importer = User.objects.create_user(
+            username="oneoffpageimporter",
+            email="oneoffpageimporter@example.com",
+            password="password",
+        )
+        self.oneoff_page_importer.user_permissions.add(can_import_permission)
+        self.oneoff_page_importer.user_permissions.add(can_access_admin_permission)
+        self.oneoff_page_importer.groups.add(editors)
+
+        # a user with can_import_pages permission through user_permissions
+        self.vanilla_user = User.objects.create_user(
+            username="vanillauser", email="vanillauser@example.com", password="password"
+        )
+        self.vanilla_user.user_permissions.add(can_access_admin_permission)
+
+        # a user that has can_import_pages permission, but is inactive
+        self.inactive_page_importer = User.objects.create_user(
+            username="inactivepageimporter",
+            email="inactivepageimporter@example.com",
+            password="password",
+        )
+        self.inactive_page_importer.groups.add(page_importers_group)
+        self.inactive_page_importer.groups.add(editors)
+        self.inactive_page_importer.is_active = False
+        self.inactive_page_importer.save()
+
+        self.anonymous_user = AnonymousUser()
+
+        self.permitted_users = [
+            self.superuser,
+            self.page_importer,
+            self.oneoff_page_importer,
+        ]
+        self.denied_users = [
+            self.anonymous_user,
+            self.inactive_superuser,
+            self.inactive_page_importer,
+            self.vanilla_user,
+        ]
+
+    def _test_view(self, method, url, data=None, success_url=None):
+
+        for user in self.permitted_users:
+            with self.subTest(user=user):
+                self.client.login(username=user.username, password="password")
+                request = getattr(self.client, method)
+                response = request(url, data)
+                if success_url:
+                    self.assertRedirects(response, success_url)
+                else:
+                    self.assertEqual(response.status_code, 200)
+            self.client.logout()
+
+        for user in self.denied_users:
+            with self.subTest(user=user):
+                if user.is_authenticated:
+                    self.client.login(username=user.username, password="password")
+
+                request = getattr(self.client, method)
+                response = request(url, data)
+                self.assertEqual(response.status_code, 302)
+                if user == self.vanilla_user:
+                    # expect redirect loop; cf. https://github.com/wagtail/wagtail/issues/431
+                    self.assertEqual(response.status_code, 302)
+                    self.assertEqual(
+                        response.url, reverse("wagtailadmin_login") + f"?next={url}"
+                    )
+                else:
+                    self.assertRedirects(
+                        response, reverse("wagtailadmin_login") + f"?next={url}"
+                    )
+            self.client.logout()
+
+    def test_chooser_view(self):
+        url = "/admin/wagtail-transfer/choose/"
+        method = "get"
+        self._test_view(method, url)
+
+    @mock.patch("wagtail_transfer.views.import_page")
+    def test_do_import_view(self, mock_import_page):
+        success_url = "/admin/pages/2/"
+        mock_import_page.return_value = redirect(success_url)
+
+        url = "/admin/wagtail-transfer/import/"
+        method = "post"
+        data = {
+            "source": "staging",
+            "source_page_id": "12",
+            "dest_page_id": "2",
+        }
+        self._test_view(method, url, data, success_url=success_url)

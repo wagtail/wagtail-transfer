@@ -3,6 +3,7 @@ from collections import defaultdict
 
 import requests
 from django.conf import settings
+from django.contrib.auth.decorators import permission_required
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -180,6 +181,9 @@ class PageChooserAPIViewSet(PagesAdminAPIViewSet):
     ]
 
 
+@permission_required(
+    "wagtail_transfer.wagtailtransfer_can_import", login_url="wagtailadmin_login"
+)
 def chooser_api_proxy(request, source_name, path):
     source_config = getattr(settings, 'WAGTAILTRANSFER_SOURCES', {}).get(source_name)
 
@@ -201,6 +205,9 @@ def chooser_api_proxy(request, source_name, path):
     return HttpResponse(response.content, status=response.status_code)
 
 
+@permission_required(
+    "wagtail_transfer.wagtailtransfer_can_import", login_url="wagtailadmin_login"
+)
 def choose_page(request):
     return render(request, 'wagtail_transfer/choose_page.html', {
         'sources_data': json.dumps([
@@ -277,6 +284,9 @@ def import_model(request):
     return redirect('wagtailsnippets:list', app_label, model_name)
 
 
+@permission_required(
+    "wagtail_transfer.wagtailtransfer_can_import", login_url="wagtailadmin_login"
+)
 @require_POST
 def do_import(request):
     post_type = request.POST.get('type', 'page')
