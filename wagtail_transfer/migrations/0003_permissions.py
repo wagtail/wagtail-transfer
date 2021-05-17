@@ -3,18 +3,22 @@ from django.db import migrations
 
 def create_import_permission(apps, schema_editor):
     ContentType = apps.get_model("contenttypes", "ContentType")
-    content_type = ContentType.objects.get(app_label="wagtailcore", model="page")
+    content_type = ContentType.objects.get(
+        app_label="wagtail_transfer", model="idmapping"
+    )
     Permission = apps.get_model("auth", "Permission")
     Permission.objects.get_or_create(
         content_type=content_type,
         codename="wagtailtransfer_can_import",
-        name="Can import pages from other sites",
+        name="Can import pages and snippets from other sites",
     )
 
 
 def delete_import_permission(apps, schema_editor):
     ContentType = apps.get_model("contenttypes", "ContentType")
-    content_type = ContentType.objects.get(app_label="wagtailcore", model="page")
+    content_type = ContentType.objects.get(
+        app_label="wagtail_transfer", model="idmapping"
+    )
     Permission = apps.get_model("auth", "Permission")
     permission = Permission.objects.filter(
         codename="wagtailtransfer_can_import", content_type=content_type,
