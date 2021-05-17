@@ -26,8 +26,8 @@ class WagtailTransferMenuItem(MenuItem):
     def is_shown(self, request):
         return all(
             [
-                request.user.has_perm("wagtailcore.wagtailtransfer_can_import"),
                 bool(getattr(settings, "WAGTAILTRANSFER_SOURCES", None)),
+                request.user.has_perm("wagtailcore.wagtailtransfer_can_import"),
             ]
         )
 
