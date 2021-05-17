@@ -27,7 +27,7 @@ class WagtailTransferMenuItem(MenuItem):
         return all(
             [
                 bool(getattr(settings, "WAGTAILTRANSFER_SOURCES", None)),
-                request.user.has_perm("wagtailcore.wagtailtransfer_can_import"),
+                request.user.has_perm("wagtail_transfer.wagtailtransfer_can_import"),
             ]
         )
 
@@ -40,5 +40,6 @@ def register_admin_menu_item():
 @hooks.register("register_permissions")
 def register_wagtail_transfer_permission():
     return Permission.objects.filter(
-        content_type__app_label="wagtailcore", codename="wagtailtransfer_can_import",
+        content_type__app_label="wagtail_transfer",
+        codename="wagtailtransfer_can_import",
     )

@@ -7,9 +7,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import redirect
 from django.test import TestCase
 from django.urls import reverse
-from wagtail.core.models import Page
 
 from tests.models import SponsoredPage
+from wagtail_transfer.models import IDMapping
 
 
 class TestChooseView(TestCase):
@@ -296,9 +296,9 @@ class ImportPermissionsTests(TestCase):
     fixtures = ["test.json"]
 
     def setUp(self):
-        page_content_type = ContentType.objects.get_for_model(Page)
+        idmapping_content_type = ContentType.objects.get_for_model(IDMapping)
         can_import_permission = Permission.objects.get(
-            content_type=page_content_type, codename="wagtailtransfer_can_import",
+            content_type=idmapping_content_type, codename="wagtailtransfer_can_import",
         )
         can_access_admin_permission = Permission.objects.get(
             content_type=ContentType.objects.get(

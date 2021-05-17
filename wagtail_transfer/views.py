@@ -182,7 +182,7 @@ class PageChooserAPIViewSet(PagesAdminAPIViewSet):
 
 
 @permission_required(
-    "wagtailcore.wagtailtransfer_can_import", login_url="wagtailadmin_login"
+    "wagtail_transfer.wagtailtransfer_can_import", login_url="wagtailadmin_login"
 )
 def chooser_api_proxy(request, source_name, path):
     source_config = getattr(settings, 'WAGTAILTRANSFER_SOURCES', {}).get(source_name)
@@ -206,7 +206,7 @@ def chooser_api_proxy(request, source_name, path):
 
 
 @permission_required(
-    "wagtailcore.wagtailtransfer_can_import", login_url="wagtailadmin_login"
+    "wagtail_transfer.wagtailtransfer_can_import", login_url="wagtailadmin_login"
 )
 def choose_page(request):
     return render(request, 'wagtail_transfer/choose_page.html', {
@@ -285,7 +285,7 @@ def import_model(request):
 
 
 @permission_required(
-    "wagtailcore.wagtailtransfer_can_import", login_url="wagtailadmin_login"
+    "wagtail_transfer.wagtailtransfer_can_import", login_url="wagtailadmin_login"
 )
 @require_POST
 def do_import(request):
