@@ -28,11 +28,30 @@ TEST_MEDIA_DIR = os.path.join(os.path.join(settings.BASE_DIR, 'test-media'))
 FIXTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fixtures')
 
 
+class TestPageChooserApi(TestCase):
+    def test_incorrect_digest(self):
+        response = self.client.get(
+            '/wagtail-transfer/api/chooser/pages/?child_of=root&fields=parent%2Cchildren&limit=20&offset=0&digest=4'
+        )
+        self.assertEqual(response.status_code, 403)
+
+    def test_correct_digest(self):
+        digest = digest_for_source('local', 'child_of=root&fields=parent%2Cchildren&limit=20&offset=0')
+        response = self.client.get(
+            f'/wagtail-transfer/api/chooser/pages/?child_of=root&fields=parent%2Cchildren&limit=20&offset=0&digest={digest}'
+        )
+        self.assertEqual(response.status_code, 200)
+
+
 class TestModelsApi(TestCase):
     fixtures = ['test.json']
 
+    def get_parameters(self, initial_get='models=true'):
+        digest = digest_for_source('local', initial_get)
+        return f'?{initial_get}&digest={digest}'
+
     def test_model_chooser_response(self):
-        response = self.client.get('/wagtail-transfer/api/chooser/models/')
+        response = self.client.get(f'/wagtail-transfer/api/chooser/models/{self.get_parameters()}')
         self.assertEqual(response.status_code, 200)
 
         content = json.loads(response.content.decode("utf-8"))
@@ -42,9 +61,8 @@ class TestModelsApi(TestCase):
         self.assertEqual(snippet['model_label'], 'tests.category')
         self.assertEqual(snippet['name'], 'Category')
 
-
     def test_model_object_chooser(self):
-        response = self.client.get('/wagtail-transfer/api/chooser/models/tests.category/')
+        response = self.client.get(f'/wagtail-transfer/api/chooser/models/tests.category/{self.get_parameters()}')
         self.assertEqual(response.status_code, 200)
 
         content = json.loads(response.content.decode("utf-8"))
@@ -64,7 +82,7 @@ class TestModelsApi(TestCase):
             name = "Car #{}".format(i)
             Category.objects.create(name=name, colour="Violet")
 
-        response = self.client.get('/wagtail-transfer/api/chooser/models/tests.category/')
+        response = self.client.get(f'/wagtail-transfer/api/chooser/models/tests.category/{self.get_parameters()}')
         self.assertEqual(response.status_code, 200)
 
         content = json.loads(response.content.decode("utf-8"))
@@ -84,7 +102,7 @@ class TestModelsApi(TestCase):
             name = "Car #{}".format(i)
             Category.objects.create(name=name, colour="Violet")
 
-        response = self.client.get('/wagtail-transfer/api/chooser/models/tests.category/?page=2')
+        response = self.client.get(f'/wagtail-transfer/api/chooser/models/tests.category/{self.get_parameters("page=2")}')
         self.assertEqual(response.status_code, 200)
 
         content = json.loads(response.content.decode("utf-8"))
@@ -104,7 +122,7 @@ class TestModelsApi(TestCase):
             name = "Car #{}".format(i)
             Category.objects.create(name=name, colour="Violet")
 
-        response = self.client.get('/wagtail-transfer/api/chooser/models/tests.category/?page=3')
+        response = self.client.get(f'/wagtail-transfer/api/chooser/models/tests.category/{self.get_parameters("page=3")}')
         self.assertEqual(response.status_code, 200)
 
         content = json.loads(response.content.decode("utf-8"))
@@ -640,7 +658,9 @@ class TestChooserProxyApi(TestCase):
 
         response = self.client.get('/admin/wagtail-transfer/api/chooser-proxy/staging/foo?bar=baz', HTTP_ACCEPT='application/json')
 
-        get.assert_called_once_with('https://www.example.com/wagtail-transfer/api/chooser/pages/foo?bar=baz', headers={'Accept': 'application/json'}, timeout=5)
+        digest = digest_for_source('staging', 'bar=baz')
+
+        get.assert_called_once_with(f'https://www.example.com/wagtail-transfer/api/chooser/pages/foo?bar=baz&digest={digest}', headers={'Accept': 'application/json'}, timeout=5)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b'test content')

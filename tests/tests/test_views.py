@@ -9,6 +9,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from tests.models import SponsoredPage
+from wagtail_transfer.auth import digest_for_source
 from wagtail_transfer.models import IDMapping
 
 
@@ -281,7 +282,9 @@ class TestImportView(TestCase):
 
     def test_list_snippet_models(self, get, post):
         # Test the model chooser view.
-        response = self.client.get("https://www.example.com/wagtail-transfer/api/chooser/models/?models=True")
+        get_params = "models=True"
+        digest = digest_for_source('local', get_params)
+        response = self.client.get(f"https://www.example.com/wagtail-transfer/api/chooser/models/?{get_params}&digest={digest}")
         self.assertEqual(response.status_code, 200)
 
         content = json.loads(response.content.decode("utf-8"))

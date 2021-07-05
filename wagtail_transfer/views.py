@@ -198,7 +198,10 @@ def chooser_api_proxy(request, source_name, path):
 
     base_url = source_config['BASE_URL'] + 'api/chooser/{}/'.format(default_chooser_endpoint)
 
-    response = requests.get(f"{base_url}{path}?{request.GET.urlencode()}", headers={
+    message = request.GET.urlencode()
+    digest = digest_for_source(source_name, message)
+
+    response = requests.get(f"{base_url}{path}?{message}&digest={digest}", headers={
         'Accept': request.META['HTTP_ACCEPT'],
     }, timeout=api_proxy_timeout_seconds)
 

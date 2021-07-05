@@ -1,7 +1,10 @@
 from django.conf.urls import url
 from django.urls import path
 
+from wagtail.utils.urlpatterns import decorate_urlpatterns
+
 from wagtail_transfer import views
+from wagtail_transfer.auth import check_get_digest_wrapper
 from wagtail_transfer.vendor.wagtail_api_v2.views import ModelsAPIViewSet
 
 from .vendor.wagtail_api_v2.router import WagtailAPIRouter
@@ -15,5 +18,5 @@ urlpatterns = [
     path('api/models/<str:model_path>/', views.models_for_export, name='wagtail_transfer_model'),
     path('api/models/<str:model_path>/<int:object_id>/', views.models_for_export, name='wagtail_transfer_model_object'),
     url(r'^api/objects/$', views.objects_for_export, name='wagtail_transfer_objects'),
-    url(r'^api/chooser/', chooser_api.urls),
+    url(r'^api/chooser/', (decorate_urlpatterns(chooser_api.get_urlpatterns(), check_get_digest_wrapper), chooser_api.url_namespace, chooser_api.url_namespace)),
 ]
