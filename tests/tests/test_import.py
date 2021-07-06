@@ -1,7 +1,6 @@
 import importlib
 import os.path
 import shutil
-import unittest
 from unittest import mock
 from datetime import datetime, timezone
 
@@ -1513,7 +1512,6 @@ class TestImport(TestCase):
         # pages, but not the missing and not-to-be-imported page id=31
         self.assertEqual(set(salad_dressing_page.related_pages.all()), set([oil_page, vinegar_page]))
 
-    @unittest.expectedFailure
     def test_import_with_soft_dependency_on_grandchild(self):
         # https://github.com/wagtail/wagtail-transfer/issues/84 -
         # if there is a dependency loop with multiple hard dependencies and one soft dependency,

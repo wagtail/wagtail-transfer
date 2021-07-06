@@ -32,6 +32,10 @@ NO_FOLLOW_MODELS = [
 ]
 
 
+class CircularDependencyException(Exception):
+    pass
+
+
 class Objective:
     """
     An objective identifies an individual database object that we want to exist on the destination
@@ -553,10 +557,27 @@ class ImportPlanner:
                 # dependency is already satisfied with no further action
                 continue
             elif resolution in path:
-                # we have a circular dependency; we have to break it somewhere, so break it here
-                continue
+                # The resolution for this dependency is an operation that's currently under
+                # consideration, so we have a circular dependency. This will be one that we can
+                # resolve by breaking a soft dependency - a circular dependency consisting of
+                # only hard dependencies would have been caught by _check_satisfiable. So, raise
+                # an exception to be propagated back up the chain until we're back to a caller that
+                # can handle it gracefully - namely, a soft dependency that can be left
+                # unsatisfied.
+                raise CircularDependencyException()
             else:
-                self._add_to_operation_order(resolution, operation_order, path + [resolution])
+                try:
+                    # recursively add the operation that we're depending on here
+                    self._add_to_operation_order(resolution, operation_order, path + [resolution])
+                except CircularDependencyException:
+                    if dep_is_hard:
+                        # we can't resolve the circular dependency by breaking the chain here,
+                        # so propagate it to the next level up
+                        raise
+                    else:
+                        # this is a soft dependency, and we can break the chain by leaving this
+                        # unsatisfied. Abandon this dependency and move on to the next in the list
+                        continue
 
         operation_order.append(operation)
 
