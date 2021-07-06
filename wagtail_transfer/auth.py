@@ -28,6 +28,13 @@ def check_get_digest_wrapper(view_func):
         # Unfortunately the admin API views won't allow unknown GET parameters
         # So we must remove the digest parameter from the request as well
         request.META['QUERY_STRING'] = message
+
+        # Normally request.GET shouldn't be evaluated yet, but in case someone's
+        # inspecting it in middleware for example, let's remove the cached version,
+        # otherwise it will retain the old digest parameter
+        if hasattr(request, 'GET'):
+            del request.GET
+
         response = view_func(request, *args, **kwargs)
         return response
     return decorated_view
