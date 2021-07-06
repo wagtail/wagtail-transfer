@@ -533,11 +533,20 @@ class ImportPlanner:
             try:
                 resolution = self.resolutions[(dep_model, dep_source_id)]
             except KeyError:
-                # At this point this should only happen for soft dependencies, as we should have
-                # stripped out unsatisfiable hard dependencies via _check_satisfiable
+                # There is no resolution for this dependency - for example, it's a rich text link
+                # to a page outside of the subtree being imported (and NO_FOLLOW_MODELS tells us
+                # not to recursively import it).
+
+                # If everything is working properly, this should be a case we already encountered
+                # during task / objective solving and logged in failed_creations.
+                assert (dep_model, dep_source_id) in self.failed_creations
+
+                # Also, it should be a soft dependency, since we've eliminated unsatisfiable hard
+                # hard dependencies during _check_satisfiable.
                 assert not dep_is_hard
 
-                # So, given that this is a soft dependency, carry on regardless
+                # Since this is a soft dependency, we can (and must!) leave it unsatisfied.
+                # Abandon this dependency and move on to the next in the list
                 continue
 
             if resolution is None:
