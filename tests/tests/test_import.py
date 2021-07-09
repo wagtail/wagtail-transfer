@@ -1512,6 +1512,87 @@ class TestImport(TestCase):
         # pages, but not the missing and not-to-be-imported page id=31
         self.assertEqual(set(salad_dressing_page.related_pages.all()), set([oil_page, vinegar_page]))
 
+    def test_import_with_soft_dependency_on_grandchild(self):
+        # https://github.com/wagtail/wagtail-transfer/issues/84 -
+        # if there is a dependency loop with multiple hard dependencies and one soft dependency,
+        # the soft dependency should be the one to be broken
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 10],
+                ["wagtailcore.page", 11],
+                ["wagtailcore.page", 12]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 10, "10101010-0000-0000-0000-000000000000"],
+                ["wagtailcore.page", 11, "11111111-0000-0000-0000-000000000000"],
+                ["wagtailcore.page", 12, "12121212-0000-0000-0000-000000000000"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.pagewithrichtext",
+                    "pk": 10,
+                    "parent_id": 1,
+                    "fields": {
+                        "title": "002 Level 1 page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "level-1-page",
+                        "body": "<p>link to <a id=\\"12\\" linktype=\\"page\\">level 3</a></p>",
+                        "comments": []
+                    }
+                },
+                {
+                    "model": "tests.pagewithrichtext",
+                    "pk": 11,
+                    "parent_id": 10,
+                    "fields": {
+                        "title": "000 Level 2 page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "level-2-page",
+                        "body": "<p>level 2</p>",
+                        "comments": []
+                    }
+                },
+                {
+                    "model": "tests.pagewithrichtext",
+                    "pk": 12,
+                    "parent_id": 11,
+                    "fields": {
+                        "title": "001 Level 3 page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "level-3-page",
+                        "body": "<p>level 3</p>",
+                        "comments": []
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=10, destination_parent_id=2)
+        importer.add_json(data)
+        # importer.run() will build a running order by iterating over the self.operations set.
+        # Since the ordering of that set is non-deterministic, it may arrive at an ordering that
+        # works by chance (i.e. at the point that it recognises the circular dependency, it is
+        # looking at the soft dependency, which happens to be the correct one to break).
+        # To prevent that, we'll hack importer.operations into a list, so that when importer.run()
+        # iterates over it, it gets back a known 'worst case' ordering as defined by the page
+        # titles.
+        importer.operations = list(importer.operations)
+        importer.operations.sort(key=lambda op: op.object_data['fields']['title'])
+
+        importer.run()
+
+        # all pages should be imported
+        self.assertTrue(PageWithRichText.objects.filter(slug="level-1-page").exists())
+        self.assertTrue(PageWithRichText.objects.filter(slug="level-2-page").exists())
+        self.assertTrue(PageWithRichText.objects.filter(slug="level-3-page").exists())
+
+        # link from homepage has to be broken
+        page = PageWithRichText.objects.get(slug="level-1-page")
+        self.assertEqual(page.body, '<p>link to level 3</p>')
+
     @mock.patch('requests.get')
     def test_import_custom_file_field(self, get):
         get.return_value.status_code = 200

@@ -32,6 +32,10 @@ NO_FOLLOW_MODELS = [
 ]
 
 
+class CircularDependencyException(Exception):
+    pass
+
+
 class Objective:
     """
     An objective identifies an individual database object that we want to exist on the destination
@@ -533,21 +537,47 @@ class ImportPlanner:
             try:
                 resolution = self.resolutions[(dep_model, dep_source_id)]
             except KeyError:
-                # At this point this should only happen for soft dependencies, as we should have
-                # stripped out unsatisfiable hard dependencies via _check_satisfiable
+                # There is no resolution for this dependency - for example, it's a rich text link
+                # to a page outside of the subtree being imported (and NO_FOLLOW_MODELS tells us
+                # not to recursively import it).
+
+                # If everything is working properly, this should be a case we already encountered
+                # during task / objective solving and logged in failed_creations.
+                assert (dep_model, dep_source_id) in self.failed_creations
+
+                # Also, it should be a soft dependency, since we've eliminated unsatisfiable hard
+                # hard dependencies during _check_satisfiable.
                 assert not dep_is_hard
 
-                # So, given that this is a soft dependency, carry on regardless
+                # Since this is a soft dependency, we can (and must!) leave it unsatisfied.
+                # Abandon this dependency and move on to the next in the list
                 continue
 
             if resolution is None:
                 # dependency is already satisfied with no further action
                 continue
             elif resolution in path:
-                # we have a circular dependency; we have to break it somewhere, so break it here
-                continue
+                # The resolution for this dependency is an operation that's currently under
+                # consideration, so we have a circular dependency. This will be one that we can
+                # resolve by breaking a soft dependency - a circular dependency consisting of
+                # only hard dependencies would have been caught by _check_satisfiable. So, raise
+                # an exception to be propagated back up the chain until we're back to a caller that
+                # can handle it gracefully - namely, a soft dependency that can be left
+                # unsatisfied.
+                raise CircularDependencyException()
             else:
-                self._add_to_operation_order(resolution, operation_order, path + [resolution])
+                try:
+                    # recursively add the operation that we're depending on here
+                    self._add_to_operation_order(resolution, operation_order, path + [resolution])
+                except CircularDependencyException:
+                    if dep_is_hard:
+                        # we can't resolve the circular dependency by breaking the chain here,
+                        # so propagate it to the next level up
+                        raise
+                    else:
+                        # this is a soft dependency, and we can break the chain by leaving this
+                        # unsatisfied. Abandon this dependency and move on to the next in the list
+                        continue
 
         operation_order.append(operation)
 
