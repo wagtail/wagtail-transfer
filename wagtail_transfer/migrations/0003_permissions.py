@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ("auth", "0011_update_proxy_permissions"),
         ("contenttypes", "0002_remove_content_type_name"),
-        ("wagtailcore", "0060_fix_workflow_unique_constraint"),
+        ("wagtailcore", "0040_page_draft_title"),
         ("wagtail_transfer", "0002_importedfile"),
     ]
 
