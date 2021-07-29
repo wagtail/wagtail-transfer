@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.8.2 (29.07.2021)
+~~~~~~~~~~~~~~~~~~
+
+ * Fix failing migrations on Wagtail <2.12 (Matthew Westcott)
+
+
 0.8.1 (9.07.2021)
 ~~~~~~~~~~~~~~~~~~
 
