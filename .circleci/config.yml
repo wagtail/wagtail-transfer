@@ -5,15 +5,19 @@ orbs:
 
 jobs:
   build-and-test:
+    parameters:
+      wagtail-version:
+        default: "wagtail"
+        type: string
     executor: python/default
     steps:
       - checkout
       - restore_cache:
-          key: pip-{{ .Branch }}
-      - run: pip install wagtail
+          key: pip-{{ .Branch }}-<< parameters.wagtail-version >>
+      - run: pip install "<< parameters.wagtail-version >>"
       - run: pip install -e .
       - save_cache:
-          key: pip-{{ .Branch }}
+          key: pip-{{ .Branch }}-<< parameters.wagtail-version >>
           paths:
             - "~/.cache/pip"
       - run:
@@ -35,7 +39,14 @@ jobs:
 workflows:
   main:
     jobs:
-      - build-and-test
+      - build-and-test:
+          wagtail-version: "wagtail"
+      - build-and-test:
+          wagtail-version: "wagtail>=2.8,<2.9"
+      - build-and-test:
+          wagtail-version: "wagtail>=2.10,<2.11"
+      - build-and-test:
+          wagtail-version: "wagtail>=2.12,<2.13"
   nightly:
     jobs:
       - nightly-wagtail-test
