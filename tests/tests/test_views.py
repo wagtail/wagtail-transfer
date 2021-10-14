@@ -59,7 +59,7 @@ class TestImportView(TestCase):
                         "live": true,
                         "slug": "home",
                         "intro": "This is the updated homepage",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -74,7 +74,7 @@ class TestImportView(TestCase):
                         "advert": 11,
                         "intro": "yay fossil fuels and climate change",
                         "categories": [],
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -89,7 +89,7 @@ class TestImportView(TestCase):
                         "advert": 8,
                         "intro": "you can make cakes with them",
                         "categories": [],
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 }
             ]
@@ -190,7 +190,7 @@ class TestImportView(TestCase):
                         "live": true,
                         "slug": "home",
                         "intro": "This is the updated homepage",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -205,7 +205,7 @@ class TestImportView(TestCase):
                         "advert": 11,
                         "intro": "yay fossil fuels and climate change",
                         "categories": [],
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -220,7 +220,7 @@ class TestImportView(TestCase):
                         "advert": 8,
                         "intro": "you can make cakes with them",
                         "categories": [],
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 }
             ]

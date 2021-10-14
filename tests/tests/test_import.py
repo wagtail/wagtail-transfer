@@ -88,7 +88,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "imported-child-page",
                         "intro": "This page is imported from the source site",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -101,7 +101,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "home",
                         "intro": "This is the updated homepage",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 }
             ]
@@ -154,7 +154,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "home",
                         "intro": "This is the updated homepage",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -170,7 +170,7 @@ class TestImport(TestCase):
                         "intro": "yay fossil fuels and climate change",
                         "author": 100,
                         "categories": [],
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -194,7 +194,7 @@ class TestImport(TestCase):
                         "advert": 8,
                         "intro": "you can make cakes with them",
                         "categories": [],
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -263,7 +263,7 @@ class TestImport(TestCase):
                         "intro": "yay fossil fuels and climate change",
                         "author": 100,
                         "categories": [],
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -326,7 +326,7 @@ class TestImport(TestCase):
                         "slug": "how-to-boil-an-egg",
                         "intro": "This is how to boil an egg",
                         "sections": [101, 102],
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -389,7 +389,7 @@ class TestImport(TestCase):
                         "slug": "how-to-boil-an-egg",
                         "intro": "This is still how to boil an egg",
                         "sections": [102, 103],
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -455,7 +455,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "how-to-boil-an-egg",
                         "intro": "This is how to boil an egg",
-                        "comments": [101]
+                        "wagtail_admin_comments": [101]
                     }
                 },
                 {
@@ -491,9 +491,9 @@ class TestImport(TestCase):
 
         page = SimplePage.objects.get(url_path='/home/how-to-boil-an-egg/')
 
-        self.assertEqual(page.comments.count(), 1)
+        self.assertEqual(page.wagtail_admin_comments.count(), 1)
 
-        comment = page.comments.first()
+        comment = page.wagtail_admin_comments.first()
         self.assertEqual(comment.replies.count(), 1)
 
         self.assertEqual(comment.contentpath, "intro")
@@ -520,7 +520,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "imported-rich-text-page",
                         "body": "<p>But I have a <a id=\\"12\\" linktype=\\"page\\">link</a></p>",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 }
             ]
@@ -557,7 +557,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "imported-rich-text-page",
                         "body": null,
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 }
             ]
@@ -594,7 +594,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "imported-rich-text-page",
                         "body": "<p>But I have a <a id=\\"13\\" linktype=\\"page\\">link</a></p>",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 }
             ]
@@ -631,7 +631,7 @@ class TestImport(TestCase):
                             "live": true,
                             "seo_title": "",
                             "show_in_menus": false,
-                            "comments": [],
+                            "wagtail_admin_comments": [],
                             "search_description": "",
                             "body": "[{\\"type\\": \\"link_block\\", \\"value\\": {\\"page\\": 100, \\"text\\": \\"Test\\"}, \\"id\\": \\"fc3b0d3d-d316-4271-9e31-84919558188a\\"}, {\\"type\\": \\"page\\", \\"value\\": 200, \\"id\\": \\"c6d07d3a-72d4-445e-8fa5-b34107291176\\"}, {\\"type\\": \\"stream\\", \\"value\\": [{\\"type\\": \\"page\\", \\"value\\": 300, \\"id\\": \\"8c0d7de7-4f77-4477-be67-7d990d0bfb82\\"}], \\"id\\": \\"21ffe52a-c0fc-4ecc-92f1-17b356c9cc94\\"}, {\\"type\\": \\"list_of_pages\\", \\"value\\": [500], \\"id\\": \\"17b972cb-a952-4940-87e2-e4eb00703997\\"}]"},
                             "parent_id": 300
@@ -671,7 +671,7 @@ class TestImport(TestCase):
                             "live": true,
                             "seo_title": "",
                             "show_in_menus": false,
-                            "comments": [],
+                            "wagtail_admin_comments": [],
                             "search_description": "",
                             "body": "[{\\"type\\": \\"integer\\", \\"value\\": 0, \\"id\\": \\"aad07d3a-72d4-445e-8fa5-b34107291199\\"}, {\\"type\\": \\"link_block\\", \\"value\\": {\\"page\\": 100, \\"text\\": \\"Test\\"}, \\"id\\": \\"fc3b0d3d-d316-4271-9e31-84919558188a\\"}, {\\"type\\": \\"page\\", \\"value\\": 200, \\"id\\": \\"c6d07d3a-72d4-445e-8fa5-b34107291176\\"}, {\\"type\\": \\"stream\\", \\"value\\": [{\\"type\\": \\"page\\", \\"value\\": 300, \\"id\\": \\"8c0d7de7-4f77-4477-be67-7d990d0bfb82\\"}], \\"id\\": \\"21ffe52a-c0fc-4ecc-92f1-17b356c9cc94\\"}, {\\"type\\": \\"list_of_pages\\", \\"value\\": [500], \\"id\\": \\"17b972cb-a952-4940-87e2-e4eb00703997\\"}]"},
                             "parent_id": 300
@@ -702,7 +702,7 @@ class TestImport(TestCase):
     def test_import_page_with_streamfield_rich_text_block(self):
         # Check that ids in RichTextBlock within a StreamField are converted properly
 
-        data = """{"ids_for_import": [["wagtailcore.page", 6]], "mappings": [["wagtailcore.page", 6, "a231303a-1754-11ea-8000-0800278dc04d"], ["wagtailcore.page", 100, "11111111-1111-1111-1111-111111111111"]], "objects": [{"model": "tests.pagewithstreamfield", "pk": 6, "fields": {"title": "My streamfield rich text block has a link", "slug": "my-streamfield-rich-text-block-has-a-link", "comments": [], "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "body": "[{\\"type\\": \\"rich_text\\", \\"value\\": \\"<p>I link to a <a id=\\\\\\"100\\\\\\" linktype=\\\\\\"page\\\\\\">page</a>.</p>\\", \\"id\\": \\"7d4ee3d4-9213-4319-b984-45be4ded8853\\"}]"}, "parent_id": 100}]}"""
+        data = """{"ids_for_import": [["wagtailcore.page", 6]], "mappings": [["wagtailcore.page", 6, "a231303a-1754-11ea-8000-0800278dc04d"], ["wagtailcore.page", 100, "11111111-1111-1111-1111-111111111111"]], "objects": [{"model": "tests.pagewithstreamfield", "pk": 6, "fields": {"title": "My streamfield rich text block has a link", "slug": "my-streamfield-rich-text-block-has-a-link", "wagtail_admin_comments": [], "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "body": "[{\\"type\\": \\"rich_text\\", \\"value\\": \\"<p>I link to a <a id=\\\\\\"100\\\\\\" linktype=\\\\\\"page\\\\\\">page</a>.</p>\\", \\"id\\": \\"7d4ee3d4-9213-4319-b984-45be4ded8853\\"}]"}, "parent_id": 100}]}"""
         importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
         importer.run()
@@ -1100,7 +1100,7 @@ class TestImport(TestCase):
                 ["tests.advert", 300, "adadadad-3333-3333-3333-333333333333"]
             ],
             "objects": [
-                {"model": "tests.pagewithparentalmanytomany", "pk": 6, "fields": {"title": "This page has lots of ads!", "slug": "this-page-has-lots-of-ads", "comments": [], "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "ads": [200, 300]}, "parent_id": 1},
+                {"model": "tests.pagewithparentalmanytomany", "pk": 6, "fields": {"title": "This page has lots of ads!", "slug": "this-page-has-lots-of-ads", "wagtail_admin_comments": [], "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "ads": [200, 300]}, "parent_id": 1},
                 {
                     "model": "tests.advert",
                     "pk": 200,
@@ -1193,7 +1193,7 @@ class TestImport(TestCase):
                         "intro": "yay fossil fuels and climate change",
                         "author": 100,
                         "categories": [101, 102],
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1267,7 +1267,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "hard-dependency-test",
                         "intro": "Testing hard dependencies on pages outside the imported root",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1280,7 +1280,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "redirect-to-oil-page",
                         "redirect_to": 30,
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1293,7 +1293,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "redirect-to-unimported-page",
                         "redirect_to": 31,
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1306,7 +1306,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "redirect-to-redirect-to-oil-page",
                         "redirect_to": 21,
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1319,7 +1319,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "redirect-to-redirect-to-unimported-page",
                         "redirect_to": 23,
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1332,7 +1332,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "pork-redirecting-to-lamb",
                         "redirect_to": 27,
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1345,7 +1345,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "lamb-redirecting-to-pork",
                         "redirect_to": 26,
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 }
             ]
@@ -1396,7 +1396,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "circular-dependency-test",
                         "intro": "Testing circular dependencies in rich text links",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1409,7 +1409,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "bill",
                         "body": "<p>Have you met my friend <a id=\\"23\\" linktype=\\"page\\">Ben</a>?</p>",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1422,7 +1422,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "ben",
                         "body": "<p>Have you met my friend <a id=\\"21\\" linktype=\\"page\\">Bill</a>?</p>",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 }
             ]
@@ -1468,7 +1468,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "m2m-reference-test",
                         "intro": "Testing references and dependencies on m2m relations",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1481,7 +1481,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "vinegar",
                         "intro": "it's pickling time",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1494,7 +1494,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "salad-dressing",
                         "related_pages": [21,30,31],
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 }
             ]
@@ -1538,7 +1538,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "level-1-page",
                         "body": "<p>link to <a id=\\"12\\" linktype=\\"page\\">level 3</a></p>",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1551,7 +1551,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "level-2-page",
                         "body": "<p>level 2</p>",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 },
                 {
@@ -1564,7 +1564,7 @@ class TestImport(TestCase):
                         "live": true,
                         "slug": "level-3-page",
                         "body": "<p>level 3</p>",
-                        "comments": []
+                        "wagtail_admin_comments": []
                     }
                 }
             ]
