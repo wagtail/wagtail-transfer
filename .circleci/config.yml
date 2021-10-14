@@ -9,7 +9,9 @@ jobs:
       wagtail-version:
         default: "wagtail"
         type: string
-    executor: python/default
+    executor:
+      name: python/default
+      tag: "3.9"
     steps:
       - checkout
       - restore_cache:
@@ -47,6 +49,8 @@ workflows:
           wagtail-version: "wagtail>=2.10,<2.11"
       - build-and-test:
           wagtail-version: "wagtail>=2.12,<2.13"
+      - build-and-test:
+          wagtail-version: "wagtail>=2.14,<2.15"
   nightly:
     jobs:
       - nightly-wagtail-test
