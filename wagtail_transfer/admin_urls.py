@@ -1,4 +1,4 @@
-from django.conf.urls import url
+from django.urls import re_path
 
 from wagtail_transfer import views
 
@@ -9,9 +9,9 @@ chooser_api.register_endpoint('pages', views.PageChooserAPIViewSet)
 
 app_name = 'wagtail_transfer_admin'
 urlpatterns = [
-    url(r'^choose/$', views.choose_page, name='choose_page'),
-    url(r'^import/$', views.do_import, name='import'),
-    url(r'^api/chooser-local/', (chooser_api.urls[0], 'page_chooser_api', 'page_chooser_api')),
-    url(r'^api/chooser-proxy/(\w+)/([\w\-/]*)$', views.chooser_api_proxy, name='chooser_api_proxy'),
-    url(r'^api/check_uid/$', views.check_page_existence_for_uid, name='check_uid'),
+    re_path(r'^choose/$', views.choose_page, name='choose_page'),
+    re_path(r'^import/$', views.do_import, name='import'),
+    re_path(r'^api/chooser-local/', (chooser_api.urls[0], 'page_chooser_api', 'page_chooser_api')),
+    re_path(r'^api/chooser-proxy/(\w+)/([\w\-/]*)$', views.chooser_api_proxy, name='chooser_api_proxy'),
+    re_path(r'^api/check_uid/$', views.check_page_existence_for_uid, name='check_uid'),
 ]

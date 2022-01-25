@@ -1,6 +1,5 @@
 from django.conf import settings
-from django.conf.urls import include, url
-from django.urls import reverse
+from django.urls import include, re_path, reverse
 from wagtail.admin.menu import MenuItem
 from wagtail.core import hooks
 from django.contrib.auth.models import Permission
@@ -18,7 +17,7 @@ except ImportError:
 @hooks.register('register_admin_urls')
 def register_admin_urls():
     return [
-        url(r'^wagtail-transfer/', include(admin_urls, namespace='wagtail_transfer_admin')),
+        re_path(r'^wagtail-transfer/', include(admin_urls, namespace='wagtail_transfer_admin')),
     ]
 
 

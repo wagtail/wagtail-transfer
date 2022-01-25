@@ -1,5 +1,4 @@
-from django.conf.urls import url
-from django.urls import path
+from django.urls import path, re_path
 
 from wagtail.utils.urlpatterns import decorate_urlpatterns
 
@@ -14,9 +13,9 @@ chooser_api.register_endpoint('pages', views.PageChooserAPIViewSet)
 chooser_api.register_endpoint('models', ModelsAPIViewSet)
 
 urlpatterns = [
-    url(r'^api/pages/(\d+)/$', views.pages_for_export, name='wagtail_transfer_pages'),
+    re_path(r'^api/pages/(\d+)/$', views.pages_for_export, name='wagtail_transfer_pages'),
     path('api/models/<str:model_path>/', views.models_for_export, name='wagtail_transfer_model'),
     path('api/models/<str:model_path>/<int:object_id>/', views.models_for_export, name='wagtail_transfer_model_object'),
-    url(r'^api/objects/$', views.objects_for_export, name='wagtail_transfer_objects'),
-    url(r'^api/chooser/', (decorate_urlpatterns(chooser_api.get_urlpatterns(), check_get_digest_wrapper), chooser_api.url_namespace, chooser_api.url_namespace)),
+    re_path(r'^api/objects/$', views.objects_for_export, name='wagtail_transfer_objects'),
+    re_path(r'^api/chooser/', (decorate_urlpatterns(chooser_api.get_urlpatterns(), check_get_digest_wrapper), chooser_api.url_namespace, chooser_api.url_namespace)),
 ]
