@@ -1,11 +1,10 @@
 from collections import OrderedDict
 
 from django.apps import apps
-from django.conf.urls import url
 from django.core.exceptions import FieldDoesNotExist
 from django.http import Http404
 from django.shortcuts import redirect
-from django.urls import reverse
+from django.urls import re_path, reverse
 from modelcluster.fields import ParentalKey
 from rest_framework import status
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
@@ -338,9 +337,9 @@ class BaseAPIViewSet(GenericViewSet):
         This returns a list of URL patterns for the endpoint
         """
         return [
-            url(r'^$', cls.as_view({'get': 'listing_view'}), name='listing'),
-            url(r'^(?P<pk>\d+)/$', cls.as_view({'get': 'detail_view'}), name='detail'),
-            url(r'^find/$', cls.as_view({'get': 'find_view'}), name='find'),
+            re_path(r'^$', cls.as_view({'get': 'listing_view'}), name='listing'),
+            re_path(r'^(?P<pk>\d+)/$', cls.as_view({'get': 'detail_view'}), name='detail'),
+            re_path(r'^find/$', cls.as_view({'get': 'find_view'}), name='find'),
         ]
 
     @classmethod
@@ -573,6 +572,6 @@ class ModelsAPIViewSet(GenericViewSet):
         This returns a list of URL patterns for the endpoint
         """
         return [
-            url(r'^$', cls.as_view({'get': 'listing_view'}), name='listing'),
-            url(r'^(?P<model_path>[-\w.]+)/$', cls.as_view({'get': 'detail_view'}), name='detail'),
+            re_path(r'^$', cls.as_view({'get': 'listing_view'}), name='listing'),
+            re_path(r'^(?P<model_path>[-\w.]+)/$', cls.as_view({'get': 'detail_view'}), name='detail'),
         ]
