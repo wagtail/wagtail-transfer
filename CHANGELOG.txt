@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.8.3 (xx.xx.xxxx) - IN DEVELOPMENT
+~~~~~~~~~~~~~~~~~~
+
+ * Django 4.0 compatibility (Matthew Westcott)
+
+
 0.8.2 (29.07.2021)
 ~~~~~~~~~~~~~~~~~~
 
