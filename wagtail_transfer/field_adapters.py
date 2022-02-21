@@ -280,7 +280,7 @@ class FileAdapter(FieldAdapter):
         if not value:
             return None
         url = value.url
-        if settings.MEDIA_URL.startswith('/'):
+        if url.startswith('/'):
             # Using a relative media url. ie. /media/
             # Prepend the BASE_URL to turn this into an absolute URL
             url = settings.BASE_URL.rstrip('/') + url
