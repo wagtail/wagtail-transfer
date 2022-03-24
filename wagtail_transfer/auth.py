@@ -1,11 +1,17 @@
+import logging
 import hashlib
 import hmac
 import re
 
+from urllib.parse import unquote
+
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 
+logger = logging.getLogger(__name__)
+
 GROUP_QUERY_WITH_DIGEST = re.compile('(?P<query_before>.*?)&?digest=(?P<digest>[^&]*)(?P<query_after>.*)')
+
 
 def check_get_digest_wrapper(view_func):
     """
@@ -13,7 +19,8 @@ def check_get_digest_wrapper(view_func):
     This is useful when wrapping vendored API views
     """
     def decorated_view(request, *args, **kwargs):
-        query_string = request.META.get('QUERY_STRING', '')
+        query_string = unquote(request.META.get('QUERY_STRING', ''))
+        logger.info(f"Parsed Querystring: {query_string}")
         match = GROUP_QUERY_WITH_DIGEST.match(query_string)
         if not match:
             raise PermissionDenied
@@ -52,7 +59,7 @@ def check_digest(message, digest):
 
     expected_digest = hmac.new(key, message, hashlib.sha1).hexdigest()
     if not hmac.compare_digest(digest, expected_digest):
-        raise PermissionDenied
+        raise PermissionDenied 
 
 
 def digest_for_source(source, message):
