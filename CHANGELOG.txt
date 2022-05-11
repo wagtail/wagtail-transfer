@@ -5,7 +5,7 @@ Changelog
 ~~~~~~~~~~~~~~~~~~
 
  * Dropped support for Python 3.5
- * Django 4.0 compatibility (Matthew Westcott)
+ * Django 4.0 and (provisional) Wagtail 3.0 compatibility (Matthew Westcott)
  * Prevent FileFieldAdapter adding BASE_URL to absolute URLs (Haydn Greatnews)
 
 
