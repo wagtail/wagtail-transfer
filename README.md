@@ -19,7 +19,7 @@ Developed by [Torchbox](https://torchbox.com/) and sponsored by [The Motley Fool
 
   and place
 
-      url(r'^wagtail-transfer/', include(wagtailtransfer_urls)),
+      path('wagtail-transfer/', include(wagtailtransfer_urls)),
 
   into the urlpatterns list, above the `include(wagtail_urls)` line.
 
