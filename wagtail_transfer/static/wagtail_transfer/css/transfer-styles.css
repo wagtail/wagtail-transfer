@@ -1,6 +1,13 @@
 .transfer.button.button-secondary.bicolor {
     overflow: visible;
     border: 1px solid #00676a;
+    width: auto;
+    color: #007d7e;
+    height: 3em;
+}
+
+.transfer.button.button-secondary.bicolor:hover {
+    color: #fff;
 }
 
 .transfer.button.button-secondary.bicolor::before {
