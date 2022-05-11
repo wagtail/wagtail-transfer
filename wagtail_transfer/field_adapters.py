@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
 from django.utils.functional import cached_property
@@ -31,6 +32,10 @@ FOLLOWED_REVERSE_RELATIONS = {
 DELETED_REVERSE_RELATIONS = {
     (model_label.lower(), relation.lower()) for model_label, relation, track_deletions in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS if track_deletions
 }
+ADMIN_BASE_URL = getattr(
+    settings, "WAGTAILADMIN_BASE_URL",
+    getattr(settings, "BASE_URL", None)
+)
 
 
 class FieldAdapter:
@@ -283,7 +288,11 @@ class FileAdapter(FieldAdapter):
         if url.startswith('/'):
             # Using a relative media url. ie. /media/
             # Prepend the BASE_URL to turn this into an absolute URL
-            url = settings.BASE_URL.rstrip('/') + url
+            if ADMIN_BASE_URL is None:
+                raise ImproperlyConfigured(
+                    "A WAGTAILADMIN_BASE_URL or BASE_URL setting must be provided when importing files"
+                )
+            url = ADMIN_BASE_URL.rstrip('/') + url
         return {
             'download_url': url,
             'size': get_file_size(self.field, instance),
