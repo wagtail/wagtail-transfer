@@ -23,3 +23,4 @@ class BaseStreamBlock(StreamBlock):
     stream = AnotherStreamBlock()
     rich_text = RichTextBlock()
     list_of_pages = ListBlock(PageChooserBlock())
+    list_of_captioned_pages = ListBlock(CaptionedPageLink())
