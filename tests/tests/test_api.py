@@ -21,6 +21,8 @@ from tests.models import (
     PageWithStreamField, PageWithParentalManyToMany
 )
 
+from .utils import has_new_listblock_format
+
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason
@@ -302,6 +304,8 @@ class TestPagesApi(TestCase):
         ))
 
     def test_streamfield_with_page_links_in_new_listblock_format(self):
+        if not has_new_listblock_format():
+            self.skipTest("This version of Wagtail does not use the UUID ListBlock format")
         page = PageWithStreamField(title="I have a streamfield",
                                    body=json.dumps([
                                          {'type': 'list_of_captioned_pages',

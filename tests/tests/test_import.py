@@ -1,3 +1,4 @@
+from ensurepip import version
 import importlib
 import os.path
 import shutil
@@ -17,6 +18,8 @@ from tests.models import (
     Advert, Author, Avatar, Category, LongAdvert, ModelWithManyToMany, PageWithParentalManyToMany, PageWithRelatedPages,
     PageWithRichText, PageWithStreamField, RedirectPage, SectionedPage, SimplePage, SponsoredPage
 )
+
+from .utils import has_new_listblock_format
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason
@@ -715,6 +718,8 @@ class TestImport(TestCase):
 
     def test_import_page_with_new_list_block_format(self):
         # Check that ids in a ListBlock with the uuid format within a StreamField are converted properly
+        if not has_new_listblock_format():
+            self.skipTest("This version of Wagtail does not use the UUID ListBlock format")
 
         data = """{"ids_for_import": [["wagtailcore.page", 6]], "mappings": [["wagtailcore.page", 6, "a231303a-1754-11ea-8000-0800278dc04d"], ["wagtailcore.page", 100, "11111111-1111-1111-1111-111111111111"]], "objects": [{"model": "tests.pagewithstreamfield", "pk": 6, "fields": {"title": "My streamfield list block has a link", "slug": "my-streamfield-block-has-a-link", "wagtail_admin_comments": [], "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "body": "[{\\"type\\": \\"list_of_captioned_pages\\", \\"value\\": [{\\"type\\": \\"item\\", \\"value\\": {\\"page\\": 100, \\"text\\": \\"a caption\\"}, \\"id\\": \\"8c0d7de7-4f77-4477-be67-7d990d0bfb82\\"}], \\"id\\": \\"21ffe52a-c0fc-4ecc-92f1-17b356c9cc94\\"}]"}, "parent_id": 100}]}"""
         importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
