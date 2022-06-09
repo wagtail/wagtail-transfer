@@ -1,6 +1,12 @@
 Changelog
 =========
 
+0.8.4 (09.06.2022)
+~~~~~~~~~~~~~~~~~~
+
+ * Correctly handle new-format ListBlock elements as of Wagtail 2.15 (Jacob Topp-Mugglestone)
+
+
 0.8.3 (11.05.2022)
 ~~~~~~~~~~~~~~~~~~
 
