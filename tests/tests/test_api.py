@@ -301,6 +301,30 @@ class TestPagesApi(TestCase):
             for model, pk, uid in data['mappings']
         ))
 
+    def test_streamfield_with_page_links_in_new_listblock_format(self):
+        page = PageWithStreamField(title="I have a streamfield",
+                                   body=json.dumps([
+                                         {'type': 'list_of_captioned_pages',
+                                          'value':
+                                              [{'type': 'item',
+                                                'value': {
+                                                    'page': 5,
+                                                    'text': 'a caption'
+                                                },
+                                                'id': '8c0d7de7-4f77-4477-be67-7d990d0bfb82'}],
+                                          'id': '21ffe52a-c0fc-4ecc-92f1-17b356c9cc94'},
+                                          ]))
+        parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+        parent_page.add_child(instance=page)
+
+        digest = digest_for_source('local', str(page.id))
+        response = self.client.get('/wagtail-transfer/api/pages/%d/?digest=%s' % (page.id, digest))
+
+        data = json.loads(response.content)
+
+        # test PageChooserBlock in ListBlock
+        self.assertIn(['wagtailcore.page', 5, "00017017-5555-5555-5555-555555555555"], data['mappings'])
+
     def test_streamfield_with_page_links(self):
         # Check that page links in a complex nested StreamField - with StreamBlock, StructBlock, and ListBlock -
         # are all picked up in mappings
