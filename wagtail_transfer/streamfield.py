@@ -86,10 +86,20 @@ class ListBlockHandler(BaseBlockHandler):
         updated_stream = []
         new_block = self.block.child_block
         new_block_handler = get_block_handler(new_block)
+        block_is_in_new_format = getattr(
+            self.block,
+            "_item_is_in_block_format",
+            lambda x: False
+        )
         for element in stream:
             try:
-                new_value = new_block_handler.map_over_json(element, func)
-                updated_stream.append(new_value)
+                if block_is_in_new_format(element):
+                    # We are dealing with new-style ListBlock representation
+                    new_value = new_block_handler.map_over_json(element['value'], func)
+                    updated_stream.append({'type': element['type'], 'value': new_value, 'id': element['id']})
+                else:
+                    new_value = new_block_handler.map_over_json(element, func)
+                    updated_stream.append(new_value)
             except ValidationError:
                 pass
         return updated_stream
