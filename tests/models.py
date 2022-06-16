@@ -1,11 +1,16 @@
 from django.db import models
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from taggit.managers import TaggableManager
-from wagtail.core.fields import RichTextField, StreamField
-from wagtail.core.models import Orderable, Page
 from wagtail.snippets.models import register_snippet
-
 from .blocks import BaseStreamBlock
+from wagtail import VERSION as WAGTAIL_VERSION
+
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail.fields import RichTextField, StreamField
+    from wagtail.models import Orderable, Page
+else:
+    from wagtail.core.fields import RichTextField, StreamField
+    from wagtail.core.models import Orderable, Page
 
 
 class SimplePage(Page):

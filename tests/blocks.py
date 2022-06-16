@@ -1,6 +1,12 @@
-from wagtail.core.blocks import (
-    CharBlock, IntegerBlock, RichTextBlock, StreamBlock, StructBlock, ListBlock, PageChooserBlock
-)
+from wagtail import VERSION as WAGTAIL_VERSION
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail.blocks import (
+        CharBlock, IntegerBlock, RichTextBlock, StreamBlock, StructBlock, ListBlock, PageChooserBlock
+    )
+else:
+    from wagtail.core.blocks import (
+        CharBlock, IntegerBlock, RichTextBlock, StreamBlock, StructBlock, ListBlock, PageChooserBlock
+    )
 
 
 class CaptionedPageLink(StructBlock):

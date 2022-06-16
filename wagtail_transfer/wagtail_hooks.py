@@ -1,10 +1,16 @@
 from django.conf import settings
 from django.urls import include, re_path, reverse
 from wagtail.admin.menu import MenuItem
-from wagtail.core import hooks
 from django.contrib.auth.models import Permission
 
 from . import admin_urls
+from wagtail import VERSION as WAGTAIL_VERSION
+
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail import hooks
+else:
+    from wagtail.core import hooks
+
 
 try:
     # Django 2

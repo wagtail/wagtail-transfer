@@ -5,9 +5,15 @@ from modelcluster.models import get_all_child_relations
 from rest_framework import relations, serializers
 from rest_framework.fields import Field, SkipField
 from taggit.managers import _TaggableManager
-from wagtail.core import fields as wagtailcore_fields
 
 from .utils import get_object_detail_url
+
+from wagtail import VERSION as WAGTAIL_VERSION
+
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail import fields as wagtailcore_fields
+else:
+    from wagtail.core import fields as wagtailcore_fields
 
 
 class TypeField(Field):

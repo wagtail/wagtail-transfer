@@ -11,7 +11,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from rest_framework import status
 from rest_framework.fields import ReadOnlyField
-from wagtail.core.models import Page
 
 from .auth import check_digest, digest_for_source
 from .locators import get_locator_for_model
@@ -23,6 +22,13 @@ from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
 
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
+
+from wagtail import VERSION as WAGTAIL_VERSION
+
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail.models import Page
+else:
+    from wagtail.core.models import Page
 
 
 def pages_for_export(request, root_page_id):

@@ -1,6 +1,7 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+from wagtail import VERSION as WAGTAIL_VERSION
 
 
 # Quick-start development settings - unsuitable for production
@@ -8,7 +9,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'tests',
     'wagtail_transfer',
@@ -35,6 +35,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
+
+# wagtail.core is now found in wagtail in Wagtail^=3.0
+if WAGTAIL_VERSION >= (3, 0):
+    INSTALLED_APPS[
+        INSTALLED_APPS.index('wagtail.core')
+    ] = "wagtail"
 
 MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',

@@ -1,4 +1,3 @@
-from ensurepip import version
 import importlib
 import os.path
 import shutil
@@ -9,7 +8,6 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.core.files.images import ImageFile
 from django.test import TestCase, override_settings
-from wagtail.core.models import Collection, Page
 from wagtail.images.models import Image
 
 from wagtail_transfer.models import IDMapping
@@ -20,6 +18,11 @@ from tests.models import (
 )
 
 from .utils import has_new_listblock_format
+from wagtail import VERSION as WAGTAIL_VERSION
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail.models import Page, Collection
+else:
+    from wagtail.core.models import Page, Collection
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason
@@ -434,7 +437,10 @@ class TestImport(TestCase):
 
     def test_import_page_with_comments(self):
         try:
-            from wagtail.core.models import Comment
+            if WAGTAIL_VERSION >= (3, 0):
+                from wagtail.models import Comment
+            else:
+                from wagtail.core.models import Comment
         except ImportError:
             self.skipTest("Comments not available on this version of Wagtail")
         data = """{

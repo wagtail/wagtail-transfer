@@ -2,8 +2,14 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import wagtail.core.blocks
-import wagtail.core.fields
+from wagtail import VERSION as WAGTAIL_VERSION
+
+if WAGTAIL_VERSION >= (3, 0):
+    import wagtail.blocks as wagtail_blocks
+    import wagtail.fields as wagtail_fields
+else:
+    import wagtail.core.blocks as wagtail_blocks
+    import wagtail.core.fields as wagtail_fields
 
 
 class Migration(migrations.Migration):
@@ -18,7 +24,7 @@ class Migration(migrations.Migration):
             name='PageWithStreamField',
             fields=[
                 ('page_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='wagtailcore.Page')),
-                ('body', wagtail.core.fields.StreamField([('link_block', wagtail.core.blocks.StructBlock([('page', wagtail.core.blocks.PageChooserBlock()), ('text', wagtail.core.blocks.CharBlock(max_length=250))])), ('page', wagtail.core.blocks.PageChooserBlock()), ('stream', wagtail.core.blocks.StreamBlock([('page', wagtail.core.blocks.PageChooserBlock())])), ('rich_text', wagtail.core.blocks.RichTextBlock()), ('list_of_pages', wagtail.core.blocks.ListBlock(wagtail.core.blocks.PageChooserBlock()))], blank=True, verbose_name='Page body')),
+                ('body', wagtail_fields.StreamField([('link_block', wagtail_blocks.StructBlock([('page', wagtail_blocks.PageChooserBlock()), ('text', wagtail_blocks.CharBlock(max_length=250))])), ('page', wagtail_blocks.PageChooserBlock()), ('stream', wagtail_blocks.StreamBlock([('page', wagtail_blocks.PageChooserBlock())])), ('rich_text', wagtail_blocks.RichTextBlock()), ('list_of_pages', wagtail_blocks.ListBlock(wagtail_blocks.PageChooserBlock()))], blank=True, verbose_name='Page body')),
             ],
             options={
                 'abstract': False,

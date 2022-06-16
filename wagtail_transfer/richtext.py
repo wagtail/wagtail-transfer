@@ -1,10 +1,15 @@
 import re
 from functools import partial
-
-from wagtail.core.rich_text import features
-from wagtail.core.rich_text.rewriters import extract_attrs
-
 from .models import get_base_model
+
+from wagtail import VERSION as WAGTAIL_VERSION
+
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail.rich_text import features
+    from wagtail.rich_text.rewriters import extract_attrs
+else:
+    from wagtail.core.rich_text import features
+    from wagtail.core.rich_text.rewriters import extract_attrs
 
 FIND_A_TAG = re.compile(r'<a(\b[^>]*)>(.*?)</a>')
 FIND_EMBED_TAG = re.compile(r'<embed(\b[^>]*)/>')

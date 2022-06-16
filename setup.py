@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='wagtail-transfer',
-    version='0.8.4',
+    version='0.9.0',
     description="Content transfer for Wagtail",
     author='Matthew Westcott',
     author_email='matthew.westcott@torchbox.com',
@@ -38,5 +38,6 @@ setup(
         'Framework :: Django',
         'Framework :: Wagtail',
         'Framework :: Wagtail :: 2',
+        'Framework :: Wagtail :: 3',
     ],
 )
