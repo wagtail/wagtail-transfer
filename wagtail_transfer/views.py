@@ -227,6 +227,7 @@ def choose_page(request):
             }
             for source_name in getattr(settings, 'WAGTAILTRANSFER_SOURCES', {}).keys()
         ]),
+        'include_legacy_editor_css': WAGTAIL_VERSION < (4, 0),
     })
 
 

@@ -4,7 +4,9 @@
 {% block extra_css %}
     {{ block.super }}
 
-    {% include "wagtailadmin/pages/_editor_css.html" %}
+    {% if include_legacy_editor_css %}
+        {% include "wagtailadmin/pages/_editor_css.html" %}
+    {% endif %}
     <link rel="stylesheet" href="{% versioned_static 'wagtail_transfer/css/transfer-styles.css' %}">
 {% endblock %}
 
