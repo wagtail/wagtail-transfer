@@ -10,7 +10,6 @@ from django.core.files import File
 from django.core.files.images import ImageFile
 from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, override_settings
-from wagtail.core.models import Page, Collection
 from wagtail.images.models import Image
 from wagtail.documents.models import Document
 
@@ -22,7 +21,11 @@ from tests.models import (
 )
 
 from .utils import has_new_listblock_format
-
+from wagtail import VERSION as WAGTAIL_VERSION
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail.models import Page, Collection
+else:
+    from wagtail.core.models import Page, Collection
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason

@@ -4,11 +4,18 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models.constants import LOOKUP_SEP
 from treebeard.mp_tree import MP_Node
-from wagtail.core import hooks
-from wagtail.core.models import Page
 
 from .field_adapters import adapter_registry
 from .models import get_base_model
+
+from wagtail import VERSION as WAGTAIL_VERSION
+
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail import hooks
+    from wagtail.models import Page
+else:
+    from wagtail.core import hooks
+    from wagtail.core.models import Page
 
 
 def _get_subclasses_recurse(model):

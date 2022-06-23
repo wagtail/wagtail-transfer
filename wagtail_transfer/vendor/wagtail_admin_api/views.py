@@ -2,11 +2,18 @@ from collections import OrderedDict
 
 from rest_framework.authentication import SessionAuthentication
 from wagtail.admin.navigation import get_explorable_root_page
-from wagtail.core.models import Page, UserPagePermissionsProxy
 
 from ..wagtail_api_v2.views import PagesAPIViewSet
 from .filters import ForExplorerFilter, HasChildrenFilter
 from .serializers import AdminPageSerializer
+
+
+from wagtail import VERSION as WAGTAIL_VERSION
+
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail.models import Page, UserPagePermissionsProxy
+else:
+    from wagtail.core.models import Page, UserPagePermissionsProxy
 
 
 class PagesAdminAPIViewSet(PagesAPIViewSet):

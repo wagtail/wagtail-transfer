@@ -11,7 +11,6 @@ from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ViewSet
 from wagtail.api import APIField
-from wagtail.core.models import Page, Site
 from wagtail.snippets.models import SNIPPET_MODELS
 
 from .filters import (ChildOfFilter, DescendantOfFilter, FieldsFilter, OrderingFilter,
@@ -21,6 +20,13 @@ from .serializers import (BaseSerializer, GenericModelSerializer, PageSerializer
                           get_serializer_class)
 from .utils import (BadRequestError, filter_page_type, get_object_detail_url,
                     page_models_from_string, parse_fields_parameter)
+
+from wagtail import VERSION as WAGTAIL_VERSION
+
+if WAGTAIL_VERSION >= (3, 0):
+    from wagtail.models import Page, Site
+else:
+    from wagtail.core.models import Page, Site
 
 
 class BaseAPIViewSet(GenericViewSet):
