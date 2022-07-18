@@ -1,7 +1,7 @@
 Changelog
 =========
 
-Unreleased
+0.8.5 (18.07.2022)
 ~~~~~~~~~~~~~~~~~~
 
  * Add support for Wagtail 3.0 (William Blackie)
