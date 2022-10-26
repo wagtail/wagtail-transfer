@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+~~~~~~~~~~~~~~~~~~
+
+ * Add support for Wagtail 4.0 (Katherine Domingo)
+
+
 0.8.5 (18.07.2022)
 ~~~~~~~~~~~~~~~~~~
 
