@@ -123,7 +123,11 @@ class TestImport(TestCase):
         self.assertEqual(updated_page.draft_title, "New home")
 
         # get_latest_revision (as used in the edit-page view) should also reflect the imported content
-        updated_page_revision = updated_page.get_latest_revision_as_page()
+        if WAGTAIL_VERSION >= (4, 0):
+            updated_page_revision = updated_page.get_latest_revision_as_object()
+        else:
+            updated_page_revision = updated_page.get_latest_revision_as_page()
+
         self.assertEqual(updated_page_revision.intro, "This is the updated homepage")
         self.assertEqual(updated_page_revision.title, "New home")
 
@@ -131,7 +135,12 @@ class TestImport(TestCase):
         self.assertEqual(created_page.intro, "This page is imported from the source site")
         # An initial page revision should also be created
         self.assertTrue(created_page.get_latest_revision())
-        created_page_revision = created_page.get_latest_revision_as_page()
+
+        if WAGTAIL_VERSION >= (4, 0):
+            created_page_revision = created_page.get_latest_revision_as_object()
+        else:
+            created_page_revision = created_page.get_latest_revision_as_page()
+
         self.assertEqual(created_page_revision.intro, "This page is imported from the source site")
 
     def test_import_pages_with_fk(self):
