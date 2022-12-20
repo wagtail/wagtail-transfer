@@ -127,6 +127,12 @@ class FieldLocator:
     def find(self, uid):
         # pair up field names with their respective items in the UID tuple, to form a filter dict
         # that we can use for an ORM lookup
+        if type(uid) == tuple:
+            filters = dict(zip(self.fields, uid))
+        elif type(uid) == str:
+            # if lookup fields are configured for wagtailcore.page, then in the admin view those
+            # fields get passed along as a string
+            filters = dict(zip(self.fields, uid.split(",")))
         filters = dict(zip(self.fields, uid))
 
         try:
