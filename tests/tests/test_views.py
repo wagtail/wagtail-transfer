@@ -2,10 +2,11 @@ import json
 from datetime import date, datetime, timezone
 from unittest import mock
 
+from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import redirect
-from django.test import TestCase
+from django.test import TestCase, override_settings, modify_settings
 from django.urls import reverse
 
 from tests.models import SponsoredPage
@@ -24,6 +25,17 @@ class TestChooseView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-wagtail-component="content-import-form"')
 
+class TestCheckPageExistence(TestCase):
+    fixtures = ['test.json']
+    
+    def setUp(self):
+        self.client.login(username='admin', password='password')
+
+    def test_get_page_existence(self):
+        # in the case of `'wagtailcore.page': ['slug', 'locale_id']` TODO: override this value instead
+        response = self.client.get('/admin/wagtail-transfer/api/check_uid/?uid=home,1')
+        # 200 means existing page was found
+        self.assertEqual(response.status_code, 200)
 
 @mock.patch('requests.post')
 @mock.patch('requests.get')
@@ -35,16 +47,14 @@ class TestImportView(TestCase):
 
     def test_run(self, get, post):
         get.return_value.status_code = 200
+        # TODO these values should be adjusted only in cases where we are not using UIDs for pages
         get.return_value.content = b"""{
             "ids_for_import": [
-                ["wagtailcore.page", 12],
-                ["wagtailcore.page", 15],
-                ["wagtailcore.page", 16]
             ],
             "mappings": [
-                ["wagtailcore.page", 12, "22222222-2222-2222-2222-222222222222"],
-                ["wagtailcore.page", 15, "00017017-5555-5555-5555-555555555555"],
-                ["wagtailcore.page", 16, "00e99e99-6666-6666-6666-666666666666"],
+                ["wagtailcore.page", 12, "/home/"],
+                ["wagtailcore.page", 15, "/home/oil-is-great/"],
+                ["wagtailcore.page", 16, "/home/eggs-are-great-too/"],
                 ["tests.advert", 11, "adadadad-1111-1111-1111-111111111111"],
                 ["tests.advert", 8, "adadadad-8888-8888-8888-888888888888"]
             ],
