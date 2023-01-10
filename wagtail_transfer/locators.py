@@ -3,7 +3,7 @@ Helper objects for locating a database object according to some lookup criterion
 all sites - usually a UUID to look up in the IDMapping table, but may be something else
 model-specific such as a slug field.
 """
-
+import logging
 import uuid
 from functools import lru_cache
 
@@ -13,6 +13,9 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db import IntegrityError
 
 from .models import IDMapping, get_base_model
+
+
+logger = logging.getLogger(__name__)
 
 UUID_SEQUENCE = 0
 
@@ -42,6 +45,7 @@ class IDMappingLocator:
         try:
             mapping = IDMapping.objects.get(uid=uid)
         except IDMapping.DoesNotExist:
+            logger.debug(f"IDMapping not found for {uid}")
             return None
 
         if mapping.content_type != self.content_type:
@@ -73,6 +77,7 @@ class IDMappingLocator:
                 )
                 return id_mapping.uid
             except IDMapping.DoesNotExist:
+                logger.debug(f"IDMapping for local_id not found for {id}")
                 return None
 
     def attach_uid(self, instance, uid):
@@ -132,6 +137,7 @@ class FieldLocator:
         try:
             return self.model.objects.get(**filters)
         except self.model.DoesNotExist:
+            logger.debug(f"Couldn't find {self.model} using {filters}, returning None")
             return None
 
 
@@ -142,6 +148,6 @@ def get_locator_for_model(model):
         # Use FieldLocator if an entry exists in LOOKUP_FIELDS
         fields = LOOKUP_FIELDS[base_model._meta.label_lower]
         return FieldLocator(base_model, fields)
-    except KeyError:
-        # Fall back on IDMappingLocator
+    except KeyError as e:
+        logger.debug(f"{base_model} FieldLocator lookup for {e} failed. Falling back to IDMappingLocator")
         return IDMappingLocator(base_model)
