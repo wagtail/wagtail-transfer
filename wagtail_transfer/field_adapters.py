@@ -1,3 +1,4 @@
+import logging
 import json
 import pathlib
 from functools import lru_cache
@@ -22,6 +23,9 @@ from .locators import get_locator_for_model
 from .models import get_base_model, get_base_model_for_path
 from .richtext import get_reference_handler
 from .streamfield import get_object_references, update_object_ids
+
+
+logger = logging.getLogger(__name__)
 
 WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS = getattr(settings, "WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS", [('wagtailimages.image', 'tagged_items', True)])
 FOLLOWED_REVERSE_RELATIONS = {
@@ -203,9 +207,19 @@ class ManyToOneRelAdapter(FieldAdapter):
         self.related_base_model = get_base_model(field.related_model)
         self.is_parental = isinstance(self.related_field, ParentalKey)
         self.is_followed = (get_base_model(self.field.model)._meta.label_lower, self.name) in FOLLOWED_REVERSE_RELATIONS
+        if self.is_parental or self.is_followed:
+            # presumably this info is most useful when it's going to be used, so this avoids some extra log noise
+            logger.debug("Field adaptor registered: "
+                         f"{self.field}, {get_base_model(self.field.model)._meta.label_lower, self.name})")
 
     def _get_related_objects(self, instance):
-        return getattr(instance, self.name).all()
+        results = getattr(instance, self.name).all()
+        if results:
+            logger.debug("Related objects found for "
+                         f"{self.name}, {instance}: {results}")
+        else:
+            logger.debug(f"No related objects found for {self.name}")
+        return results
 
     def serialize(self, instance):
         if self.is_parental or self.is_followed:
@@ -216,6 +230,9 @@ class ManyToOneRelAdapter(FieldAdapter):
         if self.is_parental or self.is_followed:
             for pk in self._get_related_objects(instance).values_list('pk', flat=True):
                 refs.add((self.related_base_model, pk))
+        else:
+            logger.debug(f"{self.field}, {get_base_model(self.field.model)._meta.label_lower, self.name}"
+                         " is not parental or followed, not adding to refs")
         return refs
 
     def get_object_deletions(self, instance, value, context):
@@ -230,7 +247,7 @@ class ManyToOneRelAdapter(FieldAdapter):
                 child = locator.find(uid)
                 if child is not None:
                     matched_destination_ids.add(child.pk)
-
+            logger.debug(f"Deleting the following objects: {matched_destination_ids}")
             return {child for child in self._get_related_objects(instance) if child.pk not in matched_destination_ids}
         return set()
 
