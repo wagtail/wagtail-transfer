@@ -1,3 +1,4 @@
+import logging
 import json
 from copy import copy
 
@@ -18,6 +19,7 @@ if WAGTAIL_VERSION >= (3, 0):
 else:
     from wagtail.core.models import Page
 
+logger = logging.getLogger(__name__)
 
 # Models which should be updated to their latest version when encountered in object references
 default_update_related_models = ['wagtailimages.image']
@@ -338,12 +340,14 @@ class ImportPlanner:
         try:
             object_data = self.object_data_by_source[(model, source_id)]
         except KeyError:
-            # Cannot complete this task during this pass; request the missing object data,
-            # unless we've already tried that
+            logger.debug(f"Cannot complete {task} during this pass")
+            # request the missing object data, unless we've already tried that
             if (model, source_id) in self.really_missing_object_data:
                 # object data apparently doesn't exist on the source site either, so give up on
                 # this object entirely
+                logger.debug("Object data apparently doesn't exist on the source site either")
                 if action == 'create':
+                    logger.debug(f"Adding {model, source_id} to faile_creations")
                     self.failed_creations.add((model, source_id))
 
             else:
@@ -548,14 +552,16 @@ class ImportPlanner:
 
                 # If everything is working properly, this should be a case we already encountered
                 # during task / objective solving and logged in failed_creations.
-                assert (dep_model, dep_source_id) in self.failed_creations
+                logger.debug(f"KeyError, no resolution for dependency found: {dep_model, dep_source_id, dep_is_hard}")
+                assert (dep_model, dep_source_id) in self.failed_creations, f"{dep_model, dep_source_id} not in failed_creations"
 
                 # Also, it should be a soft dependency, since we've eliminated unsatisfiable hard
                 # hard dependencies during _check_satisfiable.
-                assert not dep_is_hard
+                assert not dep_is_hard, "dependency is hard"
 
                 # Since this is a soft dependency, we can (and must!) leave it unsatisfied.
                 # Abandon this dependency and move on to the next in the list
+                logger.debug(f"Abandoning dependency: {dep_model, dep_source_id, dep_is_hard}")
                 continue
 
             if resolution is None:
@@ -686,6 +692,7 @@ class SaveOperationMixin:
             if adapter:
                 deps.update(adapter.get_dependencies(val))
 
+        logger.debug(f"Dependencies for creation (base_model_class, id, is_hard_dependency): {deps}")
         return deps
 
     def deletions(self, context):
@@ -697,7 +704,8 @@ class SaveOperationMixin:
             adapter = adapter_registry.get_field_adapter(field)
             if adapter:
                 deletions.update(adapter.get_object_deletions(self.instance, val, context))
-
+        if deletions:
+            logger.debug(f"Dependencies for deletion (base_model_class, id, is_hard_dependency): {deletions}")
         return deletions
 
 
