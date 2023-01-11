@@ -23,8 +23,13 @@ LOOKUP_FIELDS = {
     'taggit.tag': ['slug'],  # sensible default for taggit; can still be overridden 
     'wagtailcore.locale': ["language_code"]
 }
-for model_label, fields in getattr(settings, 'WAGTAILTRANSFER_LOOKUP_FIELDS', {}).items():
-    LOOKUP_FIELDS[model_label.lower()] = fields
+def get_lookup_fields(LOOKUP_FIELDS):
+    """ get all fields for lookup, including those declared in settings """
+    for model_label, fields in getattr(settings, 'WAGTAILTRANSFER_LOOKUP_FIELDS', {}).items():
+        LOOKUP_FIELDS[model_label.lower()] = fields
+    return LOOKUP_FIELDS
+
+
 
 
 class IDMappingLocator:
@@ -122,12 +127,19 @@ class FieldLocator:
         # A UID coming from JSON data will arrive as a list (because JSON has no tuple type),
         # but we need a tuple because the importer logic expects a hashable type that we can use
         # in sets and dict keys
+        if type(json_uid) is str:
+            json_uid = [json_uid]
         return tuple(json_uid)
 
     def find(self, uid):
         # pair up field names with their respective items in the UID tuple, to form a filter dict
         # that we can use for an ORM lookup
-        filters = dict(zip(self.fields, uid))
+        if type(uid) == tuple:
+            filters = dict(zip(self.fields, uid))
+        elif type(uid) == str:
+            # if lookup fields are configured for wagtailcore.page, then in the admin view those
+            # fields get passed along as a string
+            filters = dict(zip(self.fields, uid.split(",")))
 
         try:
             return self.model.objects.get(**filters)
@@ -138,9 +150,10 @@ class FieldLocator:
 @lru_cache(maxsize=None)
 def get_locator_for_model(model):
     base_model = get_base_model(model)
+    field_lookups = get_lookup_fields(LOOKUP_FIELDS)
     try:
         # Use FieldLocator if an entry exists in LOOKUP_FIELDS
-        fields = LOOKUP_FIELDS[base_model._meta.label_lower]
+        fields = field_lookups[base_model._meta.label_lower]
         return FieldLocator(base_model, fields)
     except KeyError:
         # Fall back on IDMappingLocator
