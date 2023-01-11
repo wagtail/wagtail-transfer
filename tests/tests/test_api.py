@@ -460,6 +460,18 @@ class TestPagesApi(TestCase):
 
         # Category objects in the mappings section should be identified by name, not UUID
         self.assertIn(['tests.category', 1, ['Cars']], mappings)
+    
+    @override_settings(WAGTAILTRANSFER_LOOKUP_FIELDS = {'tests.category': ['name'],'wagtailcore.page': ['url_path'],})
+    def test_get_page_with_field_lookup(self):
+        response = self.get(5)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        mappings = data['mappings']
+
+        # Page objects in the mappings section should be identified by url_path
+        self.assertIn(['wagtailcore.page', 5, ['/home/oil-is-great/']], mappings)
+
+
 
 
 class TestObjectsApi(TestCase):
