@@ -1,4 +1,5 @@
 import os
+from django.core.signals import setting_changed
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 from wagtail import VERSION as WAGTAIL_VERSION
@@ -149,6 +150,15 @@ WAGTAILTRANSFER_UPDATE_RELATED_MODELS = ['wagtailimages.Image', 'tests.advert']
 WAGTAILTRANSFER_LOOKUP_FIELDS = {
     'tests.category': ['name']
 }
+
+# some settings are modified in tests, in which case this caching interfers with the ability to test
+# effectivley. Since settings are unlikely to change in the middle of usage in the real world, 
+# it makes sense to clear these just inside our test settings
+def clear_locator_cache(setting, value, **kwargs):
+    from wagtail_transfer.locators import get_locator_for_model
+    get_locator_for_model.cache_clear()
+
+setting_changed.connect(clear_locator_cache)
 
 # The default name for the Page -> Comment relation from Wagtail 2.15 onward. Setting this ensures that
 # 2.13.x (from 2.13.5 onward) and 2.14.x (from 2.14.2 onward) adopt the 2.15 behaviour, allowing us to

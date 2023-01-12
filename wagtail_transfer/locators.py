@@ -23,14 +23,12 @@ LOOKUP_FIELDS = {
     'taggit.tag': ['slug'],  # sensible default for taggit; can still be overridden 
     'wagtailcore.locale': ["language_code"]
 }
-def get_lookup_fields(LOOKUP_FIELDS):
+def get_lookup_fields():
     """ get all fields for lookup, including those declared in settings """
+    lookup_fields = LOOKUP_FIELDS.copy()
     for model_label, fields in getattr(settings, 'WAGTAILTRANSFER_LOOKUP_FIELDS', {}).items():
-        LOOKUP_FIELDS[model_label.lower()] = fields
-    return LOOKUP_FIELDS
-
-
-
+        lookup_fields[model_label.lower()] = fields
+    return lookup_fields
 
 class IDMappingLocator:
     def __init__(self, model):
@@ -150,10 +148,10 @@ class FieldLocator:
 @lru_cache(maxsize=None)
 def get_locator_for_model(model):
     base_model = get_base_model(model)
-    field_lookups = get_lookup_fields(LOOKUP_FIELDS)
+    lookup_fields = get_lookup_fields()
     try:
         # Use FieldLocator if an entry exists in LOOKUP_FIELDS
-        fields = field_lookups[base_model._meta.label_lower]
+        fields = lookup_fields[base_model._meta.label_lower]
         return FieldLocator(base_model, fields)
     except KeyError:
         # Fall back on IDMappingLocator
