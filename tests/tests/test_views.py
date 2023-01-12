@@ -24,6 +24,17 @@ class TestChooseView(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-wagtail-component="content-import-form"')
 
+class TestCheckUIDView(TestCase):
+    fixtures = ['test.json']
+
+    def setUp(self):
+        self.client.login(username='admin', password='password')
+
+    def test_get(self):
+        with self.settings(WAGTAILTRANSFER_LOOKUP_FIELDS = {'wagtailcore.page': ['slug', 'locale_id'],}):
+            # the view should parse comma-seperated params correctly
+            response = self.client.get('/admin/wagtail-transfer/api/check_uid/?uid=home,1')
+            self.assertEqual(response.status_code, 200)
 
 @mock.patch('requests.post')
 @mock.patch('requests.get')
@@ -383,6 +394,7 @@ class ImportPermissionsTests(TestCase):
             with self.subTest(user=user):
                 self.client.login(username=user.username, password="password")
                 request = getattr(self.client, method)
+                breakpoint()
                 response = request(url, data)
                 if success_url:
                     self.assertRedirects(response, success_url)
