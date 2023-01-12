@@ -471,6 +471,16 @@ class TestPagesApi(TestCase):
         # Page objects in the mappings section should be identified by url_path
         self.assertIn(['wagtailcore.page', 5, ['/home/oil-is-great/']], mappings)
 
+    @override_settings(WAGTAILTRANSFER_LOOKUP_FIELDS = {'tests.category': ['name'],'wagtailcore.page': ['slug', 'locale_id'],})
+    def test_get_page_with_field_lookup_multiple(self):
+        response = self.get(5)
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        mappings = data['mappings']
+
+        # Page objects in the mappings section should be identified by url_path
+        self.assertIn(['wagtailcore.page', 5, ['oil-is-great', 1]], mappings)
+
 
 
 
