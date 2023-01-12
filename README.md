@@ -75,6 +75,16 @@ The following settings are additionally recognised:
   if `True`, will delete any models in the reverse relation on the destination site that do not exist in the source site's reverse relation. As a result,
   it should only be used for models that behave strictly like child models but do not use `ParentalKey` - for example, tags, where importing an image with deleted tags should delete those tag linking models on the destination site as well.
 
+  Note: describing the relationship according to the format expected is important. An import may still complete succesfully if you've added a value that dosen't match, in which case the followed relation simply won't be updated and may cause unexpected problems on future imports. 
+  
+  For example, if you happen to also be using the `wagtail-personalisation` library on your project, you'll need to make sure you account for page variants: 
+  ```python
+  WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS = [
+    ('wagtailcore.page', 'personalisable_canonical_metadata', True),
+  ]
+  ```
+
+
 Note that these settings do not accept models that are defined as subclasses through [multi-table inheritance](https://docs.djangoproject.com/en/stable/topics/db/models/#multi-table-inheritance) - in particular, they cannot be used to define behaviour that only applies to specific subclasses of Page.
 
 * `WAGTAILTRANSFER_CHOOSER_API_PROXY_TIMEOUT = 5`
