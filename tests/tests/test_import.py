@@ -17,12 +17,7 @@ from tests.models import (
     PageWithRichText, PageWithStreamField, RedirectPage, SectionedPage, SimplePage, SponsoredPage
 )
 
-from .utils import has_new_listblock_format
-from wagtail import VERSION as WAGTAIL_VERSION
-if WAGTAIL_VERSION >= (3, 0):
-    from wagtail.models import Page, Collection
-else:
-    from wagtail.core.models import Page, Collection
+from wagtail.models import Page, Collection, Comment
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason
@@ -123,7 +118,7 @@ class TestImport(TestCase):
         self.assertEqual(updated_page.draft_title, "New home")
 
         # get_latest_revision (as used in the edit-page view) should also reflect the imported content
-        updated_page_revision = updated_page.get_latest_revision_as_page()
+        updated_page_revision = updated_page.get_latest_revision_as_object()
         self.assertEqual(updated_page_revision.intro, "This is the updated homepage")
         self.assertEqual(updated_page_revision.title, "New home")
 
@@ -131,7 +126,7 @@ class TestImport(TestCase):
         self.assertEqual(created_page.intro, "This page is imported from the source site")
         # An initial page revision should also be created
         self.assertTrue(created_page.get_latest_revision())
-        created_page_revision = created_page.get_latest_revision_as_page()
+        created_page_revision = created_page.get_latest_revision_as_object()
         self.assertEqual(created_page_revision.intro, "This page is imported from the source site")
 
     def test_import_pages_with_fk(self):
@@ -436,13 +431,6 @@ class TestImport(TestCase):
         self.assertEqual(new_sections[1].title, "Eat the egg")
 
     def test_import_page_with_comments(self):
-        try:
-            if WAGTAIL_VERSION >= (3, 0):
-                from wagtail.models import Comment
-            else:
-                from wagtail.core.models import Comment
-        except ImportError:
-            self.skipTest("Comments not available on this version of Wagtail")
         data = """{
             "ids_for_import": [
                 ["wagtailcore.page", 100]
@@ -724,9 +712,6 @@ class TestImport(TestCase):
 
     def test_import_page_with_new_list_block_format(self):
         # Check that ids in a ListBlock with the uuid format within a StreamField are converted properly
-        if not has_new_listblock_format():
-            self.skipTest("This version of Wagtail does not use the UUID ListBlock format")
-
         data = """{"ids_for_import": [["wagtailcore.page", 6]], "mappings": [["wagtailcore.page", 6, "a231303a-1754-11ea-8000-0800278dc04d"], ["wagtailcore.page", 100, "11111111-1111-1111-1111-111111111111"]], "objects": [{"model": "tests.pagewithstreamfield", "pk": 6, "fields": {"title": "My streamfield list block has a link", "slug": "my-streamfield-block-has-a-link", "wagtail_admin_comments": [], "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "body": "[{\\"type\\": \\"list_of_captioned_pages\\", \\"value\\": [{\\"type\\": \\"item\\", \\"value\\": {\\"page\\": 100, \\"text\\": \\"a caption\\"}, \\"id\\": \\"8c0d7de7-4f77-4477-be67-7d990d0bfb82\\"}], \\"id\\": \\"21ffe52a-c0fc-4ecc-92f1-17b356c9cc94\\"}]"}, "parent_id": 100}]}"""
         importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)

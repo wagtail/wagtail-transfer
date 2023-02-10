@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Unreleased
+~~~~~~~~~~
+
+ * Dropped support for Python 3.6, and Wagtail 4.0 and below
+ * Added provisional support for Wagtail 5.0 (Matt Westcott)
+
+
 0.8.5 (18.07.2022)
 ~~~~~~~~~~~~~~~~~~
 

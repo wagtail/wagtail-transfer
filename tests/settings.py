@@ -1,7 +1,6 @@
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-from wagtail import VERSION as WAGTAIL_VERSION
 
 
 # Quick-start development settings - unsuitable for production
@@ -23,7 +22,7 @@ INSTALLED_APPS = [
     'wagtail.images',
     'wagtail.search',
     'wagtail.admin',
-    'wagtail.core',
+    'wagtail',
 
     'modelcluster',
     'taggit',
@@ -35,12 +34,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 ]
-
-# wagtail.core is now found in wagtail in Wagtail^=3.0
-if WAGTAIL_VERSION >= (3, 0):
-    INSTALLED_APPS[
-        INSTALLED_APPS.index('wagtail.core')
-    ] = "wagtail"
 
 MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -126,7 +119,7 @@ SECRET_KEY = 'not needed'
 # Wagtail settings
 
 WAGTAIL_SITE_NAME = "wagtail-transfer"
-BASE_URL = 'http://example.com'
+WAGTAILADMIN_BASE_URL = 'http://example.com'
 
 WAGTAILTRANSFER_SOURCES = {
     'staging': {

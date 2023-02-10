@@ -2,12 +2,7 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-from wagtail import VERSION as WAGTAIL_VERSION
-
-if WAGTAIL_VERSION >= (3, 0):
-    import wagtail.fields as wagtail_fields
-else:
-    import wagtail.core.fields as wagtail_fields
+import wagtail.fields
 
 class Migration(migrations.Migration):
 
@@ -21,7 +16,7 @@ class Migration(migrations.Migration):
             name='PageWithRichText',
             fields=[
                 ('page_ptr', models.OneToOneField(auto_created=True, on_delete=django.db.models.deletion.CASCADE, parent_link=True, primary_key=True, serialize=False, to='wagtailcore.Page')),
-                ('body', wagtail_fields.RichTextField(max_length=255)),
+                ('body', wagtail.fields.RichTextField(max_length=255)),
             ],
             options={
                 'abstract': False,

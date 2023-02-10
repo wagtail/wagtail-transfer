@@ -2,12 +2,7 @@ from rest_framework.filters import BaseFilterBackend
 
 from ..wagtail_api_v2.utils import BadRequestError, parse_boolean
 
-from wagtail import VERSION as WAGTAIL_VERSION
-
-if WAGTAIL_VERSION >= (3, 0):
-    from wagtail import hooks
-else:
-    from wagtail.core import hooks
+from wagtail import hooks
 
 
 class HasChildrenFilter(BaseFilterBackend):
