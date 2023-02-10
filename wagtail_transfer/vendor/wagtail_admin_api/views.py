@@ -8,12 +8,7 @@ from .filters import ForExplorerFilter, HasChildrenFilter
 from .serializers import AdminPageSerializer
 
 
-from wagtail import VERSION as WAGTAIL_VERSION
-
-if WAGTAIL_VERSION >= (3, 0):
-    from wagtail.models import Page, UserPagePermissionsProxy
-else:
-    from wagtail.core.models import Page, UserPagePermissionsProxy
+from wagtail.models import Page, UserPagePermissionsProxy
 
 
 class PagesAdminAPIViewSet(PagesAPIViewSet):

@@ -4,20 +4,9 @@ from wagtail.admin.menu import MenuItem
 from django.contrib.auth.models import Permission
 
 from . import admin_urls
-from wagtail import VERSION as WAGTAIL_VERSION
 
-if WAGTAIL_VERSION >= (3, 0):
-    from wagtail import hooks
-else:
-    from wagtail.core import hooks
-
-
-try:
-    # Django 2
-    from django.contrib.staticfiles.templatetags.staticfiles import static
-except ImportError:
-    # Django 3
-    from django.templatetags.static import static
+from wagtail import hooks
+from django.templatetags.static import static
 
 
 @hooks.register('register_admin_urls')
