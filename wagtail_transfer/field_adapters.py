@@ -23,14 +23,8 @@ from django.contrib.contenttypes.fields import GenericRelation
 
 from django.utils.encoding import is_protected_type
 
-from wagtail import VERSION as WAGTAIL_VERSION
-
-if WAGTAIL_VERSION >= (3, 0):
-    from wagtail import hooks
-    from wagtail.fields import RichTextField, StreamField
-else:
-    from wagtail.core import hooks
-    from wagtail.core.fields import RichTextField, StreamField
+from wagtail import hooks
+from wagtail.fields import RichTextField, StreamField
 
 
 WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS = getattr(settings, "WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS", [('wagtailimages.image', 'tagged_items', True)])

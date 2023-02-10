@@ -23,12 +23,7 @@ from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
 from django.contrib import messages
 from django.contrib.contenttypes.models import ContentType
 
-from wagtail import VERSION as WAGTAIL_VERSION
-
-if WAGTAIL_VERSION >= (3, 0):
-    from wagtail.models import Page
-else:
-    from wagtail.core.models import Page
+from wagtail.models import Page
 
 
 def pages_for_export(request, root_page_id):
@@ -227,7 +222,6 @@ def choose_page(request):
             }
             for source_name in getattr(settings, 'WAGTAILTRANSFER_SOURCES', {}).keys()
         ]),
-        'include_legacy_editor_css': WAGTAIL_VERSION < (4, 0),
     })
 
 

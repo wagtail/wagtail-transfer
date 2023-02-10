@@ -2,14 +2,8 @@ from urllib.parse import urlparse
 
 from django.conf import settings
 
-from wagtail import VERSION as WAGTAIL_VERSION
-
-if WAGTAIL_VERSION >= (3, 0):
-    from wagtail.models import Page, Site
-    from wagtail.coreutils import resolve_model_string
-else:
-    from wagtail.core.models import Page, Site
-    from wagtail.core.utils import resolve_model_string
+from wagtail.models import Page, Site
+from wagtail.coreutils import resolve_model_string
 
 
 class BadRequestError(Exception):
