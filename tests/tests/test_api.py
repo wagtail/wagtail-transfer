@@ -2,25 +2,24 @@ import json
 import os.path
 import shutil
 import uuid
-from unittest import mock
 from datetime import datetime, timezone
+from unittest import mock
 
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 from django.core.files.images import ImageFile
-from django.contrib.contenttypes.models import ContentType
 from django.test import TestCase, override_settings
-from wagtail.images.models import Image
 from wagtail.documents.models import Document
+from wagtail.images.models import Image
+from wagtail.models import Collection, Page
 
+from tests.models import (Advert, Avatar, Category, LongAdvert,
+                          ModelWithManyToMany, PageWithParentalManyToMany,
+                          PageWithRichText, PageWithStreamField, SectionedPage,
+                          SponsoredPage)
 from wagtail_transfer.auth import digest_for_source
 from wagtail_transfer.models import IDMapping
-from tests.models import (
-    Advert, Avatar, Category, LongAdvert, ModelWithManyToMany, PageWithRichText, SectionedPage, SponsoredPage,
-    PageWithStreamField, PageWithParentalManyToMany
-)
-
-from wagtail.models import Page, Collection
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason

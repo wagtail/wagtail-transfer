@@ -1,12 +1,11 @@
 from django.conf import settings
-from django.urls import include, re_path, reverse
-from wagtail.admin.menu import MenuItem
 from django.contrib.auth.models import Permission
+from django.templatetags.static import static
+from django.urls import include, re_path, reverse
+from wagtail import hooks
+from wagtail.admin.menu import MenuItem
 
 from . import admin_urls
-
-from wagtail import hooks
-from django.templatetags.static import static
 
 
 @hooks.register('register_admin_urls')

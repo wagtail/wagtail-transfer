@@ -4,28 +4,24 @@ from functools import lru_cache
 from urllib.parse import urlparse
 
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import (GenericForeignKey,
+                                                GenericRelation)
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models
 from django.db.models.fields.reverse_related import ManyToOneRel
+from django.utils.encoding import is_protected_type
 from django.utils.functional import cached_property
 from modelcluster.fields import ParentalKey
 from taggit.managers import TaggableManager
+from wagtail import hooks
+from wagtail.fields import RichTextField, StreamField
 
 from .files import File, FileTransferError, get_file_hash, get_file_size
 from .locators import get_locator_for_model
 from .models import get_base_model, get_base_model_for_path
 from .richtext import get_reference_handler
 from .streamfield import get_object_references, update_object_ids
-
-from django.contrib.contenttypes.fields import GenericRelation
-
-from django.utils.encoding import is_protected_type
-
-from wagtail import hooks
-from wagtail.fields import RichTextField, StreamField
-
 
 WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS = getattr(settings, "WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS", [('wagtailimages.image', 'tagged_items', True)])
 FOLLOWED_REVERSE_RELATIONS = {

@@ -2,13 +2,11 @@ from collections import OrderedDict
 
 from rest_framework.authentication import SessionAuthentication
 from wagtail.admin.navigation import get_explorable_root_page
+from wagtail.models import Page, UserPagePermissionsProxy
 
 from ..wagtail_api_v2.views import PagesAPIViewSet
 from .filters import ForExplorerFilter, HasChildrenFilter
 from .serializers import AdminPageSerializer
-
-
-from wagtail.models import Page, UserPagePermissionsProxy
 
 
 class PagesAdminAPIViewSet(PagesAPIViewSet):

@@ -1,12 +1,11 @@
 from functools import partial
 
 from django.core.exceptions import ValidationError
+from wagtail.blocks import (ChooserBlock, ListBlock, RichTextBlock,
+                            StreamBlock, StructBlock)
 
 from .models import get_base_model
 from .richtext import get_reference_handler
-
-from wagtail.blocks import (ChooserBlock, ListBlock, RichTextBlock, StreamBlock,
-                                StructBlock)
 
 
 def get_references_using_handler(block, stream, references):

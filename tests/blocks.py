@@ -1,6 +1,6 @@
-from wagtail.blocks import (
-    CharBlock, IntegerBlock, RichTextBlock, StreamBlock, StructBlock, ListBlock, PageChooserBlock
-)
+from wagtail.blocks import (CharBlock, IntegerBlock, ListBlock,
+                            PageChooserBlock, RichTextBlock, StreamBlock,
+                            StructBlock)
 
 
 class CaptionedPageLink(StructBlock):
