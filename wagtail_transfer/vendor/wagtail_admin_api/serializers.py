@@ -1,11 +1,10 @@
 from collections import OrderedDict
 
 from rest_framework.fields import Field, ReadOnlyField
+from wagtail.models import Page
 
 from ..wagtail_api_v2.serializers import PageSerializer, get_serializer_class
 from ..wagtail_api_v2.utils import get_full_url
-
-from wagtail.models import Page
 
 
 def get_model_listing_url(context, model):

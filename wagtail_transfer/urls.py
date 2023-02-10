@@ -1,5 +1,4 @@
 from django.urls import path, re_path
-
 from wagtail.utils.urlpatterns import decorate_urlpatterns
 
 from wagtail_transfer import views

@@ -1,9 +1,8 @@
 from urllib.parse import urlparse
 
 from django.conf import settings
-
-from wagtail.models import Page, Site
 from wagtail.coreutils import resolve_model_string
+from wagtail.models import Page, Site
 
 
 class BadRequestError(Exception):

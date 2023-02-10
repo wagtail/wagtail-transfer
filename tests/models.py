@@ -1,10 +1,11 @@
 from django.db import models
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from taggit.managers import TaggableManager
-from wagtail.snippets.models import register_snippet
-from .blocks import BaseStreamBlock
 from wagtail.fields import RichTextField, StreamField
 from wagtail.models import Orderable, Page
+from wagtail.snippets.models import register_snippet
+
+from .blocks import BaseStreamBlock
 
 
 class SimplePage(Page):
