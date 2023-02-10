@@ -1,8 +1,7 @@
 from rest_framework.filters import BaseFilterBackend
+from wagtail import hooks
 
 from ..wagtail_api_v2.utils import BadRequestError, parse_boolean
-
-from wagtail import hooks
 
 
 class HasChildrenFilter(BaseFilterBackend):
