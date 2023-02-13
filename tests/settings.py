@@ -146,3 +146,5 @@ WAGTAILTRANSFER_LOOKUP_FIELDS = {
 # 2.13.x (from 2.13.5 onward) and 2.14.x (from 2.14.2 onward) adopt the 2.15 behaviour, allowing us to
 # use the same test fixtures across all versions.
 WAGTAIL_COMMENTS_RELATION_NAME = 'wagtail_admin_comments'
+
+WAGTAILADMIN_BASE_URL = 'http://example.com'
