@@ -49,7 +49,7 @@ class SectionedPage(Page):
 
 
 class SectionedPageSection(Orderable):
-    page = ParentalKey(SectionedPage, related_name='sections')
+    page = ParentalKey(SectionedPage, related_name="sections")
     title = models.CharField(max_length=255)
     body = models.TextField()
 
@@ -71,12 +71,14 @@ class ModelWithManyToMany(models.Model):
 
 
 class Avatar(models.Model):
-    image = models.ImageField(upload_to='avatars')
+    image = models.ImageField(upload_to="avatars")
 
 
 class RedirectPage(Page):
-    redirect_to = models.ForeignKey(Page, blank=False, null=False, on_delete=models.PROTECT, related_name='+')
+    redirect_to = models.ForeignKey(
+        Page, blank=False, null=False, on_delete=models.PROTECT, related_name="+"
+    )
 
 
 class PageWithRelatedPages(Page):
-    related_pages = models.ManyToManyField(Page, related_name='+')
+    related_pages = models.ManyToManyField(Page, related_name="+")
