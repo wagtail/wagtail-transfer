@@ -23,7 +23,7 @@ UPDATE_RELATED_MODELS = [
 
 
 # Models which should NOT be created in response to being encountered in object references
-default_no_follow_models = ['wagtailcore.page']
+default_no_follow_models = ['wagtailcore.page', 'contenttypes.contenttype']
 
 NO_FOLLOW_MODELS = [
     model_label.lower()
