@@ -283,7 +283,7 @@ def import_model(request):
 
     messages.add_message(request, messages.SUCCESS, 'Snippet(s) successfully imported')
     app_label, model_name = model.split('.')
-    return redirect('wagtailsnippets:list', app_label, model_name)
+    return redirect(f'wagtailsnippets_{app_label}_{model_name}:list')
 
 
 @permission_required(
