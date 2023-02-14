@@ -63,6 +63,17 @@ import, then the UUID-based matching will consider them distinct, and attempt to
 destination. Adding an entry in WAGTAILTRANSFER_LOOKUP_FIELDS will mean that any imported instances of the given model 
 will be looked up based on the specified fields, rather than by UUID.
 
+The default value for `WAGTAILTRANSFER_LOOKUP_FIELDS` is:
+
+```python
+{
+    'taggit.tag': ['slug'],
+    'wagtailcore.locale': ["language_code"],
+    'contenttypes.contenttype': ['app_label', 'model'],
+}
+```
+
+Overriding these values may result in issues as described above, particularly in the case of `ContentType`.
 
 ### `WAGTAILTRANSFER_NO_FOLLOW_MODELS`
 
@@ -71,7 +82,7 @@ WAGTAILTRANSFER_NO_FOLLOW_MODELS = ['wagtailcore.page', 'organisations.Company']
 ```
 
 Specifies a list of models that should not be imported by association when they are referenced from imported content. 
-Defaults to `['wagtailcore.page']`.
+Defaults to `['wagtailcore.page', 'contenttypes.contenttype']`.
 
 By default, objects referenced within imported content will be recursively imported to ensure that those references are 
 still valid on the destination site. However, this is not always desirable - for example, if this happened for the Page 
