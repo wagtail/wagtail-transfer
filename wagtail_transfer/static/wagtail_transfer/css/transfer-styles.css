@@ -6,10 +6,6 @@
     height: 3em;
 }
 
-.transfer.button.button-secondary.bicolor:hover {
-    color: #fff;
-}
-
 .transfer.button.button-secondary.bicolor::before {
     background-color: #00676a;
     color: #fff;
@@ -96,4 +92,8 @@ li.transfer.numbered::before {
 
 .transfer.list-container {
     display: inline-block;
+}
+
+.transfer.button.close {
+    color: var(--w-color-black);
 }
