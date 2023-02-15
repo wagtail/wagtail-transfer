@@ -22,7 +22,7 @@ const PageChooserHeader = ({ onSearch, searchEnabled, searchTitle }) => (
               <div className="field char_field text_input field-small iconfield">
                 <label htmlFor="id_q">Search term:</label>
                 <div className="field-content">
-                  <div className="input icon-search ">
+                  <div>
                     <input
                       onChange={e => onSearch(e.target.value)}
                       placeholder="Search"
