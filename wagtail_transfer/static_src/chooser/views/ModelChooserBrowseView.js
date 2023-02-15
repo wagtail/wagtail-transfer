@@ -19,7 +19,7 @@ const defaultProps = {
 class ModelChooserBrowseView extends React.Component {
   renderBreadcrumb() {
     const { parentPage, onNavigate } = this.props;
-    let breadcrumbItems = null
+    let breadcrumbItems = null;
     if (parentPage) {
       const ancestorPages = parentPage.meta.ancestors;
 
@@ -67,7 +67,7 @@ class ModelChooserBrowseView extends React.Component {
       previousPage
     } = this.props;
 
-    if(resultType == "model") {
+    if (resultType == 'model') {
       // Model listing view
       return (
         <div className="nice-padding">
@@ -99,7 +99,7 @@ class ModelChooserBrowseView extends React.Component {
             previousPage={previousPage}
           />
         </div>
-      )
+      );
     }
   }
 }

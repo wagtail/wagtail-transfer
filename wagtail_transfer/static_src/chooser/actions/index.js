@@ -168,16 +168,16 @@ export function browseModels(modelPath, paginationPageNumber) {
     }
 
     return Promise.all([
-      query.getModelInstances(modelPath, paginationPageNumber),
+      query.getModelInstances(modelPath, paginationPageNumber)
     ])
       .then(([models, parentPage]) => {
-        let nextPage = null
-        let previousPage = null
-        if('next_page' in models.meta) {
-          nextPage = models.meta.next_page
+        let nextPage = null;
+        let previousPage = null;
+        if ('next_page' in models.meta) {
+          nextPage = models.meta.next_page;
         }
-        if('prev_page' in models.meta) {
-          previousPage = models.meta.prev_page
+        if ('prev_page' in models.meta) {
+          previousPage = models.meta.prev_page;
         }
         dispatch(setView('browse', { modelPath, nextPage, previousPage }));
         dispatch(fetchModelsSuccess(models, parentPage));
@@ -188,7 +188,6 @@ export function browseModels(modelPath, paginationPageNumber) {
   };
 }
 
-
 export function searchModels(modelPath, queryString, paginationPageNumber) {
   return (dispatch, getState) => {
     dispatch(fetchModelsStart());
@@ -196,10 +195,10 @@ export function searchModels(modelPath, queryString, paginationPageNumber) {
     const { api } = getState();
 
     let searchQuery = {
-      search: queryString,
-    }
-    if(modelPath) {
-      searchQuery['model'] = modelPath
+      search: queryString
+    };
+    if (modelPath) {
+      searchQuery['model'] = modelPath;
     }
     const query = api.query(searchQuery);
 
@@ -214,4 +213,3 @@ export function searchModels(modelPath, queryString, paginationPageNumber) {
       });
   };
 }
-

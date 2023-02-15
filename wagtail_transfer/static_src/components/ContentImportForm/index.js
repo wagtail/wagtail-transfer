@@ -72,7 +72,9 @@ export default function ImportContentForm({
   // A `sourceInstance` is the model the user wants to import.
   const [sourceInstance, setSourceInstance] = React.useState(null);
   // A `sourceInstanceObjectId` is a specific model object the user wants to import.
-  const [sourceInstanceObjectId, setSourceInstanceObjectId] = React.useState(null);
+  const [sourceInstanceObjectId, setSourceInstanceObjectId] = React.useState(
+    null
+  );
   // The number of pages (including child pages) that be imported when a
   // user selects a page to import.
   const [numPages, setNumPages] = React.useState(null);
@@ -97,7 +99,9 @@ export default function ImportContentForm({
       // There is a sourceInstance but no sourceInstanceObjectId
       const fetchTotalPages = async () => {
         const api = new ModelsAPI(source.page_chooser_api).query();
-        const response = await api.getModelInstances(sourceInstance.model_label);
+        const response = await api.getModelInstances(
+          sourceInstance.model_label
+        );
         setNumPages(response.meta.total_count);
       };
       fetchTotalPages();
@@ -111,7 +115,13 @@ export default function ImportContentForm({
   const onClickSubmit = () => {
     // The `onSubmit` function is found in static_src/index.js and is passed into
     // this class (ContentImportForm) as a JSX attribute.
-    onSubmit(source, sourcePage, destPage, sourceInstance, sourceInstanceObjectId);
+    onSubmit(
+      source,
+      sourcePage,
+      destPage,
+      sourceInstance,
+      sourceInstanceObjectId
+    );
   };
 
   React.useEffect(() => {
