@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addField('csrfmiddlewaretoken', csrfToken);
         addField('type', modelOrPage);
         addField('source', source.value);
-        if(modelOrPage === 'page') {
+        if (modelOrPage === 'page') {
           addField('source_page_id', sourcePage.id);
           addField('dest_page_id', destPage ? destPage.id : null);
         } else {

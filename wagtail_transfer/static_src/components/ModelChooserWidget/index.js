@@ -25,7 +25,9 @@ export default function ModelChooserWidget({
       <div className={classNames.join(' ')}>
         <div className="chosen">
           <div className="transfer title-wrapper">
-            <h3 className="transfer title">{value.object_name ? value.object_name : value.name}</h3>
+            <h3 className="transfer title">
+              {value.object_name ? value.object_name : value.name}
+            </h3>
             <h6 className="transfer subtitle">{chosenText}</h6>
           </div>
           <ul className="transfer actions">

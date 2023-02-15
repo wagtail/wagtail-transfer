@@ -28,7 +28,7 @@ class ModalWindow extends React.Component {
               <button
                 onClick={onModalClose}
                 type="button"
-                className="button close icon text-replace icon-cross"
+                className="transfer button close icon text-replace icon-cross"
                 data-dismiss="modal"
                 aria-hidden={true}
               >

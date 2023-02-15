@@ -33,7 +33,7 @@ function ModelChooserSearchView(props) {
     resultType
   } = props;
 
-  if(resultType == "model") {
+  if (resultType == 'model') {
     return (
       <div className="nice-padding">
         <h2>{renderTitle(totalItems)}</h2>
