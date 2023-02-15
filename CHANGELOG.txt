@@ -7,6 +7,8 @@ Unreleased
 
  * Dropped support for Python 3.6, and Wagtail 4.0 and below
  * Added provisional support for Wagtail 5.0 (Matt Westcott)
+ * Added UI fixes for Wagtail 4.2
+ * Added default settings for ContentType model (Joshua Munn)
 
 
 0.8.6 (13.02.2023)
