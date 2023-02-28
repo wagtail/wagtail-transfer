@@ -259,4 +259,27 @@
         "name": "Cars",
         "colour": "red"
     }
-}]
+},
+{
+    "model": "wagtaildocs.document",
+    "pk": 1,
+    "fields":
+    {
+	"collection": 1,
+	"title": "Test document",
+	"file": "documents/document.txt",
+	"created_at": "2023-02-28T15:41:44.991Z",
+	"uploaded_by_user": null,
+	"file_size": null,
+	"file_hash": ""
+    }
+},
+{
+    "pk": "ffffffff-ffff-ffff-ffff-ffffffffffff",
+    "model": "wagtail_transfer.idmapping",
+    "fields": {
+        "content_type": ["wagtaildocs", "document"],
+        "local_id": 1
+    }
+}
+]

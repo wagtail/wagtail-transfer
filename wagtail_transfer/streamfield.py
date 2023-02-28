@@ -163,11 +163,11 @@ class RichTextBlockHandler(BaseBlockHandler):
 class ChooserBlockHandler(BaseBlockHandler):
     def get_object_references(self, value):
         if value:
-            return {(get_base_model(self.block.target_model), value)}
+            return {(get_base_model(self.block.model_class), value)}
         return set()
 
     def update_ids(self, value, destination_ids_by_source):
-        value = destination_ids_by_source.get((get_base_model(self.block.target_model), value))
+        value = destination_ids_by_source.get((get_base_model(self.block.model_class), value))
         return value
 
 
