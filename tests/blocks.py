@@ -1,6 +1,7 @@
 from wagtail.blocks import (CharBlock, IntegerBlock, ListBlock,
                             PageChooserBlock, RichTextBlock, StreamBlock,
                             StructBlock)
+from wagtail.documents.blocks import DocumentChooserBlock
 
 
 class CaptionedPageLink(StructBlock):
@@ -24,3 +25,4 @@ class BaseStreamBlock(StreamBlock):
     rich_text = RichTextBlock()
     list_of_pages = ListBlock(PageChooserBlock())
     list_of_captioned_pages = ListBlock(CaptionedPageLink())
+    document = DocumentChooserBlock()
