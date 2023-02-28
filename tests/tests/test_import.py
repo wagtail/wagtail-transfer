@@ -723,6 +723,138 @@ class TestImport(TestCase):
 
         self.assertEqual(imported_streamfield, [{'type': 'list_of_captioned_pages', 'value': [{'type': 'item', 'value': {'page': 1, 'text': 'a caption'}, 'id': '8c0d7de7-4f77-4477-be67-7d990d0bfb82'}], 'id': '21ffe52a-c0fc-4ecc-92f1-17b356c9cc94'}])
 
+    @override_settings(WAGTAILTRANSFER_LOOKUP_FIELDS = {'tests.category': ['name'],'wagtailcore.page': ['url_path'],})
+    def test_import_pages_via_lookup(self):
+        # make a draft edit to the homepage
+        home = SimplePage.objects.get(slug='home')
+        home.title = "Draft home"
+        home.save_revision()
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 12],
+                ["wagtailcore.page", 15]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 12, "/home/"],
+                ["wagtailcore.page", 15, "/home/imported-child-page"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.simplepage",
+                    "pk": 15,
+                    "parent_id": 12,
+                    "fields": {
+                        "title": "Imported child page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "imported-child-page",
+                        "intro": "This page is imported from the source site",
+                        "wagtail_admin_comments": []
+                    }
+                },
+                {
+                    "model": "tests.simplepage",
+                    "pk": 12,
+                    "parent_id": 1,
+                    "fields": {
+                        "title": "New home",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "home",
+                        "intro": "This is the updated homepage",
+                        "wagtail_admin_comments": []
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=12, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+
+        updated_page = SimplePage.objects.get(url_path='/home/')
+        self.assertEqual(updated_page.intro, "This is the updated homepage")
+        self.assertEqual(updated_page.title, "New home")
+        self.assertEqual(updated_page.draft_title, "New home")
+
+        # get_latest_revision (as used in the edit-page view) should also reflect the imported content
+        updated_page_revision = updated_page.get_latest_revision_as_page()
+        self.assertEqual(updated_page_revision.intro, "This is the updated homepage")
+        self.assertEqual(updated_page_revision.title, "New home")
+
+        created_page = SimplePage.objects.get(url_path='/home/imported-child-page/')
+        self.assertEqual(created_page.intro, "This page is imported from the source site")
+        # An initial page revision should also be created
+        self.assertTrue(created_page.get_latest_revision())
+        created_page_revision = created_page.get_latest_revision_as_page()
+        self.assertEqual(created_page_revision.intro, "This page is imported from the source site")
+
+    @override_settings(WAGTAILTRANSFER_LOOKUP_FIELDS = {'tests.category': ['name'],'wagtailcore.page': ['slug', 'locale_id'],})
+    def test_import_pages_via_lookup_multiple(self):
+        # make a draft edit to the homepage
+        home = SimplePage.objects.get(slug='home')
+        home.title = "Draft home"
+        home.save_revision()
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 12],
+                ["wagtailcore.page", 15]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 12, ["home", 1]],
+                ["wagtailcore.page", 15, ["imported-child-page",1]]
+            ],
+            "objects": [
+                {
+                    "model": "tests.simplepage",
+                    "pk": 15,
+                    "parent_id": 12,
+                    "fields": {
+                        "title": "Imported child page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "imported-child-page",
+                        "intro": "This page is imported from the source site",
+                        "wagtail_admin_comments": []
+                    }
+                },
+                {
+                    "model": "tests.simplepage",
+                    "pk": 12,
+                    "parent_id": 1,
+                    "fields": {
+                        "title": "New home",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "home",
+                        "intro": "This is the updated homepage",
+                        "wagtail_admin_comments": []
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=12, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+
+        updated_page = SimplePage.objects.get(url_path='/home/')
+        self.assertEqual(updated_page.intro, "This is the updated homepage")
+        self.assertEqual(updated_page.title, "New home")
+        self.assertEqual(updated_page.draft_title, "New home")
+
+        # get_latest_revision (as used in the edit-page view) should also reflect the imported content
+        updated_page_revision = updated_page.get_latest_revision_as_page()
+        self.assertEqual(updated_page_revision.intro, "This is the updated homepage")
+        self.assertEqual(updated_page_revision.title, "New home")
+
+        created_page = SimplePage.objects.get(url_path='/home/imported-child-page/')
+        self.assertEqual(created_page.intro, "This page is imported from the source site")
+        # An initial page revision should also be created
+        self.assertTrue(created_page.get_latest_revision())
+        created_page_revision = created_page.get_latest_revision_as_page()
+        self.assertEqual(created_page_revision.intro, "This page is imported from the source site")
+
     @mock.patch('requests.get')
     def test_import_image_with_file(self, get):
         get.return_value.status_code = 200
