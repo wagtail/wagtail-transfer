@@ -18,6 +18,7 @@ class BaseStreamBlock(StreamBlock):
     """
     Define the custom blocks that `StreamField` will utilize
     """
+
     link_block = CaptionedPageLink()
     integer = IntegerBlock(required=True)
     page = PageChooserBlock()

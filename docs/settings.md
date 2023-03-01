@@ -137,7 +137,7 @@ For example, to register a custom field adapter against Django's `models.Field`:
 
 from django.db import models
 
-from wagtail.core import hooks
+from wagtail import hooks
 from wagtail_transfer.field_adapters import FieldAdapter
 
 
@@ -163,7 +163,7 @@ For example, to register a custom serializer against `myapp.MyModel`:
 # <my_app>/wagtail_hooks.py
 
 
-from wagtail.core import hooks
+from wagtail import hooks
 from wagtail_transfer.serializers import PageSerializer
 
 from myapp.models import MyModel
