@@ -2,6 +2,13 @@ Changelog
 =========
 
 
+0.9.1 (01.03.2023)
+~~~~~~~~~~~~~~~~~~
+
+ * Fix inability to import DocumentChooserBlocks (Joshua Munn, Jacob Topp-Mugglestone)
+ * More Wagtail 4.2 support tweaks (Nick Moreton)
+
+
 0.9.0 (17.02.2023)
 ~~~~~~~~~~~~~~~~~~
 
