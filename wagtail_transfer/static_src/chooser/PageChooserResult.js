@@ -99,7 +99,7 @@ class PageChooserResult extends React.Component {
           href={page.meta.html_url}
           target="_blank"
           rel="noopener noreferrer"
-          className="status-tag primary"
+          className="w-status w-status--primary"
         >
           {page.meta.status.status}
         </a>
