@@ -1,6 +1,11 @@
 Changelog
 =========
 
+Unreleased
+~~~~~~~~~~
+
+* Wagtail 5 update (https://github.com/wagtail/wagtail-transfer/pull/148)
+
 
 0.9.1 (01.03.2023)
 ~~~~~~~~~~~~~~~~~~
