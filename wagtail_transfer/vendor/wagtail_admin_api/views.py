@@ -102,6 +102,8 @@ class PagesForExplorerAdminAPIViewSet(PagesAdminAPIViewSet):
     ]
 
     def get_root_page(self):
+        if WAGTAIL_VERSION >= (5, 1):
+            return PagePermissionPolicy().explorable_root_instance(self.request.user)
         return get_explorable_root_page(self.request.user)
 
     def get_base_queryset(self, models=None):
