@@ -2,7 +2,7 @@ Changelog
 =========
 
 Unreleased
-~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
 
  * Dropped support for Python 3.7 (Nick Moreton, Katherine Domingo)
  * Wagtail 5.1 update (https://github.com/wagtail/wagtail-transfer/pull/150) (Nick Moreton)
