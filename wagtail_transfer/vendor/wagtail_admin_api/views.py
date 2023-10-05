@@ -1,8 +1,12 @@
 from collections import OrderedDict
 
 from rest_framework.authentication import SessionAuthentication
+from wagtail import VERSION as WAGTAIL_VERSION
 from wagtail.admin.navigation import get_explorable_root_page
 from wagtail.models import Page, UserPagePermissionsProxy
+
+if WAGTAIL_VERSION >= (5, 1):
+    from wagtail.permission_policies.pages import PagePermissionPolicy
 
 from ..wagtail_api_v2.views import PagesAPIViewSet
 from .filters import ForExplorerFilter, HasChildrenFilter
@@ -102,6 +106,12 @@ class PagesForExplorerAdminAPIViewSet(PagesAdminAPIViewSet):
 
     def get_base_queryset(self, models=None):
         queryset = super().get_base_queryset(models=models)
-        user_perms = UserPagePermissionsProxy(self.request.user)
-        queryset = queryset & user_perms.explorable_pages()
+
+        if WAGTAIL_VERSION >= (5, 1):
+            permission_policy = PagePermissionPolicy()
+            queryset = queryset & permission_policy.explorable_instances(self.request.user)
+        else:
+            user_perms = UserPagePermissionsProxy(self.request.user)
+            queryset = queryset & user_perms.explorable_pages()
+
         return queryset
