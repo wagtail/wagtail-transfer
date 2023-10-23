@@ -46,9 +46,12 @@ workflows:
     jobs:
       - build-and-test:
           wagtail-version: "wagtail>=4.1,<4.2"
-          python-version: "3.7"
+          python-version: "3.8"
       - build-and-test:
-          wagtail-version: "wagtail>=4.2,<4.3"
+          wagtail-version: "wagtail>=5.0,<5.1"
+          python-version: "3.11"
+      - build-and-test:
+          wagtail-version: "wagtail>=5.1,<5.2"
           python-version: "3.11"
   nightly:
     jobs:
