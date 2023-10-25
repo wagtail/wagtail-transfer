@@ -27,15 +27,17 @@ from .vendor.wagtail_admin_api.views import PagesAdminAPIViewSet
 
 
 def pages_for_export(request, root_page_id):
-    check_digest(str(root_page_id), request.GET.get('digest', ''))
+    check_digest(str(root_page_id), request.GET.get("digest", ""))
 
     root_page = get_object_or_404(Page, id=root_page_id)
 
-    pages = [root_page.specific] if request.GET.get('recursive', 'true') == 'false' else root_page.get_descendants(inclusive=True).specific()
+    pages = (
+        [root_page.specific]
+        if request.GET.get("recursive", "true") == "false"
+        else root_page.get_descendants(inclusive=True).specific()
+    )
 
-    ids_for_import = [
-        ['wagtailcore.page', page.pk] for page in pages
-    ]
+    ids_for_import = [["wagtailcore.page", page.pk] for page in pages]
 
     objects = []
     object_references = set()
@@ -48,20 +50,23 @@ def pages_for_export(request, root_page_id):
         serializer = serializer_registry.get_model_serializer(type(model))
         objects.append(serializer.serialize(model))
         object_references.update(serializer.get_object_references(model))
-        models_to_serialize.update(serializer.get_objects_to_serialize(model).difference(serialized_models))
+        models_to_serialize.update(
+            serializer.get_objects_to_serialize(model).difference(serialized_models)
+        )
 
     mappings = []
     for model, pk in object_references:
         uid = get_locator_for_model(model).get_uid_for_local_id(pk)
-        mappings.append(
-            [model._meta.label_lower, pk, uid]
-        )
+        mappings.append([model._meta.label_lower, pk, uid])
 
-    return JsonResponse({
-        'ids_for_import': ids_for_import,
-        'mappings': mappings,
-        'objects': objects,
-    }, json_dumps_params={'indent': 2})
+    return JsonResponse(
+        {
+            "ids_for_import": ids_for_import,
+            "mappings": mappings,
+            "objects": objects,
+        },
+        json_dumps_params={"indent": 2},
+    )
 
 
 def models_for_export(request, model_path, object_id=None):
@@ -70,10 +75,10 @@ def models_for_export(request, model_path, object_id=None):
 
     If an object_id is provided, search for a single model object.
     """
-    check_digest(str(model_path), request.GET.get('digest', ''))
+    check_digest(str(model_path), request.GET.get("digest", ""))
 
     # 1. Confirm whether or not th model_path leads to a real model.
-    app_label, model_name = model_path.split('.')
+    app_label, model_name = model_path.split(".")
     Model = ContentType.objects.get_by_natural_key(app_label, model_name).model_class()
 
     if object_id is None:
@@ -82,9 +87,7 @@ def models_for_export(request, model_path, object_id=None):
         model_objects = [Model.objects.get(pk=object_id)]
 
     # 2. If this was just a model and not a specific object, get all child IDs.
-    ids_for_import = [
-        [model_path, obj.pk] for obj in model_objects
-    ]
+    ids_for_import = [[model_path, obj.pk] for obj in model_objects]
 
     objects = []
     object_references = set()
@@ -97,20 +100,23 @@ def models_for_export(request, model_path, object_id=None):
         serializer = serializer_registry.get_model_serializer(type(model))
         objects.append(serializer.serialize(model))
         object_references.update(serializer.get_object_references(model))
-        models_to_serialize.update(serializer.get_objects_to_serialize(model).difference(serialized_models))
+        models_to_serialize.update(
+            serializer.get_objects_to_serialize(model).difference(serialized_models)
+        )
 
     mappings = []
     for model, pk in object_references:
         uid = get_locator_for_model(model).get_uid_for_local_id(pk)
-        mappings.append(
-            [model._meta.label_lower, pk, uid]
-        )
+        mappings.append([model._meta.label_lower, pk, uid])
 
-    return JsonResponse({
-        'ids_for_import': ids_for_import,
-        'mappings': mappings,
-        'objects': objects,
-    }, json_dumps_params={'indent': 2})
+    return JsonResponse(
+        {
+            "ids_for_import": ids_for_import,
+            "mappings": mappings,
+            "objects": objects,
+        },
+        json_dumps_params={"indent": 2},
+    )
 
 
 @csrf_exempt
@@ -125,9 +131,9 @@ def objects_for_export(request):
     and returns an API response with objects / mappings populated (but ids_for_import empty).
     """
 
-    check_digest(request.body, request.GET.get('digest', ''))
+    check_digest(request.body, request.GET.get("digest", ""))
 
-    request_data = json.loads(request.body.decode('utf-8'))
+    request_data = json.loads(request.body.decode("utf-8"))
 
     objects = []
     object_references = set()
@@ -144,28 +150,36 @@ def objects_for_export(request):
             serializer = serializer_registry.get_model_serializer(type(instance))
             objects.append(serializer.serialize(instance))
             object_references.update(serializer.get_object_references(instance))
-            models_to_serialize.update(serializer.get_objects_to_serialize(instance).difference(serialized_models))
+            models_to_serialize.update(
+                serializer.get_objects_to_serialize(instance).difference(
+                    serialized_models
+                )
+            )
 
     mappings = []
     for model, pk in object_references:
         uid = get_locator_for_model(model).get_uid_for_local_id(pk)
-        mappings.append(
-            [model._meta.label_lower, pk, uid]
-        )
+        mappings.append([model._meta.label_lower, pk, uid])
 
-    return JsonResponse({
-        'ids_for_import': [],
-        'mappings': mappings,
-        'objects': objects,
-    }, json_dumps_params={'indent': 2})
+    return JsonResponse(
+        {
+            "ids_for_import": [],
+            "mappings": mappings,
+            "objects": objects,
+        },
+        json_dumps_params={"indent": 2},
+    )
 
 
 class UIDField(ReadOnlyField):
     """
     Serializes UID for the Page Chooser API
     """
+
     def get_attribute(self, instance):
-        return get_locator_for_model(Page).get_uid_for_local_id(instance.id, create=False)
+        return get_locator_for_model(Page).get_uid_for_local_id(
+            instance.id, create=False
+        )
 
 
 class TransferPageChooserSerializer(AdminPageSerializer):
@@ -174,37 +188,39 @@ class TransferPageChooserSerializer(AdminPageSerializer):
 
 class PageChooserAPIViewSet(PagesAdminAPIViewSet):
     base_serializer_class = TransferPageChooserSerializer
-    meta_fields = PagesAdminAPIViewSet.meta_fields + [
-        'uid'
-    ]
-    listing_default_fields = PagesAdminAPIViewSet.listing_default_fields + [
-        'uid'
-    ]
+    meta_fields = PagesAdminAPIViewSet.meta_fields + ["uid"]
+    listing_default_fields = PagesAdminAPIViewSet.listing_default_fields + ["uid"]
 
 
 @permission_required(
     "wagtail_transfer.wagtailtransfer_can_import", login_url="wagtailadmin_login"
 )
 def chooser_api_proxy(request, source_name, path):
-    source_config = getattr(settings, 'WAGTAILTRANSFER_SOURCES', {}).get(source_name)
+    source_config = getattr(settings, "WAGTAILTRANSFER_SOURCES", {}).get(source_name)
 
-    api_proxy_timeout_seconds = getattr(settings, 'WAGTAILTRANSFER_CHOOSER_API_PROXY_TIMEOUT', 5)
+    api_proxy_timeout_seconds = getattr(
+        settings, "WAGTAILTRANSFER_CHOOSER_API_PROXY_TIMEOUT", 5
+    )
 
     if source_config is None:
         raise Http404("Source does not exist")
 
-    default_chooser_endpoint = 'pages'
-    if 'models' in request.GET:
-        default_chooser_endpoint = 'models'
+    default_chooser_endpoint = "pages"
+    if "models" in request.GET:
+        default_chooser_endpoint = "models"
 
-    base_url = source_config['BASE_URL'] + f'api/chooser/{default_chooser_endpoint}/'
+    base_url = source_config["BASE_URL"] + f"api/chooser/{default_chooser_endpoint}/"
 
     message = request.GET.urlencode()
     digest = digest_for_source(source_name, message)
 
-    response = requests.get(f"{base_url}{path}?{message}&digest={digest}", headers={
-        'Accept': request.META['HTTP_ACCEPT'],
-    }, timeout=api_proxy_timeout_seconds)
+    response = requests.get(
+        f"{base_url}{path}?{message}&digest={digest}",
+        headers={
+            "Accept": request.META["HTTP_ACCEPT"],
+        },
+        timeout=api_proxy_timeout_seconds,
+    )
 
     return HttpResponse(response.content, status=response.status_code)
 
@@ -213,20 +229,31 @@ def chooser_api_proxy(request, source_name, path):
     "wagtail_transfer.wagtailtransfer_can_import", login_url="wagtailadmin_login"
 )
 def choose_page(request):
-    return render(request, 'wagtail_transfer/choose_page.html', {
-        'sources_data': json.dumps([
-            {
-                'value': source_name,
-                'label': source_name,
-                'page_chooser_api': reverse('wagtail_transfer_admin:chooser_api_proxy', args=[source_name, ''])
-            }
-            for source_name in getattr(settings, 'WAGTAILTRANSFER_SOURCES', {}).keys()
-        ]),
-    })
+    return render(
+        request,
+        "wagtail_transfer/choose_page.html",
+        {
+            "sources_data": json.dumps(
+                [
+                    {
+                        "value": source_name,
+                        "label": source_name,
+                        "page_chooser_api": reverse(
+                            "wagtail_transfer_admin:chooser_api_proxy",
+                            args=[source_name, ""],
+                        ),
+                    }
+                    for source_name in getattr(
+                        settings, "WAGTAILTRANSFER_SOURCES", {}
+                    ).keys()
+                ]
+            ),
+        },
+    )
 
 
 def import_missing_object_data(source, importer: ImportPlanner):
-    base_url = settings.WAGTAILTRANSFER_SOURCES[source]['BASE_URL']
+    base_url = settings.WAGTAILTRANSFER_SOURCES[source]["BASE_URL"]
     while importer.missing_object_data:
         # convert missing_object_data from a set of (model_class, id) tuples
         # into a dict of {model_class_label: [list_of_ids]}
@@ -234,15 +261,17 @@ def import_missing_object_data(source, importer: ImportPlanner):
         for model_class, source_id in importer.missing_object_data:
             missing_object_data_by_type[model_class].append(source_id)
 
-        request_data = json.dumps({
-            model_class._meta.label_lower: ids
-            for model_class, ids in missing_object_data_by_type.items()
-        })
+        request_data = json.dumps(
+            {
+                model_class._meta.label_lower: ids
+                for model_class, ids in missing_object_data_by_type.items()
+            }
+        )
         digest = digest_for_source(source, request_data)
 
         # request the missing object data and add to the import plan
         response = requests.post(
-            f"{base_url}api/objects/", params={'digest': digest}, data=request_data
+            f"{base_url}api/objects/", params={"digest": digest}, data=request_data
         )
         importer.add_json(response.content)
     importer.run()
@@ -250,27 +279,32 @@ def import_missing_object_data(source, importer: ImportPlanner):
 
 
 def import_page(request):
-    source = request.POST['source']
-    base_url = settings.WAGTAILTRANSFER_SOURCES[source]['BASE_URL']
-    digest = digest_for_source(source, str(request.POST['source_page_id']))
+    source = request.POST["source"]
+    base_url = settings.WAGTAILTRANSFER_SOURCES[source]["BASE_URL"]
+    digest = digest_for_source(source, str(request.POST["source_page_id"]))
 
-    response = requests.get(f"{base_url}api/pages/{request.POST['source_page_id']}/", params={'digest': digest})
+    response = requests.get(
+        f"{base_url}api/pages/{request.POST['source_page_id']}/",
+        params={"digest": digest},
+    )
 
-    dest_page_id = request.POST['dest_page_id'] or None
-    importer = ImportPlanner.for_page(source=request.POST['source_page_id'], destination=dest_page_id)
+    dest_page_id = request.POST["dest_page_id"] or None
+    importer = ImportPlanner.for_page(
+        source=request.POST["source_page_id"], destination=dest_page_id
+    )
     importer.add_json(response.content)
     importer = import_missing_object_data(source, importer)
 
     if dest_page_id:
-        return redirect('wagtailadmin_explore', dest_page_id)
+        return redirect("wagtailadmin_explore", dest_page_id)
     else:
-        return redirect('wagtailadmin_explore_root')
+        return redirect("wagtailadmin_explore_root")
 
 
 def import_model(request):
-    source = request.POST['source']
-    model = request.POST['source_model']
-    base_url = settings.WAGTAILTRANSFER_SOURCES[source]['BASE_URL']
+    source = request.POST["source"]
+    model = request.POST["source_model"]
+    base_url = settings.WAGTAILTRANSFER_SOURCES[source]["BASE_URL"]
     digest = digest_for_source(source, model)
 
     url = f"{base_url}api/models/{model}/"
@@ -278,14 +312,14 @@ def import_model(request):
         source_model_object_id = request.POST.get("source_model_object_id")
         url = f"{url}{source_model_object_id}/"
 
-    response = requests.get(url, params={'digest': digest})
+    response = requests.get(url, params={"digest": digest})
     importer = ImportPlanner.for_model(model=model)
     importer.add_json(response.content)
     importer = import_missing_object_data(source, importer)
 
-    messages.add_message(request, messages.SUCCESS, 'Snippet(s) successfully imported')
-    app_label, model_name = model.split('.')
-    return redirect(f'wagtailsnippets_{app_label}_{model_name}:list')
+    messages.add_message(request, messages.SUCCESS, "Snippet(s) successfully imported")
+    app_label, model_name = model.split(".")
+    return redirect(f"wagtailsnippets_{app_label}_{model_name}:list")
 
 
 @permission_required(
@@ -293,10 +327,10 @@ def import_model(request):
 )
 @require_POST
 def do_import(request):
-    post_type = request.POST.get('type', 'page')
-    if post_type == 'page':
+    post_type = request.POST.get("type", "page")
+    if post_type == "page":
         return import_page(request)
-    elif post_type == 'model':
+    elif post_type == "model":
         return import_model(request)
 
 
@@ -305,8 +339,8 @@ def check_page_existence_for_uid(request):
     Check whether a page with the specified UID exists - used for checking whether a page has already been imported
     to the destination site
     """
-    uid = request.GET.get('uid', '')
+    uid = request.GET.get("uid", "")
     locator = get_locator_for_model(Page)
     page_exists = bool(locator.find(uid))
     result = status.HTTP_200_OK if page_exists else status.HTTP_404_NOT_FOUND
-    return HttpResponse('', status=result)
+    return HttpResponse("", status=result)

@@ -23,16 +23,22 @@ from .richtext import get_reference_handler
 from .streamfield import get_object_references, update_object_ids
 
 
-WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS = getattr(settings, "WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS", [('wagtailimages.image', 'tagged_items', True)])
+WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS = getattr(
+    settings,
+    "WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS",
+    [("wagtailimages.image", "tagged_items", True)],
+)
 FOLLOWED_REVERSE_RELATIONS = {
-    (model_label.lower(), relation.lower()) for model_label, relation, _ in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS
+    (model_label.lower(), relation.lower())
+    for model_label, relation, _ in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS
 }
 DELETED_REVERSE_RELATIONS = {
-    (model_label.lower(), relation.lower()) for model_label, relation, track_deletions in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS if track_deletions
+    (model_label.lower(), relation.lower())
+    for model_label, relation, track_deletions in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS
+    if track_deletions
 }
 ADMIN_BASE_URL = getattr(
-    settings, "WAGTAILADMIN_BASE_URL",
-    getattr(settings, "BASE_URL", None)
+    settings, "WAGTAILADMIN_BASE_URL", getattr(settings, "BASE_URL", None)
 )
 
 
@@ -114,7 +120,6 @@ class FieldAdapter:
         return set()
 
 
-
 class ForeignKeyAdapter(FieldAdapter):
     def __init__(self, field):
         super().__init__(field)
@@ -186,10 +191,18 @@ class GenericForeignKeyAdapter(FieldAdapter):
     def populate_field(self, instance, value, context):
         model_id, content_type = None, None
         if value:
-            model_path, model_id = self.update_object_references(value, context.destination_ids_by_source)
-            content_type = ContentType.objects.get_by_natural_key(*model_path.split('.'))
+            model_path, model_id = self.update_object_references(
+                value, context.destination_ids_by_source
+            )
+            content_type = ContentType.objects.get_by_natural_key(
+                *model_path.split(".")
+            )
 
-        setattr(instance, instance._meta.get_field(self.field.ct_field).get_attname(), content_type.pk)
+        setattr(
+            instance,
+            instance._meta.get_field(self.field.ct_field).get_attname(),
+            content_type.pk,
+        )
         setattr(instance, self.field.fk_field, model_id)
 
     def get_managed_fields(self):
@@ -199,29 +212,42 @@ class GenericForeignKeyAdapter(FieldAdapter):
 class ManyToOneRelAdapter(FieldAdapter):
     def __init__(self, field):
         super().__init__(field)
-        self.related_field = getattr(field, 'field', None) or getattr(field, 'remote_field', None)
+        self.related_field = getattr(field, "field", None) or getattr(
+            field, "remote_field", None
+        )
         self.related_base_model = get_base_model(field.related_model)
         self.is_parental = isinstance(self.related_field, ParentalKey)
-        self.is_followed = (get_base_model(self.field.model)._meta.label_lower, self.name) in FOLLOWED_REVERSE_RELATIONS
+        self.is_followed = (
+            get_base_model(self.field.model)._meta.label_lower,
+            self.name,
+        ) in FOLLOWED_REVERSE_RELATIONS
 
     def _get_related_objects(self, instance):
         return getattr(instance, self.name).all()
 
     def serialize(self, instance):
         if self.is_parental or self.is_followed:
-            return list(self._get_related_objects(instance).values_list('pk', flat=True))
+            return list(
+                self._get_related_objects(instance).values_list("pk", flat=True)
+            )
 
     def get_object_references(self, instance):
         refs = set()
         if self.is_parental or self.is_followed:
-            for pk in self._get_related_objects(instance).values_list('pk', flat=True):
+            for pk in self._get_related_objects(instance).values_list("pk", flat=True):
                 refs.add((self.related_base_model, pk))
         return refs
 
     def get_object_deletions(self, instance, value, context):
-        if (self.is_parental or (get_base_model(self.field.model)._meta.label_lower, self.name) in DELETED_REVERSE_RELATIONS):
+        if (
+            self.is_parental
+            or (get_base_model(self.field.model)._meta.label_lower, self.name)
+            in DELETED_REVERSE_RELATIONS
+        ):
             value = value or []
-            uids = {context.uids_by_source[(self.related_base_model, pk)] for pk in value}
+            uids = {
+                context.uids_by_source[(self.related_base_model, pk)] for pk in value
+            }
             # delete any related objects on the existing object if they can't be mapped back
             # to one of the uids in the new set
             locator = get_locator_for_model(self.related_base_model)
@@ -231,7 +257,11 @@ class ManyToOneRelAdapter(FieldAdapter):
                 if child is not None:
                     matched_destination_ids.add(child.pk)
 
-            return {child for child in self._get_related_objects(instance) if child.pk not in matched_destination_ids}
+            return {
+                child
+                for child in self._get_related_objects(instance)
+                if child.pk not in matched_destination_ids
+            }
         return set()
 
     def get_objects_to_serialize(self, instance):
@@ -245,7 +275,9 @@ class ManyToOneRelAdapter(FieldAdapter):
 
 class RichTextAdapter(FieldAdapter):
     def get_object_references(self, instance):
-        return get_reference_handler().get_objects(self.field.value_from_object(instance))
+        return get_reference_handler().get_objects(
+            self.field.value_from_object(instance)
+        )
 
     def get_dependencies(self, value):
         return {
@@ -264,7 +296,9 @@ class StreamFieldAdapter(FieldAdapter):
 
     def get_object_references(self, instance):
         # get the list of dicts representation of the streamfield json
-        stream = self.stream_block.get_prep_value(self.field.value_from_object(instance))
+        stream = self.stream_block.get_prep_value(
+            self.field.value_from_object(instance)
+        )
         return get_object_references(self.stream_block, stream)
 
     def get_dependencies(self, value):
@@ -274,7 +308,11 @@ class StreamFieldAdapter(FieldAdapter):
         }
 
     def update_object_references(self, value, destination_ids_by_source):
-        return json.dumps(update_object_ids(self.stream_block, json.loads(value), destination_ids_by_source))
+        return json.dumps(
+            update_object_ids(
+                self.stream_block, json.loads(value), destination_ids_by_source
+            )
+        )
 
 
 class FileAdapter(FieldAdapter):
@@ -283,39 +321,40 @@ class FileAdapter(FieldAdapter):
         if not value:
             return None
         url = value.url
-        if url.startswith('/'):
+        if url.startswith("/"):
             # Using a relative media url. ie. /media/
             # Prepend the BASE_URL to turn this into an absolute URL
             if ADMIN_BASE_URL is None:
                 raise ImproperlyConfigured(
                     "A WAGTAILADMIN_BASE_URL or BASE_URL setting must be provided when importing files"
                 )
-            url = ADMIN_BASE_URL.rstrip('/') + url
+            url = ADMIN_BASE_URL.rstrip("/") + url
         return {
-            'download_url': url,
-            'size': get_file_size(self.field, instance),
-            'hash': get_file_hash(self.field, instance),
+            "download_url": url,
+            "size": get_file_size(self.field, instance),
+            "hash": get_file_hash(self.field, instance),
         }
 
     def populate_field(self, instance, value, context):
         if not value:
             return None
-        imported_file = context.imported_files_by_source_url.get(value['download_url'])
+        imported_file = context.imported_files_by_source_url.get(value["download_url"])
         if imported_file is None:
-
             existing_file = self.field.value_from_object(instance)
 
             if existing_file:
                 existing_file_hash = get_file_hash(self.field, instance)
-                if existing_file_hash == value['hash']:
+                if existing_file_hash == value["hash"]:
                     # File not changed, so don't bother updating it
                     return
 
             # Get the local filename
-            name = pathlib.PurePosixPath(urlparse(value['download_url']).path).name
+            name = pathlib.PurePosixPath(urlparse(value["download_url"]).path).name
             local_filename = self.field.generate_filename(instance, name)
 
-            _file = File(local_filename, value['size'], value['hash'], value['download_url'])
+            _file = File(
+                local_filename, value["size"], value["hash"], value["download_url"]
+            )
             try:
                 imported_file = _file.transfer()
             except FileTransferError:
@@ -383,7 +422,7 @@ class AdapterRegistry:
     def _scan_for_adapters(self):
         adapters = dict(self.BASE_ADAPTERS_BY_FIELD_CLASS)
 
-        for fn in hooks.get_hooks('register_field_adapters'):
+        for fn in hooks.get_hooks("register_field_adapters"):
             adapters.update(fn())
 
         self.adapters_by_field_class = adapters

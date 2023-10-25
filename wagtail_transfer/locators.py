@@ -21,11 +21,13 @@ UUID_SEQUENCE = 0
 # dict of models that should be located by field values using FieldLocator,
 # rather than by UUID mapping
 LOOKUP_FIELDS = {
-    'taggit.tag': ['slug'],  # sensible default for taggit; can still be overridden 
-    'wagtailcore.locale': ["language_code"],
-    'contenttypes.contenttype': ['app_label', 'model'],
+    "taggit.tag": ["slug"],  # sensible default for taggit; can still be overridden
+    "wagtailcore.locale": ["language_code"],
+    "contenttypes.contenttype": ["app_label", "model"],
 }
-for model_label, fields in getattr(settings, 'WAGTAILTRANSFER_LOOKUP_FIELDS', {}).items():
+for model_label, fields in getattr(
+    settings, "WAGTAILTRANSFER_LOOKUP_FIELDS", {}
+).items():
     LOOKUP_FIELDS[model_label.lower()] = fields
 
 
@@ -61,7 +63,7 @@ class IDMappingLocator:
             id_mapping, created = IDMapping.objects.get_or_create(
                 content_type=self.content_type,
                 local_id=id,
-                defaults={'uid': uuid.uuid1(clock_seq=UUID_SEQUENCE)}
+                defaults={"uid": uuid.uuid1(clock_seq=UUID_SEQUENCE)},
             )
             UUID_SEQUENCE += 1
 
@@ -70,8 +72,7 @@ class IDMappingLocator:
             """Get UID for the instance with the given ID (returning None if one doesn't exist)"""
             try:
                 id_mapping = IDMapping.objects.get(
-                    content_type=self.content_type,
-                    local_id=id
+                    content_type=self.content_type, local_id=id
                 )
                 return id_mapping.uid
             except IDMapping.DoesNotExist:
@@ -90,7 +91,8 @@ class IDMappingLocator:
         # use update_or_create to account for the possibility of an existing IDMapping for the same
         # UID, left over from the object being previously imported and then deleted
         IDMapping.objects.update_or_create(
-            uid=uid, defaults={'content_type': self.content_type, 'local_id': instance.pk}
+            uid=uid,
+            defaults={"content_type": self.content_type, "local_id": instance.pk},
         )
 
     def uid_from_json(self, json_uid):

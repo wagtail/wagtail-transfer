@@ -7,10 +7,10 @@ class IDMapping(models.Model):
     uid = models.UUIDField(primary_key=True)
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     local_id = models.CharField(max_length=255)
-    content_object = GenericForeignKey('content_type', 'local_id')
+    content_object = GenericForeignKey("content_type", "local_id")
 
     class Meta:
-        unique_together = ['content_type', 'local_id']
+        unique_together = ["content_type", "local_id"]
 
 
 class ImportedFile(models.Model):
@@ -35,7 +35,7 @@ def get_model_for_path(model_path):
     """
     Given an 'app_name.model_name' string, return the model class
     """
-    app_label, model_name = model_path.split('.')
+    app_label, model_name = model_path.split(".")
     return ContentType.objects.get_by_natural_key(app_label, model_name).model_class()
 
 

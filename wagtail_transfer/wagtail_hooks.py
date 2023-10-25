@@ -7,10 +7,13 @@ from wagtail.admin.menu import MenuItem
 from . import admin_urls
 
 
-@hooks.register('register_admin_urls')
+@hooks.register("register_admin_urls")
 def register_admin_urls():
     return [
-        re_path(r'^wagtail-transfer/', include(admin_urls, namespace='wagtail_transfer_admin')),
+        re_path(
+            r"^wagtail-transfer/",
+            include(admin_urls, namespace="wagtail_transfer_admin"),
+        ),
     ]
 
 
@@ -24,9 +27,14 @@ class WagtailTransferMenuItem(MenuItem):
         )
 
 
-@hooks.register('register_admin_menu_item')
+@hooks.register("register_admin_menu_item")
 def register_admin_menu_item():
-    return WagtailTransferMenuItem('Import', reverse('wagtail_transfer_admin:choose_page'), classnames='icon icon-doc-empty-inverse', order=10000)
+    return WagtailTransferMenuItem(
+        "Import",
+        reverse("wagtail_transfer_admin:choose_page"),
+        classnames="icon icon-doc-empty-inverse",
+        order=10000,
+    )
 
 
 @hooks.register("register_permissions")

@@ -59,7 +59,9 @@ class PageWithRichText(Page):
 
 
 class PageWithStreamField(Page):
-    body = StreamField(BaseStreamBlock(), verbose_name="Page body", blank=True, use_json_field=True)
+    body = StreamField(
+        BaseStreamBlock(), verbose_name="Page body", blank=True, use_json_field=True
+    )
 
 
 class PageWithParentalManyToMany(Page):

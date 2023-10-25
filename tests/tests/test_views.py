@@ -15,24 +15,24 @@ from wagtail_transfer.models import IDMapping
 
 
 class TestChooseView(TestCase):
-    fixtures = ['test.json']
+    fixtures = ["test.json"]
 
     def setUp(self):
-        self.client.login(username='admin', password='password')
+        self.client.login(username="admin", password="password")
 
     def test_get(self):
-        response = self.client.get('/admin/wagtail-transfer/choose/')
+        response = self.client.get("/admin/wagtail-transfer/choose/")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'data-wagtail-component="content-import-form"')
 
 
-@mock.patch('requests.post')
-@mock.patch('requests.get')
+@mock.patch("requests.post")
+@mock.patch("requests.get")
 class TestImportView(TestCase):
-    fixtures = ['test.json']
+    fixtures = ["test.json"]
 
     def setUp(self):
-        self.client.login(username='admin', password='password')
+        self.client.login(username="admin", password="password")
 
     def test_run(self, get, post):
         get.return_value.status_code = 200
@@ -126,38 +126,51 @@ class TestImportView(TestCase):
             ]
         }"""
 
-        response = self.client.post('/admin/wagtail-transfer/import/', {
-            'source': 'staging',
-            'source_page_id': '12',
-            'dest_page_id': '2',
-        })
-        self.assertRedirects(response, '/admin/pages/2/')
+        response = self.client.post(
+            "/admin/wagtail-transfer/import/",
+            {
+                "source": "staging",
+                "source_page_id": "12",
+                "dest_page_id": "2",
+            },
+        )
+        self.assertRedirects(response, "/admin/pages/2/")
 
         # Pages API should be called once, with 12 as the root page
         get.assert_called_once()
         args, kwargs = get.call_args
-        self.assertEqual(args[0], 'https://www.example.com/wagtail-transfer/api/pages/12/')
-        self.assertIn('digest', kwargs['params'])
+        self.assertEqual(
+            args[0], "https://www.example.com/wagtail-transfer/api/pages/12/"
+        )
+        self.assertIn("digest", kwargs["params"])
 
         # then the Objects API should be called, requesting adverts with ID 11 and 8
         post.assert_called_once()
         args, kwargs = post.call_args
-        self.assertEqual(args[0], 'https://www.example.com/wagtail-transfer/api/objects/')
-        self.assertIn('digest', kwargs['params'])
-        requested_ids = json.loads(kwargs['data'])['tests.advert']
+        self.assertEqual(
+            args[0], "https://www.example.com/wagtail-transfer/api/objects/"
+        )
+        self.assertIn("digest", kwargs["params"])
+        requested_ids = json.loads(kwargs["data"])["tests.advert"]
         self.assertEqual(set(requested_ids), {8, 11})
 
         # Check import results
-        updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
+        updated_page = SponsoredPage.objects.get(url_path="/home/oil-is-still-great/")
         self.assertEqual(updated_page.intro, "yay fossil fuels and climate change")
         self.assertEqual(updated_page.advert.slogan, "put a leopard in your tank")
-        self.assertEqual(updated_page.advert.run_until, datetime(2020, 12, 23, 1, 23, 45, tzinfo=timezone.utc))
+        self.assertEqual(
+            updated_page.advert.run_until,
+            datetime(2020, 12, 23, 1, 23, 45, tzinfo=timezone.utc),
+        )
         self.assertEqual(updated_page.advert.run_from, date(2020, 1, 21))
 
-        created_page = SponsoredPage.objects.get(url_path='/home/eggs-are-great-too/')
+        created_page = SponsoredPage.objects.get(url_path="/home/eggs-are-great-too/")
         self.assertEqual(created_page.intro, "you can make cakes with them")
         self.assertEqual(created_page.advert.slogan, "go to work on an egg")
-        self.assertEqual(created_page.advert.run_until, datetime(2020, 1, 23, 1, 23, 45, tzinfo=timezone.utc))
+        self.assertEqual(
+            created_page.advert.run_until,
+            datetime(2020, 1, 23, 1, 23, 45, tzinfo=timezone.utc),
+        )
         self.assertEqual(created_page.advert.run_from, None)
 
     def test_missing_related_object(self, get, post):
@@ -247,53 +260,65 @@ class TestImportView(TestCase):
             ]
         }"""
 
-        response = self.client.post('/admin/wagtail-transfer/import/', {
-            'source': 'staging',
-            'source_page_id': '12',
-            'dest_page_id': '2',
-        })
-        self.assertRedirects(response, '/admin/pages/2/')
+        response = self.client.post(
+            "/admin/wagtail-transfer/import/",
+            {
+                "source": "staging",
+                "source_page_id": "12",
+                "dest_page_id": "2",
+            },
+        )
+        self.assertRedirects(response, "/admin/pages/2/")
 
         # Pages API should be called once, with 12 as the root page
         get.assert_called_once()
         args, kwargs = get.call_args
-        self.assertEqual(args[0], 'https://www.example.com/wagtail-transfer/api/pages/12/')
-        self.assertIn('digest', kwargs['params'])
+        self.assertEqual(
+            args[0], "https://www.example.com/wagtail-transfer/api/pages/12/"
+        )
+        self.assertIn("digest", kwargs["params"])
 
         # then the Objects API should be called, requesting adverts with ID 11 and 8
         post.assert_called_once()
         args, kwargs = post.call_args
-        self.assertEqual(args[0], 'https://www.example.com/wagtail-transfer/api/objects/')
-        self.assertIn('digest', kwargs['params'])
-        requested_ids = json.loads(kwargs['data'])['tests.advert']
+        self.assertEqual(
+            args[0], "https://www.example.com/wagtail-transfer/api/objects/"
+        )
+        self.assertIn("digest", kwargs["params"])
+        requested_ids = json.loads(kwargs["data"])["tests.advert"]
         self.assertEqual(set(requested_ids), {8, 11})
 
         # Check import results
-        updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
+        updated_page = SponsoredPage.objects.get(url_path="/home/oil-is-still-great/")
         self.assertEqual(updated_page.intro, "yay fossil fuels and climate change")
         self.assertEqual(updated_page.advert.slogan, "put a leopard in your tank")
-        self.assertEqual(updated_page.advert.run_until, datetime(2020, 12, 23, 1, 23, 45, tzinfo=timezone.utc))
+        self.assertEqual(
+            updated_page.advert.run_until,
+            datetime(2020, 12, 23, 1, 23, 45, tzinfo=timezone.utc),
+        )
         self.assertEqual(updated_page.advert.run_from, None)
 
         # The egg advert was missing in the object-api response, and the FK on SponsoredPage is
         # nullable, so it should create the egg page without the advert
-        created_page = SponsoredPage.objects.get(url_path='/home/eggs-are-great-too/')
+        created_page = SponsoredPage.objects.get(url_path="/home/eggs-are-great-too/")
         self.assertEqual(created_page.intro, "you can make cakes with them")
         self.assertEqual(created_page.advert, None)
 
     def test_list_snippet_models(self, get, post):
         # Test the model chooser view.
         get_params = "models=True"
-        digest = digest_for_source('local', get_params)
-        response = self.client.get(f"https://www.example.com/wagtail-transfer/api/chooser/models/?{get_params}&digest={digest}")
+        digest = digest_for_source("local", get_params)
+        response = self.client.get(
+            f"https://www.example.com/wagtail-transfer/api/chooser/models/?{get_params}&digest={digest}"
+        )
         self.assertEqual(response.status_code, 200)
 
         content = json.loads(response.content.decode("utf-8"))
-        self.assertEqual(content['meta']['total_count'], 1)
+        self.assertEqual(content["meta"]["total_count"], 1)
 
-        snippet = content['items'][0]
-        self.assertEqual(snippet['model_label'], 'tests.category')
-        self.assertEqual(snippet['name'], 'Category')
+        snippet = content["items"][0]
+        self.assertEqual(snippet["model_label"], "tests.category")
+        self.assertEqual(snippet["name"], "Category")
 
 
 class ImportPermissionsTests(TestCase):
@@ -302,11 +327,13 @@ class ImportPermissionsTests(TestCase):
     def setUp(self):
         idmapping_content_type = ContentType.objects.get_for_model(IDMapping)
         can_import_permission = Permission.objects.get(
-            content_type=idmapping_content_type, codename="wagtailtransfer_can_import",
+            content_type=idmapping_content_type,
+            codename="wagtailtransfer_can_import",
         )
         can_access_admin_permission = Permission.objects.get(
             content_type=ContentType.objects.get(
-                app_label="wagtailadmin", model="admin",
+                app_label="wagtailadmin",
+                model="admin",
             ),
             codename="access_admin",
         )
@@ -318,7 +345,9 @@ class ImportPermissionsTests(TestCase):
         editors = Group.objects.get(name="Editors")
 
         self.superuser = User.objects.create_superuser(
-            username="superuser", email="superuser@example.com", password="password",
+            username="superuser",
+            email="superuser@example.com",
+            password="password",
         )
         self.inactive_superuser = User.objects.create_superuser(
             username="inactivesuperuser",
@@ -379,7 +408,6 @@ class ImportPermissionsTests(TestCase):
         ]
 
     def _test_view(self, method, url, data=None, success_url=None):
-
         for user in self.permitted_users:
             with self.subTest(user=user):
                 self.client.login(username=user.username, password="password")
