@@ -8,6 +8,7 @@ from django.db import models, transaction
 from django.utils.functional import cached_property
 from modelcluster.models import ClusterableModel, get_all_child_relations
 from treebeard.mp_tree import MP_Node
+from wagtail.images import get_image_model
 from wagtail.models import Page
 
 from .field_adapters import adapter_registry
@@ -198,7 +199,7 @@ class ImportPlanner:
     def add_json(self, json_data):
         """
         Add JSON data to the import plan. The data is a dict consisting of:
-        'ids_for_import': a list of [source_id, model_classname] pairs for the set of objects
+        'ids_for_import': a list of [model_classname, source_id] pairs for the set of objects
             explicitly requested to be imported. (For example, in a page import, this is the set of
             descendant pages of the selected root page.)
         'mappings': a list of mappings between UIDs and the object IDs that exist on the source
@@ -383,7 +384,10 @@ class ImportPlanner:
             else:  # action == 'update'
                 destination_id = self.context.destination_ids_by_source[(model, source_id)]
                 obj = specific_model.objects.get(pk=destination_id)
-                operation = UpdateModel(obj, object_data)
+                if specific_model is get_image_model():
+                    operation = UpdateImage(obj, object_data)
+                else:
+                    operation = UpdateModel(obj, object_data)
 
         if issubclass(specific_model, ClusterableModel):
             # Process child object relations for this item
@@ -770,6 +774,30 @@ class UpdateModel(SaveOperationMixin, Operation):
         self._populate_fields(context)
         self._save(context)
         self._populate_many_to_many_fields(context)
+
+
+class UpdateImage(UpdateModel):
+    """
+    Operation class to handle clearing existing renditions when an image is updated.
+
+    If an image's file changes, and we don't clear renditions generated from the old
+    file, outdated renditions may be shown to users.
+    """
+
+    def run(self, context):
+        super().run(context)
+        self._clear_renditions(context)
+
+    def _clear_renditions(self, context):
+        instance_file_hash = self.instance.get_file_hash()
+        for imported_file in context.imported_files_by_source_url.values():
+            if (
+                imported_file.file.name == self.instance.file.name
+                and imported_file.hash == instance_file_hash
+            ):
+                # This will cause Wagtail to purge the renditions cache also.
+                self.instance.renditions.all().delete()
+                break
 
 
 class DeleteModel(Operation):

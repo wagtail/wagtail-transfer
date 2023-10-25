@@ -9,7 +9,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.images import ImageFile
 from django.test import TestCase, override_settings
 from wagtail.images.models import Image
-from wagtail.models import Collection, Comment, Page
+from wagtail.models import Collection, Page
 
 from tests.models import (Advert, Author, Avatar, Category, LongAdvert,
                           ModelWithManyToMany, PageWithParentalManyToMany,
@@ -1067,6 +1067,161 @@ class TestImport(TestCase):
         image = Image.objects.get()
         self.assertEqual(image.title, "A lovely wagtail")
         self.assertEqual(image.file.read(), b'my test image file contents')
+
+    @mock.patch('requests.get')
+    def test_updated_image_renditions_cleared(self, get):
+        """
+        If we update an Image file, we should clear any renditions that were generated from
+        the older version of the file.
+        """
+
+        get.return_value.status_code = 200
+        get.return_value.content = b'my test image file contents'
+
+        with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
+            image = Image.objects.create(
+                title="Wagtail",
+                file=ImageFile(f, name='wagtail.jpg')
+            )
+
+        rendition = image.get_rendition("fill-165x165")
+        self.assertIn(rendition, image.renditions.all())
+
+        IDMapping.objects.get_or_create(
+            uid="f91debc6-1751-11ea-8001-0800278dc04d",
+            defaults={
+                'content_type': ContentType.objects.get_for_model(Image),
+                'local_id': image.id,
+            }
+        )
+
+        data = """{
+            "ids_for_import": [
+                ["wagtailimages.image", 53]
+            ],
+            "mappings": [
+                ["wagtailcore.collection", 3, "f91cb31c-1751-11ea-8000-0800278dc04d"],
+                ["wagtailimages.image", 53, "f91debc6-1751-11ea-8001-0800278dc04d"]
+            ],
+            "objects": [
+                {
+                    "model": "wagtailcore.collection",
+                    "pk": 3,
+                    "fields": {
+                        "name": "root"
+                    },
+                    "parent_id": null
+                },
+                {
+                    "model": "wagtailimages.image",
+                    "pk": 53,
+                    "fields": {
+                        "collection": 3,
+                        "title": "A lovely wagtail",
+                        "file": {
+                            "download_url": "https://wagtail.io/media/original_images/wagtail.jpg",
+                            "size": 27,
+                            "hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada"
+                        },
+                        "width": 32,
+                        "height": 40,
+                        "created_at": "2019-04-01T07:31:21.251Z",
+                        "uploaded_by_user": null,
+                        "focal_point_x": null,
+                        "focal_point_y": null,
+                        "focal_point_width": null,
+                        "focal_point_height": null,
+                        "file_size": 27,
+                        "file_hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada",
+                        "tags": "[]",
+                        "tagged_items": []
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+
+        get.assert_called()
+        image = Image.objects.get()
+        self.assertNotIn(rendition, image.renditions.all())
+
+    def test_renditions_not_cleared_if_file_unchanged(self):
+        """
+        If we update an Image, but not the file, we shouldn't clear the renditions
+        """
+
+        with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
+            image = Image.objects.create(
+                title="Wagtail",
+                file=ImageFile(f, name='wagtail.jpg')
+            )
+
+        original_image_hash = image.get_file_hash()
+        rendition = image.get_rendition("fill-165x165")
+        self.assertIn(rendition, image.renditions.all())
+
+        IDMapping.objects.get_or_create(
+            uid="f91debc6-1751-11ea-8001-0800278dc04d",
+            defaults={
+                'content_type': ContentType.objects.get_for_model(Image),
+                'local_id': image.id,
+            }
+        )
+
+        data = f"""{{
+            "ids_for_import": [
+                ["wagtailimages.image", 53]
+            ],
+            "mappings": [
+                ["wagtailcore.collection", 3, "f91cb31c-1751-11ea-8000-0800278dc04d"],
+                ["wagtailimages.image", 53, "f91debc6-1751-11ea-8001-0800278dc04d"]
+            ],
+            "objects": [
+                {{
+                    "model": "wagtailcore.collection",
+                    "pk": 3,
+                    "fields": {{
+                        "name": "root"
+                    }},
+                    "parent_id": null
+                }},
+                {{
+                    "model": "wagtailimages.image",
+                    "pk": 53,
+                    "fields": {{
+                        "collection": 3,
+                        "title": "A lovely wagtail",
+                        "file": {{
+                            "download_url": "https://wagtail.io/media/original_images/wagtail.jpg",
+                            "size": 27,
+                            "hash": "{original_image_hash}"
+                        }},
+                        "width": 32,
+                        "height": 40,
+                        "created_at": "2019-04-01T07:31:21.251Z",
+                        "uploaded_by_user": null,
+                        "focal_point_x": null,
+                        "focal_point_y": null,
+                        "focal_point_width": null,
+                        "focal_point_height": null,
+                        "file_size": 27,
+                        "file_hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada",
+                        "tags": "[]",
+                        "tagged_items": []
+                    }}
+                }}
+            ]
+        }}"""
+
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+
+        image = Image.objects.get()
+        self.assertIn(rendition, image.renditions.all())
 
     def test_import_collection(self):
         root_collection = Collection.objects.get()
