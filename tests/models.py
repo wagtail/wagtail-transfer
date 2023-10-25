@@ -34,7 +34,7 @@ class Category(models.Model):
     colour = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return "{} {}".format(self.colour, self.name)
+        return f"{self.colour} {self.name}"
 
 
 class SponsoredPage(Page):

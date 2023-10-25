@@ -1,4 +1,5 @@
 import json
+
 from datetime import date, datetime, timezone
 from unittest import mock
 
@@ -144,7 +145,7 @@ class TestImportView(TestCase):
         self.assertEqual(args[0], 'https://www.example.com/wagtail-transfer/api/objects/')
         self.assertIn('digest', kwargs['params'])
         requested_ids = json.loads(kwargs['data'])['tests.advert']
-        self.assertEqual(set(requested_ids), set([8, 11]))
+        self.assertEqual(set(requested_ids), {8, 11})
 
         # Check import results
         updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
@@ -265,7 +266,7 @@ class TestImportView(TestCase):
         self.assertEqual(args[0], 'https://www.example.com/wagtail-transfer/api/objects/')
         self.assertIn('digest', kwargs['params'])
         requested_ids = json.loads(kwargs['data'])['tests.advert']
-        self.assertEqual(set(requested_ids), set([8, 11]))
+        self.assertEqual(set(requested_ids), {8, 11})
 
         # Check import results
         updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')

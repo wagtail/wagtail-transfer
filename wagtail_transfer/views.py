@@ -1,7 +1,9 @@
 import json
+
 from collections import defaultdict
 
 import requests
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import permission_required
@@ -195,7 +197,7 @@ def chooser_api_proxy(request, source_name, path):
     if 'models' in request.GET:
         default_chooser_endpoint = 'models'
 
-    base_url = source_config['BASE_URL'] + 'api/chooser/{}/'.format(default_chooser_endpoint)
+    base_url = source_config['BASE_URL'] + f'api/chooser/{default_chooser_endpoint}/'
 
     message = request.GET.urlencode()
     digest = digest_for_source(source_name, message)

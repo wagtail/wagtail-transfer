@@ -1,8 +1,13 @@
 from functools import partial
 
 from django.core.exceptions import ValidationError
-from wagtail.blocks import (ChooserBlock, ListBlock, RichTextBlock,
-                            StreamBlock, StructBlock)
+from wagtail.blocks import (
+    ChooserBlock,
+    ListBlock,
+    RichTextBlock,
+    StreamBlock,
+    StructBlock,
+)
 
 from .models import get_base_model
 from .richtext import get_reference_handler
@@ -143,7 +148,7 @@ class StructBlockHandler(BaseBlockHandler):
                 new_value = new_block_handler.map_over_json(new_stream, func)
             except ValidationError:
                 if new_block.required:
-                    raise ValidationError('This block requires a value for {}'.format(new_block))
+                    raise ValidationError(f'This block requires a value for {new_block}')
                 else:
                     # If the new block isn't required, just set it to the empty value
                     new_value = new_block_handler.empty_value

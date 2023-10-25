@@ -7,6 +7,7 @@ import os
 
 import requests
 
+
 if 'SLACK_WEBHOOK_URL' in os.environ:
     print("Reporting to #nightly-build-failures slack channel")
     response = requests.post(os.environ['SLACK_WEBHOOK_URL'], json={

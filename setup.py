@@ -2,6 +2,7 @@
 
 from setuptools import find_packages, setup
 
+
 setup(
     name='wagtail-transfer',
     version='0.9.1',
@@ -18,6 +19,9 @@ setup(
         'docs': [
             'mkdocs>=1.0,<1.1',
             'mkdocs-material>=4.6,<4.7',
+        ],
+        'dev': [
+            'ruff>=1.2.0',
         ],
     },
     python_requires=">=3.7",

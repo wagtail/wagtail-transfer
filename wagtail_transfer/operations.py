@@ -1,4 +1,5 @@
 import json
+
 from copy import copy
 
 from django.conf import settings
@@ -12,6 +13,7 @@ from wagtail.models import Page
 from .field_adapters import adapter_registry
 from .locators import get_locator_for_model
 from .models import get_base_model, get_base_model_for_path, get_model_for_path
+
 
 # Models which should be updated to their latest version when encountered in object references
 default_update_related_models = ['wagtailimages.image']
@@ -384,7 +386,6 @@ class ImportPlanner:
             # and add objectives to ensure that they're all updated to their newest versions
             for rel in get_all_child_relations(specific_model):
                 related_base_model = get_base_model(rel.related_model)
-                child_uids = set()
 
                 for child_obj_pk in object_data['fields'][rel.name]:
 

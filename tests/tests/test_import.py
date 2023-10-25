@@ -1,6 +1,7 @@
 import importlib
 import os.path
 import shutil
+
 from datetime import datetime, timezone
 from unittest import mock
 
@@ -9,15 +10,27 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.images import ImageFile
 from django.test import TestCase, override_settings
 from wagtail.images.models import Image
-from wagtail.models import Collection, Comment, Page
+from wagtail.models import Collection, Page
 
-from tests.models import (Advert, Author, Avatar, Category, LongAdvert,
-                          ModelWithManyToMany, PageWithParentalManyToMany,
-                          PageWithRelatedPages, PageWithRichText,
-                          PageWithStreamField, RedirectPage, SectionedPage,
-                          SimplePage, SponsoredPage)
+from tests.models import (
+    Advert,
+    Author,
+    Avatar,
+    Category,
+    LongAdvert,
+    ModelWithManyToMany,
+    PageWithParentalManyToMany,
+    PageWithRelatedPages,
+    PageWithRichText,
+    PageWithStreamField,
+    RedirectPage,
+    SectionedPage,
+    SimplePage,
+    SponsoredPage,
+)
 from wagtail_transfer.models import IDMapping
 from wagtail_transfer.operations import ImportPlanner
+
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason
@@ -60,7 +73,7 @@ class TestImport(TestCase):
         importer.run()
 
         cats = Category.objects.all()
-        self.assertEquals(cats.count(), 2)
+        self.assertEqual(cats.count(), 2)
 
 
     def test_import_pages(self):
@@ -1567,7 +1580,7 @@ class TestImport(TestCase):
 
         # salad_dressing_page's related_pages should include the oil (id=30) and vinegar (id=21)
         # pages, but not the missing and not-to-be-imported page id=31
-        self.assertEqual(set(salad_dressing_page.related_pages.all()), set([oil_page, vinegar_page]))
+        self.assertEqual(set(salad_dressing_page.related_pages.all()), {oil_page, vinegar_page})
 
     def test_import_with_soft_dependency_on_grandchild(self):
         # https://github.com/wagtail/wagtail-transfer/issues/84 -

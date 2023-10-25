@@ -5,6 +5,7 @@ model-specific such as a slug field.
 """
 
 import uuid
+
 from functools import lru_cache
 
 from django.conf import settings
@@ -13,6 +14,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db import IntegrityError
 
 from .models import IDMapping, get_base_model
+
 
 UUID_SEQUENCE = 0
 
@@ -46,7 +48,7 @@ class IDMappingLocator:
 
         if mapping.content_type != self.content_type:
             raise IntegrityError(
-                "Content type mismatch! Expected %r, got %r" % (self.content_type, mapping.content_type)
+                f"Content type mismatch! Expected {self.content_type!r}, got {mapping.content_type!r}"
             )
 
         return mapping.content_object
@@ -82,7 +84,7 @@ class IDMappingLocator:
         """
         if not isinstance(instance, self.model):
             raise IntegrityError(
-                "IDMappingLocator expected a %s instance, got %r" % (self.model, instance)
+                f"IDMappingLocator expected a {self.model} instance, got {instance!r}"
             )
 
         # use update_or_create to account for the possibility of an existing IDMapping for the same

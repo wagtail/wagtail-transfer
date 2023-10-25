@@ -2,6 +2,7 @@ import json
 import os.path
 import shutil
 import uuid
+
 from datetime import datetime, timezone
 from unittest import mock
 
@@ -14,12 +15,21 @@ from wagtail.documents.models import Document
 from wagtail.images.models import Image
 from wagtail.models import Collection, Page
 
-from tests.models import (Advert, Avatar, Category, LongAdvert,
-                          ModelWithManyToMany, PageWithParentalManyToMany,
-                          PageWithRichText, PageWithStreamField, SectionedPage,
-                          SponsoredPage)
+from tests.models import (
+    Advert,
+    Avatar,
+    Category,
+    LongAdvert,
+    ModelWithManyToMany,
+    PageWithParentalManyToMany,
+    PageWithRichText,
+    PageWithStreamField,
+    SectionedPage,
+    SponsoredPage,
+)
 from wagtail_transfer.auth import digest_for_source
 from wagtail_transfer.models import IDMapping
+
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason
@@ -78,7 +88,7 @@ class TestModelsApi(TestCase):
     def test_model_object_next_pagination(self):
         # Create 50 more categories
         for i in range(50):
-            name = "Car #{}".format(i)
+            name = f"Car #{i}"
             Category.objects.create(name=name, colour="Violet")
 
         response = self.client.get(f'/wagtail-transfer/api/chooser/models/tests.category/{self.get_parameters()}')
@@ -98,7 +108,7 @@ class TestModelsApi(TestCase):
     def test_model_object_previous_and_next_pagination(self):
         # Create 50 more categories
         for i in range(50):
-            name = "Car #{}".format(i)
+            name = f"Car #{i}"
             Category.objects.create(name=name, colour="Violet")
 
         response = self.client.get(f'/wagtail-transfer/api/chooser/models/tests.category/{self.get_parameters("page=2")}')
@@ -118,7 +128,7 @@ class TestModelsApi(TestCase):
     def test_model_object_previous_pagination(self):
         # Create 50 more categories
         for i in range(50):
-            name = "Car #{}".format(i)
+            name = f"Car #{i}"
             Category.objects.create(name=name, colour="Violet")
 
         response = self.client.get(f'/wagtail-transfer/api/chooser/models/tests.category/{self.get_parameters("page=3")}')

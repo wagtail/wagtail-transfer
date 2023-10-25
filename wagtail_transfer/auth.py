@@ -5,6 +5,7 @@ import re
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 
+
 GROUP_QUERY_WITH_DIGEST = re.compile('(?P<query_before>.*?)&?digest=(?P<digest>[^&]*)(?P<query_after>.*)')
 
 def check_get_digest_wrapper(view_func):

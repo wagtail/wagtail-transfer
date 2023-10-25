@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.contrib.auth.models import Permission
-from django.templatetags.static import static
 from django.urls import include, re_path, reverse
 from wagtail import hooks
 from wagtail.admin.menu import MenuItem

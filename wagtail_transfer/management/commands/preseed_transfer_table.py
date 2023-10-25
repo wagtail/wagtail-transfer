@@ -5,8 +5,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.management.base import BaseCommand, CommandError
 
-from wagtail_transfer.models import (IDMapping, get_base_model,
-                                     get_model_for_path)
+from wagtail_transfer.models import IDMapping, get_base_model, get_model_for_path
+
 
 # Namespace UUID common to all wagtail-transfer installances, used with uuid5 to generate
 # a predictable UUID for any given model-name / PK combination
@@ -51,7 +51,7 @@ class Command(BaseCommand):
         created_count = 0
 
         for model in models:
-            model_name = "%s.%s" % (model._meta.app_label, model._meta.model_name)
+            model_name = f"{model._meta.app_label}.{model._meta.model_name}"
 
             content_type = ContentType.objects.get_for_model(model)
             # find IDs of instances of this model that already exist in the IDMapping table
@@ -72,7 +72,7 @@ class Command(BaseCommand):
             for pk in unmapped_ids:
                 _, created = IDMapping.objects.get_or_create(
                     content_type=content_type, local_id=pk,
-                    defaults={'uid': uuid.uuid5(NAMESPACE, "%s:%s" % (model_name, pk))}
+                    defaults={'uid': uuid.uuid5(NAMESPACE, f"{model_name}:{pk}")}
                 )
                 if created:
                     created_count += 1

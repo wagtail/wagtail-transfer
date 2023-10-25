@@ -1,10 +1,12 @@
 import re
+
 from functools import partial
 
 from wagtail.rich_text import features
 from wagtail.rich_text.rewriters import extract_attrs
 
 from .models import get_base_model
+
 
 FIND_A_TAG = re.compile(r'<a(\b[^>]*)>(.*?)</a>')
 FIND_EMBED_TAG = re.compile(r'<embed(\b[^>]*)/>')
@@ -42,7 +44,7 @@ class RichTextReferenceHandler:
                     # The tag has no inner content, return a blank string instead
                     return ''
             # Otherwise update the id and construct the new tag string
-            new_tag_body = FIND_ID.sub('id="{0}"'.format(str(new_id)), tag_body)
+            new_tag_body = FIND_ID.sub(f'id="{str(new_id)}"', tag_body)
             tag_body_offset = match.start(0)
             new_tag_string = match.group(0)[:(match.start(1)-tag_body_offset)] + new_tag_body + match.group(0)[(match.end(1)-tag_body_offset):]
             return new_tag_string
