@@ -1,0 +1,54 @@
+target-version = "py38"
+
+exclude = [
+  "vendor",
+  "dist",
+  "build",
+  "venv",
+  ".venv",
+  ".tox",
+  ".git",
+  "__pycache__",
+  "node_modules",
+  "LC_MESSAGES",
+  "locale",
+  "migrations",
+]
+
+select = [
+  "B",   # flake8-bugbear
+  "BLE", # flake8-blind-except
+  "C4",  # flake8-comprehensions
+  "DJ",  # flake8-django
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "I",   # isort
+  "PGH", # pygrep-hooks
+  "RUF100",  # unused noqa
+  "S",   # flake8-bandit
+  "T20",  # flake8-print
+  "UP",   # pyupgrade
+  "W",    # pycodestyle warnings
+  "YTT",   # flake8-2020
+]
+
+fixable = ["C4", "E", "F", "I", "UP"]
+
+ignore = [
+  "E501",    # line-too-long (conflicts with formatter)
+  "W191",    # tab-indentation (conflicts with formatter)
+  "DJ008",   # model without __str__ method
+  "B019",    # functools.cache/lru_cache can lead to memory leaks
+  "S113",    # use of requests without timeout
+]
+
+[lint.per-file-ignores]
+"**/tests/**/*.py" = [
+  "S105",  # possible hardcoded password
+  "S106",  # possible hardcoded password
+  "DJ001", # use of null=True on CharField
+]
+".circleci/report_nightly_build_failure.py" = ["T201"]  # use of print()
+
+[isort]
+known-first-party = ["wagtail_transfer"]

@@ -14,20 +14,24 @@ from .locators import get_locator_for_model
 from .models import get_base_model, get_base_model_for_path, get_model_for_path
 
 # Models which should be updated to their latest version when encountered in object references
-default_update_related_models = ['wagtailimages.image']
+default_update_related_models = ["wagtailimages.image"]
 
 UPDATE_RELATED_MODELS = [
     model_label.lower()
-    for model_label in getattr(settings, 'WAGTAILTRANSFER_UPDATE_RELATED_MODELS', default_update_related_models)
+    for model_label in getattr(
+        settings, "WAGTAILTRANSFER_UPDATE_RELATED_MODELS", default_update_related_models
+    )
 ]
 
 
 # Models which should NOT be created in response to being encountered in object references
-default_no_follow_models = ['wagtailcore.page', 'contenttypes.contenttype']
+default_no_follow_models = ["wagtailcore.page", "contenttypes.contenttype"]
 
 NO_FOLLOW_MODELS = [
     model_label.lower()
-    for model_label in getattr(settings, 'WAGTAILTRANSFER_NO_FOLLOW_MODELS', default_no_follow_models)
+    for model_label in getattr(
+        settings, "WAGTAILTRANSFER_NO_FOLLOW_MODELS", default_no_follow_models
+    )
 ]
 
 
@@ -59,7 +63,9 @@ class Objective:
         """
         # see if there's already an entry in destination_ids_by_source
         try:
-            self._destination_id = self.context.destination_ids_by_source[(self.model, self.source_id)]
+            self._destination_id = self.context.destination_ids_by_source[
+                (self.model, self.source_id)
+            ]
             self._exists_at_destination = True
             return
         except KeyError:
@@ -76,7 +82,9 @@ class Objective:
         else:
             self._destination_id = destination_object.pk
             self._exists_at_destination = True
-            self.context.destination_ids_by_source[(self.model, self.source_id)] = self._destination_id
+            self.context.destination_ids_by_source[
+                (self.model, self.source_id)
+            ] = self._destination_id
 
     @property
     def exists_at_destination(self):
@@ -86,10 +94,11 @@ class Objective:
         return self._exists_at_destination
 
     def __eq__(self, other):
-        return (
-            isinstance(other, Objective)
-            and (self.model, self.source_id, self.must_update) == (other.model, other.source_id, other.must_update)
-        )
+        return isinstance(other, Objective) and (
+            self.model,
+            self.source_id,
+            self.must_update,
+        ) == (other.model, other.source_id, other.must_update)
 
     def __hash__(self):
         return hash((self.model, self.source_id, self.must_update))
@@ -102,6 +111,7 @@ class ImportContext:
     (for example, once a page is created at the destination, we add its ID mapping so that we
     can handle references to it that appear in other imported pages).
     """
+
     def __init__(self):
         # A mapping of objects on the source site to their IDs on the destination site.
         # Keys are tuples of (model_class, source_id); values are destination IDs.
@@ -118,17 +128,18 @@ class ImportContext:
 
 
 class ImportPlanner:
-    def __init__(self, root_page_source_pk=None, destination_parent_id=None, model=None):
-
+    def __init__(
+        self, root_page_source_pk=None, destination_parent_id=None, model=None
+    ):
         if root_page_source_pk or destination_parent_id:
-            self.import_type = 'page'
+            self.import_type = "page"
             self.root_page_source_pk = int(root_page_source_pk)
             if destination_parent_id is None:
                 self.destination_parent_id = None
             else:
                 self.destination_parent_id = int(destination_parent_id)
         elif model:
-            self.import_type = 'model'
+            self.import_type = "model"
             self.model = model
         else:
             raise NotImplementedError("Missing page kwargs or specified model kwarg")
@@ -212,13 +223,13 @@ class ImportPlanner:
 
         # for each ID in the import list, add to base_import_ids as an object explicitly selected
         # for import
-        for model_path, source_id in data['ids_for_import']:
+        for model_path, source_id in data["ids_for_import"]:
             model = get_base_model_for_path(model_path)
             self.base_import_ids.add((model, source_id))
 
-        # add source id -> uid mappings to the uids_by_source dict, and add objectives 
+        # add source id -> uid mappings to the uids_by_source dict, and add objectives
         # for importing referenced models
-        for model_path, source_id, jsonish_uid in data['mappings']:
+        for model_path, source_id, jsonish_uid in data["mappings"]:
             model = get_base_model_for_path(model_path)
             uid = get_locator_for_model(model).uid_from_json(jsonish_uid)
             self.context.uids_by_source[(model, source_id)] = uid
@@ -227,20 +238,21 @@ class ImportPlanner:
 
             if base_import or model_path not in NO_FOLLOW_MODELS:
                 objective = Objective(
-                    model, source_id, self.context,
-                    must_update=(base_import or model_path in UPDATE_RELATED_MODELS)
+                    model,
+                    source_id,
+                    self.context,
+                    must_update=(base_import or model_path in UPDATE_RELATED_MODELS),
                 )
 
                 # add to the set of objectives that need handling
                 self._add_objective(objective)
 
         # add object data to the object_data_by_source dict
-        for obj_data in data['objects']:
+        for obj_data in data["objects"]:
             self._add_object_data_to_lookup(obj_data)
 
         # retry tasks that were previously postponed due to missing object data
         self._retry_tasks()
-
 
         # Process all unhandled objectives - which may trigger new objectives as dependencies of
         # the resulting operations - until no unhandled objectives remain
@@ -249,8 +261,8 @@ class ImportPlanner:
             self._handle_objective(objective)
 
     def _add_object_data_to_lookup(self, obj_data):
-        model = get_base_model_for_path(obj_data['model'])
-        source_id = obj_data['pk']
+        model = get_base_model_for_path(obj_data["model"])
+        source_id = obj_data["pk"]
         self.object_data_by_source[(model, source_id)] = obj_data
 
     def _add_objective(self, objective):
@@ -274,14 +286,12 @@ class ImportPlanner:
             no_update_objective.must_update = False
             self.objectives.discard(no_update_objective)
             self.unhandled_objectives.discard(no_update_objective)
-        
+
         self.objectives.add(objective)
         self.unhandled_objectives.add(objective)
 
-
     def _handle_objective(self, objective):
         if not objective.exists_at_destination:
-
             # object does not exist locally - create it if we're allowed to do so, i.e.
             # it is in the set of objects explicitly selected for import, or it is a related object
             # that we have not been blocked from following by NO_FOLLOW_MODELS
@@ -292,7 +302,7 @@ class ImportPlanner:
                 # NO_FOLLOW_MODELS prevents us from creating this object
                 self.failed_creations.add((objective.model, objective.source_id))
             else:
-                task = ('create', objective.model, objective.source_id)
+                task = ("create", objective.model, objective.source_id)
                 self._handle_task(task)
 
         else:
@@ -301,7 +311,7 @@ class ImportPlanner:
             self.resolutions[(objective.model, objective.source_id)] = None
 
             if objective.must_update:
-                task = ('update', objective.model, objective.source_id)
+                task = ("update", objective.model, objective.source_id)
                 self._handle_task(task)
 
     def _handle_task(self, task):
@@ -337,7 +347,7 @@ class ImportPlanner:
             if (model, source_id) in self.really_missing_object_data:
                 # object data apparently doesn't exist on the source site either, so give up on
                 # this object entirely
-                if action == 'create':
+                if action == "create":
                     self.failed_creations.add((model, source_id))
 
             else:
@@ -348,34 +358,45 @@ class ImportPlanner:
             return
 
         # retrieve the specific model for this object
-        specific_model = get_model_for_path(object_data['model'])
+        specific_model = get_model_for_path(object_data["model"])
 
         if issubclass(specific_model, MP_Node):
-            if object_data['parent_id'] is None:
+            if object_data["parent_id"] is None:
                 # This is the root node; populate destination_ids_by_source so that we use the
                 # existing root node for any references to it, rather than creating a new one
                 destination_id = specific_model.get_first_root_node().pk
-                self.context.destination_ids_by_source[(model, source_id)] = destination_id
+                self.context.destination_ids_by_source[
+                    (model, source_id)
+                ] = destination_id
 
                 # No operation to be performed for this task
                 operation = None
-            elif action == 'create':
-                if issubclass(specific_model, Page) and source_id == self.root_page_source_pk:
+            elif action == "create":
+                if (
+                    issubclass(specific_model, Page)
+                    and source_id == self.root_page_source_pk
+                ):
                     # this is the root page of the import; ignore the parent ID in the source
                     # record and import at the requested destination instead
-                    operation = CreateTreeModel(specific_model, object_data, self.destination_parent_id)
+                    operation = CreateTreeModel(
+                        specific_model, object_data, self.destination_parent_id
+                    )
                 else:
                     operation = CreateTreeModel(specific_model, object_data)
             else:  # action == 'update'
-                destination_id = self.context.destination_ids_by_source[(model, source_id)]
+                destination_id = self.context.destination_ids_by_source[
+                    (model, source_id)
+                ]
                 obj = specific_model.objects.get(pk=destination_id)
                 operation = UpdateModel(obj, object_data)
         else:
             # non-tree model
-            if action == 'create':
+            if action == "create":
                 operation = CreateModel(specific_model, object_data)
             else:  # action == 'update'
-                destination_id = self.context.destination_ids_by_source[(model, source_id)]
+                destination_id = self.context.destination_ids_by_source[
+                    (model, source_id)
+                ]
                 obj = specific_model.objects.get(pk=destination_id)
                 operation = UpdateModel(obj, object_data)
 
@@ -384,22 +405,25 @@ class ImportPlanner:
             # and add objectives to ensure that they're all updated to their newest versions
             for rel in get_all_child_relations(specific_model):
                 related_base_model = get_base_model(rel.related_model)
-                child_uids = set()
 
-                for child_obj_pk in object_data['fields'][rel.name]:
-
+                for child_obj_pk in object_data["fields"][rel.name]:
                     # Add an objective for handling the child object. Regardless of whether
                     # this is a 'create' or 'update' task, we want the child objects to be at
                     # their most up-to-date versions, so set the objective to 'must update'
 
                     self._add_objective(
-                        Objective(related_base_model, child_obj_pk, self.context, must_update=True)
+                        Objective(
+                            related_base_model,
+                            child_obj_pk,
+                            self.context,
+                            must_update=True,
+                        )
                     )
 
         if operation is not None:
             self.operations.add(operation)
 
-        if action == 'create':
+        if action == "create":
             # For 'create' actions, record this operation in `resolutions`, so that any operations
             # that identify this object as a dependency know that this operation has to happen
             # first.
@@ -417,9 +441,14 @@ class ImportPlanner:
         self.task_resolutions[task] = operation
 
         if operation is not None:
-            for model, source_id, is_hard_dep in operation.dependencies:
+            for model, source_id, _ in operation.dependencies:
                 self._add_objective(
-                    Objective(model, source_id, self.context, must_update=(model._meta.label_lower in UPDATE_RELATED_MODELS))
+                    Objective(
+                        model,
+                        source_id,
+                        self.context,
+                        must_update=(model._meta.label_lower in UPDATE_RELATED_MODELS),
+                    )
                 )
 
             for instance in operation.deletions(self.context):
@@ -446,13 +475,14 @@ class ImportPlanner:
 
     def run(self):
         if self.unhandled_objectives or self.postponed_tasks:
-            raise ImproperlyConfigured("Cannot run import until all dependencies are resoved")
+            raise ImproperlyConfigured(
+                "Cannot run import until all dependencies are resoved"
+            )
 
         # filter out unsatisfiable operations
         statuses = {}
         satisfiable_operations = [
-            op for op in self.operations
-            if self._check_satisfiable(op, statuses)
+            op for op in self.operations if self._check_satisfiable(op, statuses)
         ]
 
         # arrange operations into an order that satisfies dependencies
@@ -464,13 +494,12 @@ class ImportPlanner:
         with transaction.atomic():
             for operation in operation_order:
                 operation.run(self.context)
-            
+
             # pages must only have revisions saved after all child objects have been updated, imported, or deleted, otherwise
             # they will capture outdated versions of child objects in the revision
             for operation in operation_order:
                 if isinstance(operation.instance, Page):
                     operation.instance.save_revision()
-
 
     def _check_satisfiable(self, operation, statuses):
         # Check whether the given operation's dependencies are satisfiable. statuses is a dict of
@@ -479,7 +508,7 @@ class ImportPlanner:
         #  False - dependency is not satisfiable
         #  None - the satisfiability check is currently in progress -
         #         if we encounter this we have found a circular dependency.
-        for (model, id, is_hard_dep) in operation.dependencies:
+        for model, id, is_hard_dep in operation.dependencies:
             if not is_hard_dep:
                 continue  # ignore soft dependencies here
 
@@ -542,11 +571,11 @@ class ImportPlanner:
 
                 # If everything is working properly, this should be a case we already encountered
                 # during task / objective solving and logged in failed_creations.
-                assert (dep_model, dep_source_id) in self.failed_creations
+                assert (dep_model, dep_source_id) in self.failed_creations  # noqa: S101
 
                 # Also, it should be a soft dependency, since we've eliminated unsatisfiable hard
                 # hard dependencies during _check_satisfiable.
-                assert not dep_is_hard
+                assert not dep_is_hard  # noqa: S101
 
                 # Since this is a soft dependency, we can (and must!) leave it unsatisfied.
                 # Abandon this dependency and move on to the next in the list
@@ -567,7 +596,9 @@ class ImportPlanner:
             else:
                 try:
                     # recursively add the operation that we're depending on here
-                    self._add_to_operation_order(resolution, operation_order, path + [resolution])
+                    self._add_to_operation_order(
+                        resolution, operation_order, path + [resolution]
+                    )
                 except CircularDependencyException:
                     if dep_is_hard:
                         # we can't resolve the circular dependency by breaking the chain here,
@@ -590,6 +621,7 @@ class Operation:
     necessary to retrieve more data), finding a valid sequence to run them in, and running them all
     within a transaction.
     """
+
     def run(self, context):
         raise NotImplementedError
 
@@ -620,6 +652,7 @@ class SaveOperationMixin:
 
     Requires subclasses to define `self.model`, `self.instance` and `self.object_data`.
     """
+
     @cached_property
     def base_model(self):
         return get_base_model(self.model)
@@ -627,7 +660,7 @@ class SaveOperationMixin:
     def _populate_fields(self, context):
         for field in self.model._meta.get_fields():
             try:
-                value = self.object_data['fields'][field.name]
+                value = self.object_data["fields"][field.name]
             except KeyError:
                 continue
 
@@ -645,7 +678,7 @@ class SaveOperationMixin:
         for field in self.model._meta.get_fields():
             if isinstance(field, models.ManyToManyField):
                 try:
-                    value = self.object_data['fields'][field.name]
+                    value = self.object_data["fields"][field.name]
                 except KeyError:
                     continue
                 target_model = get_base_model(field.related_model)
@@ -675,7 +708,7 @@ class SaveOperationMixin:
         deps = super().dependencies
 
         for field in self.model._meta.get_fields():
-            val = self.object_data['fields'].get(field.name)
+            val = self.object_data["fields"].get(field.name)
             adapter = adapter_registry.get_field_adapter(field)
             if adapter:
                 deps.update(adapter.get_dependencies(val))
@@ -687,10 +720,12 @@ class SaveOperationMixin:
 
         deletions = super().deletions(context)
         for field in self.model._meta.get_fields():
-            val = self.object_data['fields'].get(field.name)
+            val = self.object_data["fields"].get(field.name)
             adapter = adapter_registry.get_field_adapter(field)
             if adapter:
-                deletions.update(adapter.get_object_deletions(self.instance, val, context))
+                deletions.update(
+                    adapter.get_object_deletions(self.instance, val, context)
+                )
 
         return deletions
 
@@ -708,12 +743,14 @@ class CreateModel(SaveOperationMixin, Operation):
         self._populate_many_to_many_fields(context)
 
         # record the UID for the newly created page
-        uid = context.uids_by_source[(self.base_model, self.object_data['pk'])]
+        uid = context.uids_by_source[(self.base_model, self.object_data["pk"])]
         get_locator_for_model(self.base_model).attach_uid(self.instance, uid)
 
         # Also add it to destination_ids_by_source mapping
-        source_pk = self.object_data['pk']
-        context.destination_ids_by_source[(self.base_model, source_pk)] = self.instance.pk
+        source_pk = self.object_data["pk"]
+        context.destination_ids_by_source[
+            (self.base_model, source_pk)
+        ] = self.instance.pk
 
 
 class CreateTreeModel(CreateModel):
@@ -722,6 +759,7 @@ class CreateTreeModel(CreateModel):
 
     For example: Pages and Collections
     """
+
     def __init__(self, model, object_data, destination_parent_id=None):
         super().__init__(model, object_data)
         self.destination_parent_id = destination_parent_id
@@ -732,7 +770,7 @@ class CreateTreeModel(CreateModel):
         if self.destination_parent_id is None:
             # need to ensure parent page is imported before this one
             deps.add(
-                (get_base_model(self.model), self.object_data['parent_id'], True),
+                (get_base_model(self.model), self.object_data["parent_id"], True),
             )
 
         return deps
@@ -741,8 +779,10 @@ class CreateTreeModel(CreateModel):
         if self.destination_parent_id is None:
             # The destination parent ID was not known at the time this operation was built,
             # but should now exist in the page ID mapping
-            source_parent_id = self.object_data['parent_id']
-            self.destination_parent_id = context.destination_ids_by_source[(get_base_model(self.model), source_parent_id)]
+            source_parent_id = self.object_data["parent_id"]
+            self.destination_parent_id = context.destination_ids_by_source[
+                (get_base_model(self.model), source_parent_id)
+            ]
 
         parent = get_base_model(self.model).objects.get(id=self.destination_parent_id)
 

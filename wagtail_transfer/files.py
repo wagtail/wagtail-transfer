@@ -18,19 +18,19 @@ def open_file(field, file):
 
         # First check if the file is stored on the local filesystem
         try:
-            file.path
+            file.path  # noqa: B018
 
             is_local = True
         except NotImplementedError:
             is_local = False
 
         if is_local:
-            f.open('rb')
+            f.open("rb")
         else:
             # Some external storage backends don't allow reopening
             # the file. Get a fresh file instance. #1397
             storage = field.storage
-            f = storage.open(f.name, 'rb')
+            f = storage.open(f.name, "rb")
 
         close_file = True
 
@@ -51,7 +51,8 @@ def get_file_size(field, instance):
     # Cases we know about
     from wagtail.documents.models import AbstractDocument
     from wagtail.images.models import AbstractImage
-    if isinstance(instance, (AbstractDocument, AbstractImage)) and field.name == 'file':
+
+    if isinstance(instance, (AbstractDocument, AbstractImage)) and field.name == "file":
         return instance.get_file_size()
 
     # Allow developers to provide a file size getter for custom file fields
@@ -72,7 +73,8 @@ def get_file_hash(field, instance):
     # Cases we know about
     from wagtail.documents.models import AbstractDocument
     from wagtail.images.models import AbstractImage
-    if isinstance(instance, (AbstractDocument, AbstractImage)) and field.name == 'file':
+
+    if isinstance(instance, (AbstractDocument, AbstractImage)) and field.name == "file":
         return instance.get_file_hash()
 
     # Allow developers to provide a file hash getter for custom file fields
@@ -83,7 +85,7 @@ def get_file_hash(field, instance):
 
     # Fall back to calculating it on the fly
     with open_file(field, field.value_from_object(instance)) as f:
-        return hashlib.sha1(f.read()).hexdigest()
+        return hashlib.sha1(f.read()).hexdigest()  # noqa: S324
 
 
 class FileTransferError(Exception):
@@ -96,6 +98,7 @@ class File:
 
     Note that local_filename is only a guideline, it may be changed to avoid conflict with an existing file
     """
+
     def __init__(self, local_filename, size, hash, source_url):
         self.local_filename = local_filename
         self.size = size

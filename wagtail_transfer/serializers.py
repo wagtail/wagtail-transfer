@@ -18,10 +18,13 @@ def _get_subclasses_recurse(model):
     relations for select_related, adapted from https://github.com/jazzband/django-model-utils/blob/master/model_utils/managers.py
     """
 
-    related_objects = [f for f in model._meta.get_fields() if isinstance(f, models.OneToOneRel)]
+    related_objects = [
+        f for f in model._meta.get_fields() if isinstance(f, models.OneToOneRel)
+    ]
 
     rels = [
-        rel for rel in related_objects
+        rel
+        for rel in related_objects
         if isinstance(rel.field, models.OneToOneField)
         and issubclass(rel.field.model, model)
         and model is not rel.field.model
@@ -31,8 +34,7 @@ def _get_subclasses_recurse(model):
     subclasses = []
     for rel in rels:
         for subclass in _get_subclasses_recurse(rel.field.model):
-            subclasses.append(
-                rel.get_accessor_name() + LOOKUP_SEP + subclass)
+            subclasses.append(rel.get_accessor_name() + LOOKUP_SEP + subclass)
         subclasses.append(rel.get_accessor_name())
     return subclasses
 
@@ -84,16 +86,22 @@ class ModelSerializer:
                 continue
 
             # ignore primary keys (including MTI parent pointers)
-            if getattr(field, 'primary_key', False):
+            if getattr(field, "primary_key", False):
                 continue
 
             adapter = adapter_registry.get_field_adapter(field)
 
             if adapter:
-                adapter_managed_fields = adapter_managed_fields + adapter.get_managed_fields()
+                adapter_managed_fields = (
+                    adapter_managed_fields + adapter.get_managed_fields()
+                )
                 field_adapters.append(adapter)
 
-        self.field_adapters = [adapter for adapter in field_adapters if adapter.name not in adapter_managed_fields]
+        self.field_adapters = [
+            adapter
+            for adapter in field_adapters
+            if adapter.name not in adapter_managed_fields
+        ]
 
     def get_objects_by_ids(self, ids):
         """
@@ -113,9 +121,9 @@ class ModelSerializer:
 
     def serialize(self, instance):
         return {
-            'model': self.model._meta.label_lower,
-            'pk': instance.pk,
-            'fields': self.serialize_fields(instance)
+            "model": self.model._meta.label_lower,
+            "pk": instance.pk,
+            "fields": self.serialize_fields(instance),
         }
 
     def get_object_references(self, instance):
@@ -135,14 +143,14 @@ class ModelSerializer:
 
 
 class TreeModelSerializer(ModelSerializer):
-    ignored_fields = ['path', 'depth', 'numchild']
+    ignored_fields = ["path", "depth", "numchild"]
 
     def serialize(self, instance):
         result = super().serialize(instance)
         if instance.is_root():
-            result['parent_id'] = None
+            result["parent_id"] = None
         else:
-            result['parent_id'] = instance.get_parent().pk
+            result["parent_id"] = instance.get_parent().pk
 
         return result
 
@@ -150,17 +158,25 @@ class TreeModelSerializer(ModelSerializer):
         refs = super().get_object_references(instance)
         if not instance.is_root():
             # add a reference for the parent ID
-            refs.add(
-                (self.base_model, instance.get_parent().pk)
-            )
+            refs.add((self.base_model, instance.get_parent().pk))
         return refs
 
 
 class PageSerializer(TreeModelSerializer):
     ignored_fields = TreeModelSerializer.ignored_fields + [
-        'url_path', 'content_type', 'draft_title', 'has_unpublished_changes', 'owner',
-        'go_live_at', 'expire_at', 'expired', 'locked', 'first_published_at', 'last_published_at',
-        'latest_revision_created_at', 'live_revision',
+        "url_path",
+        "content_type",
+        "draft_title",
+        "has_unpublished_changes",
+        "owner",
+        "go_live_at",
+        "expire_at",
+        "expired",
+        "locked",
+        "first_published_at",
+        "last_published_at",
+        "latest_revision_created_at",
+        "live_revision",
     ]
 
     def get_objects_by_ids(self, ids):
@@ -182,7 +198,7 @@ class SerializerRegistry:
     def _scan_for_serializers(self):
         serializers = dict(self.BASE_SERIALIZERS_BY_MODEL_CLASS)
 
-        for fn in hooks.get_hooks('register_custom_serializers'):
+        for fn in hooks.get_hooks("register_custom_serializers"):
             serializers.update(fn())
 
         self.serializers_by_model_class = serializers

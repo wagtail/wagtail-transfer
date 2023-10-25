@@ -9,24 +9,35 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files.images import ImageFile
 from django.test import TestCase, override_settings
 from wagtail.images.models import Image
-from wagtail.models import Collection, Comment, Page
+from wagtail.models import Collection, Page
 
-from tests.models import (Advert, Author, Avatar, Category, LongAdvert,
-                          ModelWithManyToMany, PageWithParentalManyToMany,
-                          PageWithRelatedPages, PageWithRichText,
-                          PageWithStreamField, RedirectPage, SectionedPage,
-                          SimplePage, SponsoredPage)
+from tests.models import (
+    Advert,
+    Author,
+    Avatar,
+    Category,
+    LongAdvert,
+    ModelWithManyToMany,
+    PageWithParentalManyToMany,
+    PageWithRelatedPages,
+    PageWithRichText,
+    PageWithStreamField,
+    RedirectPage,
+    SectionedPage,
+    SimplePage,
+    SponsoredPage,
+)
 from wagtail_transfer.models import IDMapping
 from wagtail_transfer.operations import ImportPlanner
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason
-TEST_MEDIA_DIR = os.path.join(os.path.join(settings.BASE_DIR, 'test-media'))
-FIXTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fixtures')
+TEST_MEDIA_DIR = os.path.join(os.path.join(settings.BASE_DIR, "test-media"))
+FIXTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "fixtures")
 
 
 class TestImport(TestCase):
-    fixtures = ['test.json']
+    fixtures = ["test.json"]
 
     def setUp(self):
         shutil.rmtree(TEST_MEDIA_DIR, ignore_errors=True)
@@ -60,12 +71,11 @@ class TestImport(TestCase):
         importer.run()
 
         cats = Category.objects.all()
-        self.assertEquals(cats.count(), 2)
-
+        self.assertEqual(cats.count(), 2)
 
     def test_import_pages(self):
         # make a draft edit to the homepage
-        home = SimplePage.objects.get(slug='home')
+        home = SimplePage.objects.get(slug="home")
         home.title = "Draft home"
         home.save_revision()
 
@@ -112,7 +122,7 @@ class TestImport(TestCase):
         importer.add_json(data)
         importer.run()
 
-        updated_page = SimplePage.objects.get(url_path='/home/')
+        updated_page = SimplePage.objects.get(url_path="/home/")
         self.assertEqual(updated_page.intro, "This is the updated homepage")
         self.assertEqual(updated_page.title, "New home")
         self.assertEqual(updated_page.draft_title, "New home")
@@ -122,12 +132,16 @@ class TestImport(TestCase):
         self.assertEqual(updated_page_revision.intro, "This is the updated homepage")
         self.assertEqual(updated_page_revision.title, "New home")
 
-        created_page = SimplePage.objects.get(url_path='/home/imported-child-page/')
-        self.assertEqual(created_page.intro, "This page is imported from the source site")
+        created_page = SimplePage.objects.get(url_path="/home/imported-child-page/")
+        self.assertEqual(
+            created_page.intro, "This page is imported from the source site"
+        )
         # An initial page revision should also be created
         self.assertTrue(created_page.get_latest_revision())
         created_page_revision = created_page.get_latest_revision_as_object()
-        self.assertEqual(created_page_revision.intro, "This page is imported from the source site")
+        self.assertEqual(
+            created_page_revision.intro, "This page is imported from the source site"
+        )
 
     def test_import_pages_with_fk(self):
         data = """{
@@ -222,19 +236,25 @@ class TestImport(TestCase):
         importer.add_json(data)
         importer.run()
 
-        updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
+        updated_page = SponsoredPage.objects.get(url_path="/home/oil-is-still-great/")
         self.assertEqual(updated_page.intro, "yay fossil fuels and climate change")
         # advert is listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so changes to the advert should have been pulled in too
         self.assertEqual(updated_page.advert.slogan, "put a leopard in your tank")
-        self.assertEqual(updated_page.advert.run_until, datetime(2020, 12, 23, 21, 5, 43, tzinfo=timezone.utc))
+        self.assertEqual(
+            updated_page.advert.run_until,
+            datetime(2020, 12, 23, 21, 5, 43, tzinfo=timezone.utc),
+        )
         self.assertEqual(updated_page.advert.run_from, None)
         # author is not listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so should be left unchanged
         self.assertEqual(updated_page.author.bio, "Jack Kerouac's car has broken down.")
 
-        created_page = SponsoredPage.objects.get(url_path='/home/eggs-are-great-too/')
+        created_page = SponsoredPage.objects.get(url_path="/home/eggs-are-great-too/")
         self.assertEqual(created_page.intro, "you can make cakes with them")
         self.assertEqual(created_page.advert.slogan, "go to work on an egg")
-        self.assertEqual(created_page.advert.run_until, datetime(2020, 12, 23, 1, 23, 45, tzinfo=timezone.utc))
+        self.assertEqual(
+            created_page.advert.run_until,
+            datetime(2020, 12, 23, 1, 23, 45, tzinfo=timezone.utc),
+        )
         self.assertEqual(created_page.advert.run_from, None)
 
     def test_import_pages_with_orphaned_uid(self):
@@ -291,18 +311,22 @@ class TestImport(TestCase):
         importer.add_json(data)
         importer.run()
 
-        updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
+        updated_page = SponsoredPage.objects.get(url_path="/home/oil-is-still-great/")
         # author should be recreated
         self.assertEqual(updated_page.author.name, "Edgar Allen Poe")
-        self.assertEqual(updated_page.author.bio, "Edgar Allen Poe has come back from the dead")
+        self.assertEqual(
+            updated_page.author.bio, "Edgar Allen Poe has come back from the dead"
+        )
         # make sure it has't just overwritten the old author...
         self.assertTrue(Author.objects.filter(name="Jack Kerouac").exists())
 
         # there should now be an IDMapping record for the previously orphaned UID, pointing to the
         # newly created author
         self.assertEqual(
-            IDMapping.objects.get(uid="b00cb00c-0000-0000-0000-00000de1e7ed").content_object,
-            updated_page.author
+            IDMapping.objects.get(
+                uid="b00cb00c-0000-0000-0000-00000de1e7ed"
+            ).content_object,
+            updated_page.author,
         )
 
     def test_import_page_with_child_models(self):
@@ -357,7 +381,7 @@ class TestImport(TestCase):
         importer.add_json(data)
         importer.run()
 
-        page = SectionedPage.objects.get(url_path='/home/how-to-boil-an-egg/')
+        page = SectionedPage.objects.get(url_path="/home/how-to-boil-an-egg/")
         self.assertEqual(page.sections.count(), 2)
         self.assertEqual(page.sections.first().title, "Boil the outside of the egg")
 
@@ -486,7 +510,7 @@ class TestImport(TestCase):
         importer.add_json(data)
         importer.run()
 
-        page = SimplePage.objects.get(url_path='/home/how-to-boil-an-egg/')
+        page = SimplePage.objects.get(url_path="/home/how-to-boil-an-egg/")
 
         self.assertEqual(page.wagtail_admin_comments.count(), 1)
 
@@ -530,7 +554,9 @@ class TestImport(TestCase):
         page = PageWithRichText.objects.get(slug="imported-rich-text-page")
 
         # tests that a page link id is changed successfully when imported
-        self.assertEqual(page.body, '<p>But I have a <a id="1" linktype="page">link</a></p>')
+        self.assertEqual(
+            page.body, '<p>But I have a <a id="1" linktype="page">link</a></p>'
+        )
 
         # TODO: this should include an embed type as well once document/image import is added
 
@@ -604,7 +630,7 @@ class TestImport(TestCase):
         page = PageWithRichText.objects.get(slug="imported-rich-text-page")
 
         # tests that the page link tag is removed, as the page does not exist on the destination
-        self.assertEqual(page.body, '<p>But I have a link</p>')
+        self.assertEqual(page.body, "<p>But I have a link</p>")
 
     def test_import_page_with_streamfield_page_links(self):
         data = """{
@@ -644,7 +670,37 @@ class TestImport(TestCase):
         imported_streamfield = page.body.stream_block.get_prep_value(page.body)
 
         # Check that PageChooserBlock ids are converted correctly to those on the destination site
-        self.assertEqual(imported_streamfield, [{'type': 'link_block', 'value': {'page': 1, 'text': 'Test'}, 'id': 'fc3b0d3d-d316-4271-9e31-84919558188a'}, {'type': 'page', 'value': 2, 'id': 'c6d07d3a-72d4-445e-8fa5-b34107291176'}, {'type': 'stream', 'value': [{'type': 'page', 'value': 3, 'id': '8c0d7de7-4f77-4477-be67-7d990d0bfb82'}], 'id': '21ffe52a-c0fc-4ecc-92f1-17b356c9cc94'}, {'type': 'list_of_pages', 'value': [5], 'id': '17b972cb-a952-4940-87e2-e4eb00703997'}])
+        self.assertEqual(
+            imported_streamfield,
+            [
+                {
+                    "type": "link_block",
+                    "value": {"page": 1, "text": "Test"},
+                    "id": "fc3b0d3d-d316-4271-9e31-84919558188a",
+                },
+                {
+                    "type": "page",
+                    "value": 2,
+                    "id": "c6d07d3a-72d4-445e-8fa5-b34107291176",
+                },
+                {
+                    "type": "stream",
+                    "value": [
+                        {
+                            "type": "page",
+                            "value": 3,
+                            "id": "8c0d7de7-4f77-4477-be67-7d990d0bfb82",
+                        }
+                    ],
+                    "id": "21ffe52a-c0fc-4ecc-92f1-17b356c9cc94",
+                },
+                {
+                    "type": "list_of_pages",
+                    "value": [5],
+                    "id": "17b972cb-a952-4940-87e2-e4eb00703997",
+                },
+            ],
+        )
 
     def test_import_page_with_document_chooser_block(self):
         data = """{
@@ -686,14 +742,16 @@ class TestImport(TestCase):
             imported_streamfield,
             [
                 {
-                    'id': '17b972cb-a952-4940-87e2-e4eb00703997',
-                    'type': 'document',
-                    'value': 1,
+                    "id": "17b972cb-a952-4940-87e2-e4eb00703997",
+                    "type": "document",
+                    "value": 1,
                 },
             ],
         )
 
-    def test_import_page_with_streamfield_page_links_where_linked_pages_not_imported(self):
+    def test_import_page_with_streamfield_page_links_where_linked_pages_not_imported(
+        self
+    ):
         data = """{
                 "ids_for_import": [
                     ["wagtailcore.page", 6]
@@ -731,17 +789,44 @@ class TestImport(TestCase):
         imported_streamfield = page.body.stream_block.get_prep_value(page.body)
 
         # The PageChooserBlock has required=True, so when its value is removed, the block should also be removed
-        self.assertNotIn({'type': 'page', 'value': None, 'id': 'c6d07d3a-72d4-445e-8fa5-b34107291176'}, imported_streamfield)
+        self.assertNotIn(
+            {
+                "type": "page",
+                "value": None,
+                "id": "c6d07d3a-72d4-445e-8fa5-b34107291176",
+            },
+            imported_streamfield,
+        )
 
         # Test that 0 values are not removed, only None
-        self.assertIn({'type': 'integer', 'value': 0, 'id': 'aad07d3a-72d4-445e-8fa5-b34107291199'}, imported_streamfield)
+        self.assertIn(
+            {
+                "type": "integer",
+                "value": 0,
+                "id": "aad07d3a-72d4-445e-8fa5-b34107291199",
+            },
+            imported_streamfield,
+        )
 
         # By contrast, the PageChooserBlock in the link_block has required=False, so just the block's value should be removed instead
-        self.assertIn({'type': 'link_block', 'value': {'page': None, 'text': 'Test'}, 'id': 'fc3b0d3d-d316-4271-9e31-84919558188a'}, imported_streamfield)
+        self.assertIn(
+            {
+                "type": "link_block",
+                "value": {"page": None, "text": "Test"},
+                "id": "fc3b0d3d-d316-4271-9e31-84919558188a",
+            },
+            imported_streamfield,
+        )
 
         # The ListBlock should now be empty, as the (required) PageChooserBlocks inside have had their values set to None
-        self.assertIn({'type': 'list_of_pages', 'value': [], 'id': '17b972cb-a952-4940-87e2-e4eb00703997'}, imported_streamfield)
-
+        self.assertIn(
+            {
+                "type": "list_of_pages",
+                "value": [],
+                "id": "17b972cb-a952-4940-87e2-e4eb00703997",
+            },
+            imported_streamfield,
+        )
 
     def test_import_page_with_streamfield_rich_text_block(self):
         # Check that ids in RichTextBlock within a StreamField are converted properly
@@ -751,11 +836,22 @@ class TestImport(TestCase):
         importer.add_json(data)
         importer.run()
 
-        page = PageWithStreamField.objects.get(slug="my-streamfield-rich-text-block-has-a-link")
+        page = PageWithStreamField.objects.get(
+            slug="my-streamfield-rich-text-block-has-a-link"
+        )
 
         imported_streamfield = page.body.stream_block.get_prep_value(page.body)
 
-        self.assertEqual(imported_streamfield, [{'type': 'rich_text', 'value': '<p>I link to a <a id="1" linktype="page">page</a>.</p>', 'id': '7d4ee3d4-9213-4319-b984-45be4ded8853'}])
+        self.assertEqual(
+            imported_streamfield,
+            [
+                {
+                    "type": "rich_text",
+                    "value": '<p>I link to a <a id="1" linktype="page">page</a>.</p>',
+                    "id": "7d4ee3d4-9213-4319-b984-45be4ded8853",
+                }
+            ],
+        )
 
     def test_import_page_with_new_list_block_format(self):
         # Check that ids in a ListBlock with the uuid format within a StreamField are converted properly
@@ -768,19 +864,34 @@ class TestImport(TestCase):
 
         imported_streamfield = page.body.stream_block.get_prep_value(page.body)
 
-        self.assertEqual(imported_streamfield, [{'type': 'list_of_captioned_pages', 'value': [{'type': 'item', 'value': {'page': 1, 'text': 'a caption'}, 'id': '8c0d7de7-4f77-4477-be67-7d990d0bfb82'}], 'id': '21ffe52a-c0fc-4ecc-92f1-17b356c9cc94'}])
+        self.assertEqual(
+            imported_streamfield,
+            [
+                {
+                    "type": "list_of_captioned_pages",
+                    "value": [
+                        {
+                            "type": "item",
+                            "value": {"page": 1, "text": "a caption"},
+                            "id": "8c0d7de7-4f77-4477-be67-7d990d0bfb82",
+                        }
+                    ],
+                    "id": "21ffe52a-c0fc-4ecc-92f1-17b356c9cc94",
+                }
+            ],
+        )
 
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_import_image_with_file(self, get):
         get.return_value.status_code = 200
-        get.return_value.content = b'my test image file contents'
+        get.return_value.content = b"my test image file contents"
 
         IDMapping.objects.get_or_create(
             uid="f91cb31c-1751-11ea-8000-0800278dc04d",
             defaults={
-                'content_type': ContentType.objects.get_for_model(Collection),
-                'local_id':  Collection.objects.get().id,
-            }
+                "content_type": ContentType.objects.get_for_model(Collection),
+                "local_id": Collection.objects.get().id,
+            },
         )
 
         data = """{
@@ -836,16 +947,16 @@ class TestImport(TestCase):
         get.assert_called()
         image = Image.objects.get()
         self.assertEqual(image.title, "Lightnin' Hopkins")
-        self.assertEqual(image.file.read(), b'my test image file contents')
+        self.assertEqual(image.file.read(), b"my test image file contents")
 
         # TODO: We should verify these
         self.assertEqual(image.file_size, 18521)
         self.assertEqual(image.file_hash, "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada")
 
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_import_image_with_file_without_root_collection_mapping(self, get):
         get.return_value.status_code = 200
-        get.return_value.content = b'my test image file contents'
+        get.return_value.content = b"my test image file contents"
 
         data = """{
             "ids_for_import": [
@@ -900,7 +1011,7 @@ class TestImport(TestCase):
         get.assert_called()
         image = Image.objects.get()
         self.assertEqual(image.title, "Lightnin' Hopkins")
-        self.assertEqual(image.file.read(), b'my test image file contents')
+        self.assertEqual(image.file.read(), b"my test image file contents")
 
         # It should be in the existing root collection (no new collection should be created)
         self.assertEqual(image.collection.name, "Root")
@@ -910,7 +1021,7 @@ class TestImport(TestCase):
         self.assertEqual(image.file_size, 18521)
         self.assertEqual(image.file_hash, "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada")
 
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_existing_image_is_not_refetched(self, get):
         """
         If an incoming object has a FileField that reports the same size/hash as the existing
@@ -918,20 +1029,19 @@ class TestImport(TestCase):
         """
 
         get.return_value.status_code = 200
-        get.return_value.content = b'my test image file contents'
+        get.return_value.content = b"my test image file contents"
 
-        with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
+        with open(os.path.join(FIXTURES_DIR, "wagtail.jpg"), "rb") as f:
             image = Image.objects.create(
-                title="Wagtail",
-                file=ImageFile(f, name='wagtail.jpg')
+                title="Wagtail", file=ImageFile(f, name="wagtail.jpg")
             )
 
         IDMapping.objects.get_or_create(
             uid="f91debc6-1751-11ea-8001-0800278dc04d",
             defaults={
-                'content_type': ContentType.objects.get_for_model(Image),
-                'local_id': image.id,
-            }
+                "content_type": ContentType.objects.get_for_model(Image),
+                "local_id": image.id,
+            },
         )
 
         data = """{
@@ -990,7 +1100,7 @@ class TestImport(TestCase):
         # but file is left alone (i.e. it has not been replaced with 'my test image file contents')
         self.assertEqual(image.file.size, 1160)
 
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_replace_image(self, get):
         """
         If an incoming object has a FileField that reports a different size/hash to the existing
@@ -998,20 +1108,19 @@ class TestImport(TestCase):
         """
 
         get.return_value.status_code = 200
-        get.return_value.content = b'my test image file contents'
+        get.return_value.content = b"my test image file contents"
 
-        with open(os.path.join(FIXTURES_DIR, 'wagtail.jpg'), 'rb') as f:
+        with open(os.path.join(FIXTURES_DIR, "wagtail.jpg"), "rb") as f:
             image = Image.objects.create(
-                title="Wagtail",
-                file=ImageFile(f, name='wagtail.jpg')
+                title="Wagtail", file=ImageFile(f, name="wagtail.jpg")
             )
 
         IDMapping.objects.get_or_create(
             uid="f91debc6-1751-11ea-8001-0800278dc04d",
             defaults={
-                'content_type': ContentType.objects.get_for_model(Image),
-                'local_id': image.id,
-            }
+                "content_type": ContentType.objects.get_for_model(Image),
+                "local_id": image.id,
+            },
         )
 
         data = """{
@@ -1066,7 +1175,7 @@ class TestImport(TestCase):
         get.assert_called()
         image = Image.objects.get()
         self.assertEqual(image.title, "A lovely wagtail")
-        self.assertEqual(image.file.read(), b'my test image file contents')
+        self.assertEqual(image.file.read(), b"my test image file contents")
 
     def test_import_collection(self):
         root_collection = Collection.objects.get()
@@ -1074,17 +1183,20 @@ class TestImport(TestCase):
         IDMapping.objects.get_or_create(
             uid="f91cb31c-1751-11ea-8000-0800278dc04d",
             defaults={
-                'content_type': ContentType.objects.get_for_model(Collection),
-                'local_id':  root_collection.id,
-            }
+                "content_type": ContentType.objects.get_for_model(Collection),
+                "local_id": root_collection.id,
+            },
         )
 
-        data = """{
+        data = (
+            """{
             "ids_for_import": [
                 ["wagtailcore.collection", 4]
             ],
             "mappings": [
-                ["wagtailcore.collection", """ + str(root_collection.id) + """, "f91cb31c-1751-11ea-8000-0800278dc04d"],
+                ["wagtailcore.collection", """
+            + str(root_collection.id)
+            + """, "f91cb31c-1751-11ea-8000-0800278dc04d"],
                 ["wagtailcore.collection", 4, "8a1d3afd-3fa2-4309-9dc7-6d31902174ca"]
             ],
             "objects": [
@@ -1094,10 +1206,13 @@ class TestImport(TestCase):
                     "fields": {
                         "name": "New collection"
                     },
-                    "parent_id": """ + str(root_collection.id) + """
+                    "parent_id": """
+            + str(root_collection.id)
+            + """
                 }
             ]
         }"""
+        )
 
         importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
         importer.add_json(data)
@@ -1183,8 +1298,13 @@ class TestImport(TestCase):
         self.assertEqual(set(page.ads.all()), {advert_2, advert_3})
 
         # advert is listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so changes to the advert should have been pulled in too
-        self.assertEqual(advert_3.slogan, "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!")
-        self.assertEqual(advert_3.run_until, datetime(1937, 5, 6, 23, 25, 12, tzinfo=timezone.utc))
+        self.assertEqual(
+            advert_3.slogan,
+            "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!",
+        )
+        self.assertEqual(
+            advert_3.run_until, datetime(1937, 5, 6, 23, 25, 12, tzinfo=timezone.utc)
+        )
         self.assertEqual(advert_3.run_from, None)
 
     def test_import_object_with_many_to_many(self):
@@ -1220,8 +1340,13 @@ class TestImport(TestCase):
         self.assertEqual(set(ad_holder.ads.all()), {advert_2, advert_3})
 
         # advert is listed in WAGTAILTRANSFER_UPDATE_RELATED_MODELS, so changes to the advert should have been pulled in too
-        self.assertEqual(advert_3.slogan, "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!")
-        self.assertEqual(advert_3.run_until, datetime(1937, 5, 6, 23, 25, 12, tzinfo=timezone.utc))
+        self.assertEqual(
+            advert_3.slogan,
+            "Buy a half-scale authentically hydrogen-filled replica of the Hindenburg!",
+        )
+        self.assertEqual(
+            advert_3.run_until, datetime(1937, 5, 6, 23, 25, 12, tzinfo=timezone.utc)
+        )
         self.assertEqual(advert_3.run_from, None)
 
     def test_import_with_field_based_lookup(self):
@@ -1285,11 +1410,13 @@ class TestImport(TestCase):
         importer.add_json(data)
         importer.run()
 
-        updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
+        updated_page = SponsoredPage.objects.get(url_path="/home/oil-is-still-great/")
         # The 'Cars' category should have been matched by name to the existing record
-        self.assertEqual(updated_page.categories.get(name='Cars').colour, "red")
+        self.assertEqual(updated_page.categories.get(name="Cars").colour, "red")
         # The 'Environment' category should have been created
-        self.assertEqual(updated_page.categories.get(name='Environment').colour, "green")
+        self.assertEqual(
+            updated_page.categories.get(name="Environment").colour, "green"
+        )
 
     def test_skip_import_if_hard_dependency_on_non_imported_page(self):
         data = """{
@@ -1413,22 +1540,36 @@ class TestImport(TestCase):
         importer.run()
 
         # A non-nullable FK to an existing page outside the imported root is fine
-        redirect_to_oil_page = RedirectPage.objects.get(slug='redirect-to-oil-page')
-        self.assertEqual(redirect_to_oil_page.redirect_to.slug, 'oil-is-great')
+        redirect_to_oil_page = RedirectPage.objects.get(slug="redirect-to-oil-page")
+        self.assertEqual(redirect_to_oil_page.redirect_to.slug, "oil-is-great")
 
         # A non-nullable FK to a non-existing page outside the imported root will prevent import
-        self.assertFalse(RedirectPage.objects.filter(slug='redirect-to-unimported-page').exists())
+        self.assertFalse(
+            RedirectPage.objects.filter(slug="redirect-to-unimported-page").exists()
+        )
 
         # We can also handle FKs to pages being created in the import
-        redirect_to_redirect_to_oil_page = RedirectPage.objects.get(slug='redirect-to-redirect-to-oil-page')
-        self.assertEqual(redirect_to_redirect_to_oil_page.redirect_to.slug, 'redirect-to-oil-page')
+        redirect_to_redirect_to_oil_page = RedirectPage.objects.get(
+            slug="redirect-to-redirect-to-oil-page"
+        )
+        self.assertEqual(
+            redirect_to_redirect_to_oil_page.redirect_to.slug, "redirect-to-oil-page"
+        )
 
         # Failure to create a page will also propagate to pages with a hard dependency on it
-        self.assertFalse(RedirectPage.objects.filter(slug='redirect-to-redirect-to-unimported-page').exists())
+        self.assertFalse(
+            RedirectPage.objects.filter(
+                slug="redirect-to-redirect-to-unimported-page"
+            ).exists()
+        )
 
         # Circular references will be caught and pages not created
-        self.assertFalse(RedirectPage.objects.filter(slug='pork-redirecting-to-lamb').exists())
-        self.assertFalse(RedirectPage.objects.filter(slug='lamb-redirecting-to-pork').exists())
+        self.assertFalse(
+            RedirectPage.objects.filter(slug="pork-redirecting-to-lamb").exists()
+        )
+        self.assertFalse(
+            RedirectPage.objects.filter(slug="lamb-redirecting-to-pork").exists()
+        )
 
     def test_circular_references_in_rich_text(self):
         data = """{
@@ -1490,14 +1631,17 @@ class TestImport(TestCase):
         importer.run()
 
         # Both pages should have been created
-        bill_page = PageWithRichText.objects.get(slug='bill')
-        ben_page = PageWithRichText.objects.get(slug='ben')
+        bill_page = PageWithRichText.objects.get(slug="bill")
+        ben_page = PageWithRichText.objects.get(slug="ben")
 
         # At least one of them (i.e. the second one to be created) should have a valid link to the other
         self.assertTrue(
-            bill_page.body == """<p>Have you met my friend <a id="%d" linktype="page">Ben</a>?</p>""" % ben_page.id
-            or
-            ben_page.body == """<p>Have you met my friend <a id="%d" linktype="page">Bill</a>?</p>""" % bill_page.id
+            bill_page.body
+            == """<p>Have you met my friend <a id="%d" linktype="page">Ben</a>?</p>"""
+            % ben_page.id
+            or ben_page.body
+            == """<p>Have you met my friend <a id="%d" linktype="page">Bill</a>?</p>"""
+            % bill_page.id
         )
 
     def test_omitting_references_in_m2m_relations(self):
@@ -1561,13 +1705,15 @@ class TestImport(TestCase):
         importer.add_json(data)
         importer.run()
 
-        salad_dressing_page = PageWithRelatedPages.objects.get(slug='salad-dressing')
-        oil_page = Page.objects.get(slug='oil-is-great')
-        vinegar_page = Page.objects.get(slug='vinegar')
+        salad_dressing_page = PageWithRelatedPages.objects.get(slug="salad-dressing")
+        oil_page = Page.objects.get(slug="oil-is-great")
+        vinegar_page = Page.objects.get(slug="vinegar")
 
         # salad_dressing_page's related_pages should include the oil (id=30) and vinegar (id=21)
         # pages, but not the missing and not-to-be-imported page id=31
-        self.assertEqual(set(salad_dressing_page.related_pages.all()), set([oil_page, vinegar_page]))
+        self.assertEqual(
+            set(salad_dressing_page.related_pages.all()), {oil_page, vinegar_page}
+        )
 
     def test_import_with_soft_dependency_on_grandchild(self):
         # https://github.com/wagtail/wagtail-transfer/issues/84 -
@@ -1637,7 +1783,7 @@ class TestImport(TestCase):
         # iterates over it, it gets back a known 'worst case' ordering as defined by the page
         # titles.
         importer.operations = list(importer.operations)
-        importer.operations.sort(key=lambda op: op.object_data['fields']['title'])
+        importer.operations.sort(key=lambda op: op.object_data["fields"]["title"])
 
         importer.run()
 
@@ -1648,12 +1794,12 @@ class TestImport(TestCase):
 
         # link from homepage has to be broken
         page = PageWithRichText.objects.get(slug="level-1-page")
-        self.assertEqual(page.body, '<p>link to level 3</p>')
+        self.assertEqual(page.body, "<p>link to level 3</p>")
 
-    @mock.patch('requests.get')
+    @mock.patch("requests.get")
     def test_import_custom_file_field(self, get):
         get.return_value.status_code = 200
-        get.return_value.content = b'my test image file contents'
+        get.return_value.content = b"my test image file contents"
 
         data = """{
             "ids_for_import": [
@@ -1684,7 +1830,7 @@ class TestImport(TestCase):
         # Check the db record and file was imported
         get.assert_called()
         avatar = Avatar.objects.get()
-        self.assertEqual(avatar.image.read(), b'my test image file contents')
+        self.assertEqual(avatar.image.read(), b"my test image file contents")
 
     def test_import_multi_table_model(self):
         # test that importing a model using multi table inheritance correctly imports the child model, not just the parent
@@ -1717,7 +1863,10 @@ class TestImport(TestCase):
         imported_ad = LongAdvert.objects.filter(id=4).first()
         self.assertIsNotNone(imported_ad)
         self.assertEqual(imported_ad.slogan, "test")
-        self.assertEqual(imported_ad.run_until, datetime(2020, 12, 23, 12, 34, 56, tzinfo=timezone.utc))
+        self.assertEqual(
+            imported_ad.run_until,
+            datetime(2020, 12, 23, 12, 34, 56, tzinfo=timezone.utc),
+        )
         self.assertEqual(imported_ad.description, "longertest")
 
     def test_import_model_with_generic_foreign_key(self):
@@ -1818,11 +1967,16 @@ class TestImport(TestCase):
         self.assertIsNotNone(imported_ad)
         self.assertIsNone(imported_ad.tags.first())
 
-    @override_settings(WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS=[('tests.advert', 'tagged_items', False)])
+    @override_settings(
+        WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS=[
+            ("tests.advert", "tagged_items", False)
+        ]
+    )
     def test_import_model_with_untracked_deleted_reverse_related_models(self):
         # test re-importing a model where WAGTAILTRANFER_FOLLOWED_REVERSE_RELATIONS is not used to track tag deletions
         # will not delete tags
         from wagtail_transfer import field_adapters
+
         importlib.reload(field_adapters)
         # force reload field adapters as followed/deleted variables are set on module load, so will not get new setting
         data = """{

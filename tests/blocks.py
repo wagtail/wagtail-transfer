@@ -1,6 +1,12 @@
-from wagtail.blocks import (CharBlock, IntegerBlock, ListBlock,
-                            PageChooserBlock, RichTextBlock, StreamBlock,
-                            StructBlock)
+from wagtail.blocks import (
+    CharBlock,
+    IntegerBlock,
+    ListBlock,
+    PageChooserBlock,
+    RichTextBlock,
+    StreamBlock,
+    StructBlock,
+)
 from wagtail.documents.blocks import DocumentChooserBlock
 
 

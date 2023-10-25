@@ -1,8 +1,13 @@
 from functools import partial
 
 from django.core.exceptions import ValidationError
-from wagtail.blocks import (ChooserBlock, ListBlock, RichTextBlock,
-                            StreamBlock, StructBlock)
+from wagtail.blocks import (
+    ChooserBlock,
+    ListBlock,
+    RichTextBlock,
+    StreamBlock,
+    StructBlock,
+)
 
 from .models import get_base_model
 from .richtext import get_reference_handler
@@ -40,7 +45,9 @@ def update_object_ids(stream_block, stream, destination_ids_by_source):
     """Loops over list-of-dicts formatted StreamField (stream) to update object references. This format is used as opposed
     to the StreamChild object format to prevent ChooserBlocks trying to load nonexistent models with old ids upon to_python
     being called"""
-    update_ids = partial(update_ids_using_handler, destination_ids_by_source=destination_ids_by_source)
+    update_ids = partial(
+        update_ids_using_handler, destination_ids_by_source=destination_ids_by_source
+    )
     stream_block_handler = get_block_handler(stream_block)
     try:
         updated_stream = stream_block_handler.map_over_json(stream, update_ids)
@@ -76,7 +83,7 @@ class BaseBlockHandler:
         """
         value = func(self.block, stream)
         if self.block.required and value is None:
-            raise ValidationError('This block requires a value')
+            raise ValidationError("This block requires a value")
         return value
 
 
@@ -86,16 +93,20 @@ class ListBlockHandler(BaseBlockHandler):
         new_block = self.block.child_block
         new_block_handler = get_block_handler(new_block)
         block_is_in_new_format = getattr(
-            self.block,
-            "_item_is_in_block_format",
-            lambda x: False
+            self.block, "_item_is_in_block_format", lambda x: False
         )
         for element in stream:
             try:
                 if block_is_in_new_format(element):
                     # We are dealing with new-style ListBlock representation
-                    new_value = new_block_handler.map_over_json(element['value'], func)
-                    updated_stream.append({'type': element['type'], 'value': new_value, 'id': element['id']})
+                    new_value = new_block_handler.map_over_json(element["value"], func)
+                    updated_stream.append(
+                        {
+                            "type": element["type"],
+                            "value": new_value,
+                            "id": element["id"],
+                        }
+                    )
                 else:
                     new_value = new_block_handler.map_over_json(element, func)
                     updated_stream.append(new_value)
@@ -112,17 +123,19 @@ class StreamBlockHandler(BaseBlockHandler):
     def map_over_json(self, stream, func):
         updated_stream = []
         for element in stream:
-            new_block = self.block.child_blocks.get(element['type'])
+            new_block = self.block.child_blocks.get(element["type"])
             new_block_handler = get_block_handler(new_block)
-            new_stream = element['value']
+            new_stream = element["value"]
             try:
                 new_value = new_block_handler.map_over_json(new_stream, func)
-                updated_stream.append({'type': element['type'], 'value': new_value, 'id': element['id']})
+                updated_stream.append(
+                    {"type": element["type"], "value": new_value, "id": element["id"]}
+                )
             except ValidationError:
                 # Omit the block if a required field was left blank due to the import
                 pass
         if self.block.required and not updated_stream:
-            raise ValidationError('This block requires a value')
+            raise ValidationError("This block requires a value")
         return updated_stream
 
     @property
@@ -141,9 +154,11 @@ class StructBlockHandler(BaseBlockHandler):
             new_stream = stream[key]
             try:
                 new_value = new_block_handler.map_over_json(new_stream, func)
-            except ValidationError:
+            except ValidationError as err:
                 if new_block.required:
-                    raise ValidationError('This block requires a value for {}'.format(new_block))
+                    raise ValidationError(
+                        f"This block requires a value for {new_block}"
+                    ) from err
                 else:
                     # If the new block isn't required, just set it to the empty value
                     new_value = new_block_handler.empty_value
@@ -167,7 +182,9 @@ class ChooserBlockHandler(BaseBlockHandler):
         return set()
 
     def update_ids(self, value, destination_ids_by_source):
-        value = destination_ids_by_source.get((get_base_model(self.block.model_class), value))
+        value = destination_ids_by_source.get(
+            (get_base_model(self.block.model_class), value)
+        )
         return value
 
 
