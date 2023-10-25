@@ -30,4 +30,3 @@ Suppose a site has been developed and populated with content on a staging enviro
  * On both instances, run: `./manage.py preseed_transfer_table wagtailcore.page --range=1-199`
 
  The `preseed_transfer_table` command generates consistent UUIDs between the two site instances, so any transfers involving this ID range will recognise the pages as matching, and handle them as updates rather than creations.
- 
