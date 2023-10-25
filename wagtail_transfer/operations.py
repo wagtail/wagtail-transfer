@@ -441,7 +441,7 @@ class ImportPlanner:
         self.task_resolutions[task] = operation
 
         if operation is not None:
-            for model, source_id, is_hard_dep in operation.dependencies:
+            for model, source_id, _ in operation.dependencies:
                 self._add_objective(
                     Objective(
                         model,
@@ -571,11 +571,11 @@ class ImportPlanner:
 
                 # If everything is working properly, this should be a case we already encountered
                 # during task / objective solving and logged in failed_creations.
-                assert (dep_model, dep_source_id) in self.failed_creations
+                assert (dep_model, dep_source_id) in self.failed_creations  # noqa: S101
 
                 # Also, it should be a soft dependency, since we've eliminated unsatisfiable hard
                 # hard dependencies during _check_satisfiable.
-                assert not dep_is_hard
+                assert not dep_is_hard  # noqa: S101
 
                 # Since this is a soft dependency, we can (and must!) leave it unsatisfied.
                 # Abandon this dependency and move on to the next in the list

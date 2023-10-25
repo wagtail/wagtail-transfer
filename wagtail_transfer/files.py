@@ -18,7 +18,7 @@ def open_file(field, file):
 
         # First check if the file is stored on the local filesystem
         try:
-            file.path
+            file.path  # noqa: B018
 
             is_local = True
         except NotImplementedError:
@@ -85,7 +85,7 @@ def get_file_hash(field, instance):
 
     # Fall back to calculating it on the fly
     with open_file(field, field.value_from_object(instance)) as f:
-        return hashlib.sha1(f.read()).hexdigest()
+        return hashlib.sha1(f.read()).hexdigest()  # noqa: S324
 
 
 class FileTransferError(Exception):

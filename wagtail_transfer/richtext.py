@@ -22,12 +22,12 @@ class RichTextReferenceHandler:
     """
 
     def __init__(
-        self, handlers, tag_matcher, type_attribute, destination_ids_by_source={}
+        self, handlers, tag_matcher, type_attribute, destination_ids_by_source=None
     ):
         self.handlers = handlers
         self.tag_matcher = tag_matcher
         self.type_attribute = type_attribute
-        self.destination_ids_by_source = destination_ids_by_source
+        self.destination_ids_by_source = destination_ids_by_source or {}
 
     def update_tag_id(self, match, destination_ids_by_source):
         # Updates a specific tag's id from source to destination Wagtail instance, or removes the tag if no id mapping exists

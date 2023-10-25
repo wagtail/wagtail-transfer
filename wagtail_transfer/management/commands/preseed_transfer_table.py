@@ -34,8 +34,10 @@ class Command(BaseCommand):
                 # interpret as a model
                 try:
                     model = get_model_for_path(label)
-                except ObjectDoesNotExist:
-                    raise CommandError("%r is not recognised as a model name." % label)
+                except ObjectDoesNotExist as err:
+                    raise CommandError(
+                        "%r is not recognised as a model name." % label
+                    ) from err
 
                 if model != get_base_model(model):
                     raise CommandError(
@@ -48,8 +50,10 @@ class Command(BaseCommand):
                 # interpret label as an app
                 try:
                     app = apps.get_app_config(label)
-                except LookupError:
-                    raise CommandError("%r is not recognised as an app label." % label)
+                except LookupError as err:
+                    raise CommandError(
+                        "%r is not recognised as an app label." % label
+                    ) from err
 
                 for model in app.get_models():
                     if model == get_base_model(model):

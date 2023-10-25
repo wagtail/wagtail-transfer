@@ -154,11 +154,11 @@ class StructBlockHandler(BaseBlockHandler):
             new_stream = stream[key]
             try:
                 new_value = new_block_handler.map_over_json(new_stream, func)
-            except ValidationError:
+            except ValidationError as err:
                 if new_block.required:
                     raise ValidationError(
                         f"This block requires a value for {new_block}"
-                    )
+                    ) from err
                 else:
                     # If the new block isn't required, just set it to the empty value
                     new_value = new_block_handler.empty_value
