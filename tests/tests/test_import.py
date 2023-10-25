@@ -1,7 +1,6 @@
 import importlib
 import os.path
 import shutil
-
 from datetime import datetime, timezone
 from unittest import mock
 
@@ -30,7 +29,6 @@ from tests.models import (
 )
 from wagtail_transfer.models import IDMapping
 from wagtail_transfer.operations import ImportPlanner
-
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason

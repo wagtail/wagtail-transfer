@@ -1,5 +1,4 @@
 import json
-
 from datetime import date, datetime, timezone
 from unittest import mock
 

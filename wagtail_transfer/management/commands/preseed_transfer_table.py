@@ -7,7 +7,6 @@ from django.core.management.base import BaseCommand, CommandError
 
 from wagtail_transfer.models import IDMapping, get_base_model, get_model_for_path
 
-
 # Namespace UUID common to all wagtail-transfer installances, used with uuid5 to generate
 # a predictable UUID for any given model-name / PK combination
 NAMESPACE = uuid.UUID("418b5168-5a10-11ea-a84b-7831c1c42e66")

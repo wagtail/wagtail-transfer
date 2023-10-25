@@ -1,6 +1,5 @@
 import json
 import pathlib
-
 from functools import lru_cache
 from urllib.parse import urlparse
 
@@ -21,7 +20,6 @@ from .locators import get_locator_for_model
 from .models import get_base_model, get_base_model_for_path
 from .richtext import get_reference_handler
 from .streamfield import get_object_references, update_object_ids
-
 
 WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS = getattr(
     settings,

@@ -1,5 +1,4 @@
 import json
-
 from copy import copy
 
 from django.conf import settings
@@ -13,7 +12,6 @@ from wagtail.models import Page
 from .field_adapters import adapter_registry
 from .locators import get_locator_for_model
 from .models import get_base_model, get_base_model_for_path, get_model_for_path
-
 
 # Models which should be updated to their latest version when encountered in object references
 default_update_related_models = ["wagtailimages.image"]

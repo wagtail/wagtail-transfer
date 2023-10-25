@@ -2,7 +2,6 @@ import json
 import os.path
 import shutil
 import uuid
-
 from datetime import datetime, timezone
 from unittest import mock
 
@@ -29,7 +28,6 @@ from tests.models import (
 )
 from wagtail_transfer.auth import digest_for_source
 from wagtail_transfer.models import IDMapping
-
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason

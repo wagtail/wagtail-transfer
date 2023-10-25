@@ -2,7 +2,6 @@
 
 from setuptools import find_packages, setup
 
-
 setup(
     name="wagtail-transfer",
     version="0.9.1",
