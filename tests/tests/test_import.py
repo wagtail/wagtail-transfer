@@ -60,7 +60,7 @@ class TestImport(TestCase):
         importer.run()
 
         cats = Category.objects.all()
-        self.assertEquals(cats.count(), 2)
+        self.assertEqual(cats.count(), 2)
 
 
     def test_import_pages(self):
