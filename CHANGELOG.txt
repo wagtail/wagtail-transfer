@@ -8,6 +8,7 @@ Unreleased
  * Wagtail 5.1 update (https://github.com/wagtail/wagtail-transfer/pull/150) (Nick Moreton)
  * Wagtail 5.0 update (https://github.com/wagtail/wagtail-transfer/pull/148) (Katherine Domingo)
  * Added debug logging (Eric Sherman)
+ * Clear existing image renditions if an import updates an image's file (Joshua Munn)
 
 
 0.9.1 (01.03.2023)
