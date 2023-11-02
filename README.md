@@ -75,7 +75,7 @@ The following settings are additionally recognised:
   if `True`, will delete any models in the reverse relation on the destination site that do not exist in the source site's reverse relation. As a result,
   it should only be used for models that behave strictly like child models but do not use `ParentalKey` - for example, tags, where importing an image with deleted tags should delete those tag linking models on the destination site as well.
 
-  Note: describing the relationship according to the format expected is important. An import may still complete succesfully if you've added a value that dosen't match, in which case the followed relation simply won't be updated and may cause unexpected problems on future imports. 
+  Note: describing the relationship according to the format expected is important. An import may still complete succesfully if you've added a value that doesn't match, in which case the followed relation simply won't be updated and may cause unexpected problems on future imports. 
   
   For example, if you happen to also be using the `wagtail-personalisation` library on your project, you'll need to make sure you account for page variants: 
   ```python
