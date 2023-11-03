@@ -2,11 +2,13 @@ from collections import OrderedDict
 
 from rest_framework.authentication import SessionAuthentication
 from wagtail import VERSION as WAGTAIL_VERSION
-from wagtail.admin.navigation import get_explorable_root_page
-from wagtail.models import Page, UserPagePermissionsProxy
+from wagtail.models import Page
 
 if WAGTAIL_VERSION >= (5, 1):
     from wagtail.permission_policies.pages import PagePermissionPolicy
+else:
+    from wagtail.admin.navigation import get_explorable_root_page
+    from wagtail.models import UserPagePermissionsProxy
 
 from ..wagtail_api_v2.views import PagesAPIViewSet
 from .filters import ForExplorerFilter, HasChildrenFilter
