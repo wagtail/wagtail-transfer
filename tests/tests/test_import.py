@@ -828,7 +828,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -892,7 +892,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1059,7 +1059,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1140,7 +1140,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1832,7 +1832,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
