@@ -5,6 +5,7 @@ import requests
 from django.core.files.base import ContentFile
 
 from .models import ImportedFile
+from .auth import requests_auth
 
 
 @contextmanager
@@ -96,14 +97,15 @@ class File:
 
     Note that local_filename is only a guideline, it may be changed to avoid conflict with an existing file
     """
-    def __init__(self, local_filename, size, hash, source_url):
+    def __init__(self, local_filename, size, hash, source_url, source_site):
         self.local_filename = local_filename
         self.size = size
         self.hash = hash
         self.source_url = source_url
+        self.source_site = source_site
 
     def transfer(self):
-        response = requests.get(self.source_url)
+        response = requests.get(self.source_url, auth=requests_auth(self.source_site))
 
         if response.status_code != 200:
             raise FileTransferError("Non-200 response from image URL")

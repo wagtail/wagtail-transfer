@@ -332,7 +332,7 @@ class FileAdapter(FieldAdapter):
             name = pathlib.PurePosixPath(urlparse(value['download_url']).path).name
             local_filename = self.field.generate_filename(instance, name)
 
-            _file = File(local_filename, value['size'], value['hash'], value['download_url'])
+            _file = File(local_filename, value['size'], value['hash'], value['download_url'], context.source_site)
             try:
                 imported_file = _file.transfer()
             except FileTransferError:

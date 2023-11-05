@@ -107,7 +107,7 @@ class ImportContext:
     (for example, once a page is created at the destination, we add its ID mapping so that we
     can handle references to it that appear in other imported pages).
     """
-    def __init__(self):
+    def __init__(self, source_site):
         # A mapping of objects on the source site to their IDs on the destination site.
         # Keys are tuples of (model_class, source_id); values are destination IDs.
         # model_class must be the highest concrete model in the inheritance tree - i.e.
@@ -121,9 +121,12 @@ class ImportContext:
         # Mapping of source_urls to instances of ImportedFile
         self.imported_files_by_source_url = {}
 
+        # Source name
+        self.source_site = source_site
+
 
 class ImportPlanner:
-    def __init__(self, root_page_source_pk=None, destination_parent_id=None, model=None):
+    def __init__(self, root_page_source_pk=None, destination_parent_id=None, model=None, source_site=None):
 
         if root_page_source_pk or destination_parent_id:
             self.import_type = 'page'
@@ -138,7 +141,7 @@ class ImportPlanner:
         else:
             raise NotImplementedError("Missing page kwargs or specified model kwarg")
 
-        self.context = ImportContext()
+        self.context = ImportContext(source_site)
 
         self.objectives = set()
 
@@ -189,12 +192,12 @@ class ImportPlanner:
         self.failed_creations = set()
 
     @classmethod
-    def for_page(cls, source, destination):
-        return cls(root_page_source_pk=source, destination_parent_id=destination)
+    def for_page(cls, source, destination, source_site):
+        return cls(root_page_source_pk=source, destination_parent_id=destination, source_site=source_site)
 
     @classmethod
-    def for_model(cls, model):
-        return cls(model=model)
+    def for_model(cls, model, source_site):
+        return cls(model=model, source_site=source_site)
 
     def add_json(self, json_data):
         """
