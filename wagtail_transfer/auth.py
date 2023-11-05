@@ -66,3 +66,6 @@ def digest_for_source(source, message):
         message = message.encode()
 
     return hmac.new(key, message, hashlib.sha1).hexdigest()
+
+def requests_auth(source):
+    return settings.WAGTAILTRANSFER_SOURCES[source].get('BASIC_AUTH', None)
