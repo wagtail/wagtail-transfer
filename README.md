@@ -49,7 +49,7 @@ Developed by [Torchbox](https://torchbox.com/) and sponsored by [The Motley Fool
           'staging': {
               'BASE_URL': 'https://staging.example.com/wagtail-transfer/',
               'SECRET_KEY': '4ac4822149691395773b2a8942e1a472',
-              'BASIC_AUTH': ('testing', 'super-secret'),
+              'BASIC_AUTH_SECRET': ('testing', 'super-secret'),
           },
       }
 
