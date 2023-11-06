@@ -2222,3 +2222,40 @@ class TestImport(TestCase):
         imported_ad = Advert.objects.filter(id=4).first()
         self.assertIsNotNone(imported_ad)
         self.assertIsNotNone(imported_ad.tags.first())
+
+    @override_settings(WAGTAILTRANSFER_SOURCES=settings.WAGTAILTRANSFER_SOURCES_BASIC_AUTH)
+    @mock.patch('requests.get')
+    def test_basic_auth(self, get):
+        # tests the auth parameters are added to the GET request
+        # based on test_import_custom_file_field()
+
+        data = """{
+            "ids_for_import": [
+                ["tests.avatar", 123]
+            ],
+            "mappings": [
+                ["tests.avatar", 123, "01230123-0000-0000-0000-000000000000"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.avatar",
+                    "pk": 123,
+                    "fields": {
+                        "image": {
+                            "download_url": "https://wagtail.io/media/original_images/muddy_waters.jpg",
+                            "size": 18521,
+                            "hash": "e4eab12cc50b6b9c619c9ddd20b61d8e6a961ada"
+                        }
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
+        importer.add_json(data)
+        importer.run()
+
+        self.assertEquals(
+            get.call_args.kwargs['auth'],
+            settings.WAGTAILTRANSFER_SOURCES_BASIC_AUTH['staging']['BASIC_AUTH_SECRET']
+        )
