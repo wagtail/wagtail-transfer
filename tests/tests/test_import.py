@@ -55,7 +55,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(model="tests.category")
+        importer = ImportPlanner(model="tests.category", source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -108,7 +108,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=12, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=12, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -218,7 +218,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=12, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=12, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -287,7 +287,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=15, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=15, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -353,7 +353,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=100, destination_parent_id=2)
+        importer = ImportPlanner(root_page_source_pk=100, destination_parent_id=2, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -416,7 +416,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=100, destination_parent_id=2)
+        importer = ImportPlanner(root_page_source_pk=100, destination_parent_id=2, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -482,7 +482,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=100, destination_parent_id=2)
+        importer = ImportPlanner(root_page_source_pk=100, destination_parent_id=2, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -523,7 +523,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -560,7 +560,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -597,7 +597,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -635,7 +635,7 @@ class TestImport(TestCase):
                         }
                     ]
                 }"""
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -674,7 +674,7 @@ class TestImport(TestCase):
                     }
                 ]
         }"""
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
         page = PageWithStreamField.objects.get(slug="i-have-a-streamfield")
@@ -722,7 +722,7 @@ class TestImport(TestCase):
                         }
                     ]
                 }"""
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -747,7 +747,7 @@ class TestImport(TestCase):
         # Check that ids in RichTextBlock within a StreamField are converted properly
 
         data = """{"ids_for_import": [["wagtailcore.page", 6]], "mappings": [["wagtailcore.page", 6, "a231303a-1754-11ea-8000-0800278dc04d"], ["wagtailcore.page", 100, "11111111-1111-1111-1111-111111111111"]], "objects": [{"model": "tests.pagewithstreamfield", "pk": 6, "fields": {"title": "My streamfield rich text block has a link", "slug": "my-streamfield-rich-text-block-has-a-link", "wagtail_admin_comments": [], "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "body": "[{\\"type\\": \\"rich_text\\", \\"value\\": \\"<p>I link to a <a id=\\\\\\"100\\\\\\" linktype=\\\\\\"page\\\\\\">page</a>.</p>\\", \\"id\\": \\"7d4ee3d4-9213-4319-b984-45be4ded8853\\"}]"}, "parent_id": 100}]}"""
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -760,7 +760,7 @@ class TestImport(TestCase):
     def test_import_page_with_new_list_block_format(self):
         # Check that ids in a ListBlock with the uuid format within a StreamField are converted properly
         data = """{"ids_for_import": [["wagtailcore.page", 6]], "mappings": [["wagtailcore.page", 6, "a231303a-1754-11ea-8000-0800278dc04d"], ["wagtailcore.page", 100, "11111111-1111-1111-1111-111111111111"]], "objects": [{"model": "tests.pagewithstreamfield", "pk": 6, "fields": {"title": "My streamfield list block has a link", "slug": "my-streamfield-block-has-a-link", "wagtail_admin_comments": [], "live": true, "seo_title": "", "show_in_menus": false, "search_description": "", "body": "[{\\"type\\": \\"list_of_captioned_pages\\", \\"value\\": [{\\"type\\": \\"item\\", \\"value\\": {\\"page\\": 100, \\"text\\": \\"a caption\\"}, \\"id\\": \\"8c0d7de7-4f77-4477-be67-7d990d0bfb82\\"}], \\"id\\": \\"21ffe52a-c0fc-4ecc-92f1-17b356c9cc94\\"}]"}, "parent_id": 100}]}"""
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -979,7 +979,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1216,7 +1216,7 @@ class TestImport(TestCase):
             ]
         }}"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1254,7 +1254,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1292,7 +1292,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1326,7 +1326,7 @@ class TestImport(TestCase):
             ]}
         """
 
-        importer = ImportPlanner(root_page_source_pk=6, destination_parent_id=3)
+        importer = ImportPlanner(root_page_source_pk=6, destination_parent_id=3, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1365,7 +1365,7 @@ class TestImport(TestCase):
                 }
             ]}"""
 
-        importer = ImportPlanner(root_page_source_pk=6, destination_parent_id=3)
+        importer = ImportPlanner(root_page_source_pk=6, destination_parent_id=3, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1436,7 +1436,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=15, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=15, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1563,7 +1563,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=20, destination_parent_id=2)
+        importer = ImportPlanner(root_page_source_pk=20, destination_parent_id=2, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1640,7 +1640,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=20, destination_parent_id=2)
+        importer = ImportPlanner(root_page_source_pk=20, destination_parent_id=2, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1712,7 +1712,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=20, destination_parent_id=2)
+        importer = ImportPlanner(root_page_source_pk=20, destination_parent_id=2, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1782,7 +1782,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=10, destination_parent_id=2)
+        importer = ImportPlanner(root_page_source_pk=10, destination_parent_id=2, source_site="staging")
         importer.add_json(data)
         # importer.run() will build a running order by iterating over the self.operations set.
         # Since the ordering of that set is non-deterministic, it may arrive at an ordering that
@@ -1865,7 +1865,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1904,7 +1904,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1942,7 +1942,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -1965,7 +1965,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -2007,7 +2007,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
@@ -2030,7 +2030,7 @@ class TestImport(TestCase):
             ]
         }"""
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
         importer.run()
 
