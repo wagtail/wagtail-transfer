@@ -2,7 +2,7 @@ from django.conf import settings
 from django.contrib.auth.models import Permission
 from django.templatetags.static import static
 from django.urls import include, re_path, reverse
-from wagtail import hooks
+from wagtail import hooks, VERSION as WAGTAIL_VERSION
 from wagtail.admin.menu import MenuItem
 
 from . import admin_urls
@@ -27,7 +27,17 @@ class WagtailTransferMenuItem(MenuItem):
 
 @hooks.register('register_admin_menu_item')
 def register_admin_menu_item():
-    return WagtailTransferMenuItem('Import', reverse('wagtail_transfer_admin:choose_page'), classnames='icon icon-doc-empty-inverse', order=10000)
+    if WAGTAIL_VERSION >= (5, 2):
+        kwargs = {"classname": "icon icon-doc-empty-inverse"}
+    else:
+        kwargs = {"classnames": "icon icon-doc-empty-inverse"}
+
+    return WagtailTransferMenuItem(
+        'Import',
+        reverse('wagtail_transfer_admin:choose_page'),
+        order=10000,
+        **kwargs
+    )
 
 
 @hooks.register("register_permissions")
