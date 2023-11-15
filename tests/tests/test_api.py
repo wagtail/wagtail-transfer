@@ -683,7 +683,7 @@ class TestChooserProxyApi(TestCase):
 
         digest = digest_for_source('staging', 'bar=baz')
 
-        get.assert_called_once_with(f'https://www.example.com/wagtail-transfer/api/chooser/pages/foo?bar=baz&digest={digest}', headers={'Accept': 'application/json'}, timeout=5)
+        get.assert_called_once_with(f'https://www.example.com/wagtail-transfer/api/chooser/pages/foo?bar=baz&digest={digest}', auth=None, headers={'Accept': 'application/json'}, timeout=5)
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.content, b'test content')
