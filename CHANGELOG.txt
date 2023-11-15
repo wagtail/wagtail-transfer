@@ -1,10 +1,11 @@
 Changelog
 =========
 
-Unreleased
-~~~~~~~~~~
+0.9.3 (15.11.2023)
+~~~~~~~~~~~~~~~~~~
 
  * Apply Wagtail 5.2 upgrade considerations (Katherine Domingo)
+ * Fix deprecated UserPagePermissionsProxy / get_explorable_root_page imports in advance of Wagtail 6.0 (Matt Westcott)
 
 
 0.9.2 (02.11.2023)
