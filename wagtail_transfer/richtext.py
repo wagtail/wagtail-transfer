@@ -46,7 +46,7 @@ class RichTextReferenceHandler:
             tag_body_offset = match.start(0)
             new_tag_string = match.group(0)[:(match.start(1)-tag_body_offset)] + new_tag_body + match.group(0)[(match.end(1)-tag_body_offset):]
             return new_tag_string
-        except KeyError:
+        except (KeyError, NotImplementedError):
             # If the relevant handler cannot be found, don't update the tag id
             pass
         return match.group(0)
@@ -60,9 +60,10 @@ class RichTextReferenceHandler:
                 try:
                     handler = self.handlers[attrs[self.type_attribute]]
                     objects.add((get_base_model(handler.get_model()), int(attrs['id'])))
-                except KeyError:
+                except (KeyError, NotImplementedError):
                     # If no handler can be found, no object reference can be added.
-                    # This might occur when the link is a plain url
+                    # This might occur when the link is a plain url, or a custom link
+                    # or embed type.
                     pass
         return objects
 
