@@ -2,6 +2,7 @@ import importlib
 import os.path
 import shutil
 from datetime import datetime, timezone
+from string import Template
 from unittest import mock
 
 from django.conf import settings
@@ -24,6 +25,7 @@ from wagtail_transfer.operations import ImportPlanner
 TEST_MEDIA_DIR = os.path.join(os.path.join(settings.BASE_DIR, 'test-media'))
 FIXTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fixtures')
 
+CUSTOM_LINK_TYPE_IDENTIFIERS = ("custom-link-notimplemented", "custom-link-none")
 
 class TestImport(TestCase):
     fixtures = ['test.json']
@@ -541,77 +543,86 @@ class TestImport(TestCase):
         If rich text includes custom link/embed types that do not implement
         `get_model', the import shouldn't fail.
         """
-
-        data = """{
-            "ids_for_import": [
-                ["wagtailcore.page", 15]
-            ],
-            "mappings": [
-                ["wagtailcore.page", 12, "11111111-1111-1111-1111-111111111111"],
-                ["wagtailcore.page", 15, "01010101-0005-8765-7889-987889889898"]
-            ],
-            "objects": [
-                {
-                    "model": "tests.pagewithrichtext",
-                    "pk": 15,
-                    "parent_id": 12,
-                    "fields": {
-                        "title": "Imported page with rich text",
-                        "show_in_menus": false,
-                        "live": true,
-                        "slug": "imported-rich-text-page",
-                        "body": "Hello <a id=\\"42\\" linktype=\\"custom-link\\">world</a>",
-                        "wagtail_admin_comments": []
+        data = Template(
+            """{
+                "ids_for_import": [
+                    ["wagtailcore.page", 15]
+                ],
+                "mappings": [
+                    ["wagtailcore.page", 12, "11111111-1111-1111-1111-111111111111"],
+                    ["wagtailcore.page", 15, "01010101-0005-8765-7889-987889889898"]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.pagewithrichtext",
+                        "pk": 15,
+                        "parent_id": 12,
+                        "fields": {
+                            "title": "Imported page with rich text",
+                            "show_in_menus": false,
+                            "live": true,
+                            "slug": "imported-rich-text-page",
+                            "body": "Hello <a id=\\"42\\" linktype=\\"$link_type\\">world</a>",
+                            "wagtail_admin_comments": []
+                        }
                     }
-                }
-            ]
-        }"""
+                ]
+            }"""
+        )
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
-        importer.add_json(data)
-        importer.run()
+        for link_type in CUSTOM_LINK_TYPE_IDENTIFIERS:
+            with self.subTest(link_type=link_type):
+                importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+                importer.add_json(data.substitute(link_type=link_type))
+                importer.run()
 
-        page = PageWithRichText.objects.get(slug="imported-rich-text-page")
+                page = PageWithRichText.objects.get(slug="imported-rich-text-page")
 
-        # tests that the custom linktype is imported successfully
-        self.assertEqual(page.body, 'Hello <a id="42" linktype="custom-link">world</a>')
+                # tests that the custom linktype is imported successfully
+                self.assertEqual(page.body, f'Hello <a id="42" linktype="{link_type}">world</a>')
 
     def test_import_page_with_unhandled_rich_text_feature_stream_field(self):
         """
         Rich text blocks with custom link handlers should be gracefully.
         """
 
-        data = """{
-            "ids_for_import": [["wagtailcore.page", 6]],
-            "mappings": [
-                ["wagtailcore.page", 6, "0c7a9390-16cb-11ea-8000-0800278dc04d"],
-                ["wagtailcore.page", 300, "33333333-3333-3333-3333-333333333333"]
-            ],
-            "objects": [
-                {
-                    "model": "tests.pagewithstreamfield",
-                    "pk": 6,
-                    "parent_id": 300,
-                    "fields": {
-                        "title": "Imported page with rich text",
-                        "show_in_menus": false,
-                        "live": true,
-                        "slug": "imported-rich-text-page",
-                        "body": "[{\\"type\\": \\"rich_text\\", \\"value\\": \\"Hello <a id=\\\\\\"42\\\\\\" linktype=\\\\\\"custom-link\\\\\\">world</a>\\", \\"id\\": \\"fc3b0d3d-d316-4271-9e31-84919558188a\\"}]",
-                        "wagtail_admin_comments": []
+        data = Template(
+            """{
+                "ids_for_import": [["wagtailcore.page", 6]],
+                "mappings": [
+                    ["wagtailcore.page", 6, "0c7a9390-16cb-11ea-8000-0800278dc04d"],
+                    ["wagtailcore.page", 300, "33333333-3333-3333-3333-333333333333"]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.pagewithstreamfield",
+                        "pk": 6,
+                        "parent_id": 300,
+                        "fields": {
+                            "title": "Imported page with rich text",
+                            "show_in_menus": false,
+                            "live": true,
+                            "slug": "imported-rich-text-page",
+                            "body": "[{\\"type\\": \\"rich_text\\", \\"value\\": \\"Hello <a id=\\\\\\"42\\\\\\" linktype=\\\\\\"$link_type\\\\\\">world</a>\\", \\"id\\": \\"fc3b0d3d-d316-4271-9e31-84919558188a\\"}]",
+                            "wagtail_admin_comments": []
+                        }
                     }
-                }
-            ]
-        }"""
+                ]
+            }"""
+        )
 
-        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
-        importer.add_json(data)
-        importer.run()
+        for link_type in CUSTOM_LINK_TYPE_IDENTIFIERS:
+            importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+            importer.add_json(data.substitute(link_type=link_type))
+            importer.run()
 
-        page = PageWithStreamField.objects.get(slug="imported-rich-text-page")
+            page = PageWithStreamField.objects.get(slug="imported-rich-text-page")
 
-        # tests that the custom linktype is imported successfully
-        self.assertEqual(page.body[0].value.source, 'Hello <a id="42" linktype="custom-link">world</a>')
+            # tests that the custom linktype is imported successfully
+            self.assertEqual(
+                page.body[0].value.source,
+                f'Hello <a id="42" linktype="{link_type}">world</a>',
+            )
 
     def test_import_page_with_null_rich_text(self):
         data = """{

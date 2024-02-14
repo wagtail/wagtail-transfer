@@ -32,7 +32,9 @@ class RichTextReferenceHandler:
         attrs = extract_attrs(tag_body)
         try:
             handler = self.handlers[attrs[self.type_attribute]]
-            target_model = get_base_model(handler.get_model())
+            if (target_model := handler.get_model()) is None:
+                return match.group(0)
+            target_model = get_base_model(target_model)
             new_id = destination_ids_by_source.get((target_model, int(attrs['id'])))
             if new_id is None:
                 # Return the tag's inner contents, effectively removing the tag
@@ -59,7 +61,10 @@ class RichTextReferenceHandler:
                 attrs = extract_attrs(match.group(1))
                 try:
                     handler = self.handlers[attrs[self.type_attribute]]
-                    objects.add((get_base_model(handler.get_model()), int(attrs['id'])))
+                    if (model := handler.get_model()) is None:
+                        # This might occur for custom link types
+                        continue
+                    objects.add((get_base_model(model), int(attrs['id'])))
                 except (KeyError, NotImplementedError):
                     # If no handler can be found, no object reference can be added.
                     # This might occur when the link is a plain url, or a custom link
