@@ -20,7 +20,7 @@ setup(
             'mkdocs-material>=4.6,<4.7',
         ],
     },
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     license='BSD',
     long_description="An extension for Wagtail allowing content to be transferred between multiple instances of a Wagtail project",
     classifiers=[
