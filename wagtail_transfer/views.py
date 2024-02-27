@@ -201,7 +201,7 @@ def chooser_api_proxy(request, source_name, path):
     digest = digest_for_source(source_name, message)
 
     response = requests.get(f"{base_url}{path}?{message}&digest={digest}", headers={
-        'Accept': request.META['HTTP_ACCEPT'],
+        'Accept': request.headers['accept'],
     }, timeout=api_proxy_timeout_seconds)
 
     return HttpResponse(response.content, status=response.status_code)

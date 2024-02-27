@@ -15,6 +15,6 @@ urlpatterns = [
     re_path(r'^api/pages/(\d+)/$', views.pages_for_export, name='wagtail_transfer_pages'),
     path('api/models/<str:model_path>/', views.models_for_export, name='wagtail_transfer_model'),
     path('api/models/<str:model_path>/<int:object_id>/', views.models_for_export, name='wagtail_transfer_model_object'),
-    re_path(r'^api/objects/$', views.objects_for_export, name='wagtail_transfer_objects'),
+    path('api/objects/', views.objects_for_export, name='wagtail_transfer_objects'),
     re_path(r'^api/chooser/', (decorate_urlpatterns(chooser_api.get_urlpatterns(), check_get_digest_wrapper), chooser_api.url_namespace, chooser_api.url_namespace)),
 ]
