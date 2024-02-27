@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  python: circleci/python@2.1.1
+  python: cimg/python@3.12.1
 
 jobs:
   build-and-test:
@@ -10,7 +10,7 @@ jobs:
         default: "wagtail"
         type: string
       python-version:
-        default: "3.10"
+        default: "3.12"
         type: string
     executor:
       name: python/default
@@ -45,16 +45,10 @@ workflows:
   main:
     jobs:
       - build-and-test:
-          wagtail-version: "wagtail>=4.1,<4.2"
+          wagtail-version: "wagtail>=5.2,<5.3"
           python-version: "3.8"
       - build-and-test:
-          wagtail-version: "wagtail>=5.0,<5.1"
-          python-version: "3.11"
-      - build-and-test:
-          wagtail-version: "wagtail>=5.1,<5.2"
-          python-version: "3.11"
-      - build-and-test:
-          wagtail-version: "wagtail>=5.2,<5.3"
+          wagtail-version: "wagtail>=6.0,<6.1"
           python-version: "3.12"
   nightly:
     jobs:
