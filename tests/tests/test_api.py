@@ -679,7 +679,7 @@ class TestChooserProxyApi(TestCase):
         get.return_value.status_code = 200
         get.return_value.content = b'test content'
 
-        response = self.client.get('/admin/wagtail-transfer/api/chooser-proxy/staging/foo?bar=baz', HTTP_ACCEPT='application/json')
+        response = self.client.get('/admin/wagtail-transfer/api/chooser-proxy/staging/foo?bar=baz', headers={"accept": 'application/json'})
 
         digest = digest_for_source('staging', 'bar=baz')
 
@@ -692,7 +692,7 @@ class TestChooserProxyApi(TestCase):
         get.return_value.status_code = 200
         get.return_value.content = b'test content'
 
-        response = self.client.get('/admin/wagtail-transfer/api/chooser-proxy/production/foo?bar=baz', HTTP_ACCEPT='application/json')
+        response = self.client.get('/admin/wagtail-transfer/api/chooser-proxy/production/foo?bar=baz', headers={"accept": 'application/json'})
 
         get.assert_not_called()
 

@@ -4,7 +4,7 @@ from django.apps import apps
 from django.core.exceptions import FieldDoesNotExist
 from django.http import Http404
 from django.shortcuts import redirect
-from django.urls import re_path, reverse
+from django.urls import path, re_path, reverse
 from modelcluster.fields import ParentalKey
 from rest_framework import status
 from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
@@ -337,9 +337,9 @@ class BaseAPIViewSet(GenericViewSet):
         This returns a list of URL patterns for the endpoint
         """
         return [
-            re_path(r'^$', cls.as_view({'get': 'listing_view'}), name='listing'),
-            re_path(r'^(?P<pk>\d+)/$', cls.as_view({'get': 'detail_view'}), name='detail'),
-            re_path(r'^find/$', cls.as_view({'get': 'find_view'}), name='find'),
+            path('', cls.as_view({'get': 'listing_view'}), name='listing'),
+            path('<int:pk>/', cls.as_view({'get': 'detail_view'}), name='detail'),
+            path('find/', cls.as_view({'get': 'find_view'}), name='find'),
         ]
 
     @classmethod
@@ -572,6 +572,6 @@ class ModelsAPIViewSet(GenericViewSet):
         This returns a list of URL patterns for the endpoint
         """
         return [
-            re_path(r'^$', cls.as_view({'get': 'listing_view'}), name='listing'),
+            path('', cls.as_view({'get': 'listing_view'}), name='listing'),
             re_path(r'^(?P<model_path>[-\w.]+)/$', cls.as_view({'get': 'detail_view'}), name='detail'),
         ]
