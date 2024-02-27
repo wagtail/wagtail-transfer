@@ -1,6 +1,12 @@
 Changelog
 =========
 
+Unreleased
+~~~~~~~~~~
+
+ * Apply Wagtail 6.0 upgrade considerations (Katherine Domingo)
+ * Apply Django 5.0 upgrade considerations (Katherine Domingo)
+
 0.9.3 (15.11.2023)
 ~~~~~~~~~~~~~~~~~~
 
