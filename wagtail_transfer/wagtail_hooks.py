@@ -27,16 +27,11 @@ class WagtailTransferMenuItem(MenuItem):
 
 @hooks.register('register_admin_menu_item')
 def register_admin_menu_item():
-    if WAGTAIL_VERSION >= (5, 2):
-        kwargs = {"classname": "icon icon-doc-empty-inverse"}
-    else:
-        kwargs = {"classnames": "icon icon-doc-empty-inverse"}
-
     return WagtailTransferMenuItem(
         'Import',
         reverse('wagtail_transfer_admin:choose_page'),
         order=10000,
-        **kwargs
+        classname="icon icon-doc-empty-inverse",
     )
 
 
