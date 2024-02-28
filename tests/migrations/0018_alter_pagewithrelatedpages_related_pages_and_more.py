@@ -3,7 +3,6 @@
 import wagtail.blocks
 import wagtail.fields
 from django.db import migrations, models
-from wagtail import VERSION as WAGTAIL_VERSION
 
 
 class Migration(migrations.Migration):
@@ -11,8 +10,6 @@ class Migration(migrations.Migration):
     dependencies = [
         ('tests', '0017_correctmodeltypes'),
     ]
-
-    extra_args = {"use_json_field": True} if WAGTAIL_VERSION < (6, 0) else {}
 
     operations = [
         migrations.AlterField(
@@ -23,6 +20,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='pagewithstreamfield',
             name='body',
-            field=wagtail.fields.StreamField([('link_block', wagtail.blocks.StructBlock([('page', wagtail.blocks.PageChooserBlock(required=False)), ('text', wagtail.blocks.CharBlock(max_length=250))])), ('integer', wagtail.blocks.IntegerBlock(required=True)), ('page', wagtail.blocks.PageChooserBlock()), ('stream', wagtail.blocks.StreamBlock([('page', wagtail.blocks.PageChooserBlock())])), ('rich_text', wagtail.blocks.RichTextBlock()), ('list_of_pages', wagtail.blocks.ListBlock(wagtail.blocks.PageChooserBlock())), ('list_of_captioned_pages', wagtail.blocks.ListBlock(wagtail.blocks.StructBlock([('page', wagtail.blocks.PageChooserBlock(required=False)), ('text', wagtail.blocks.CharBlock(max_length=250))])))], blank=True, verbose_name='Page body', **extra_args),
+            field=wagtail.fields.StreamField([('link_block', wagtail.blocks.StructBlock([('page', wagtail.blocks.PageChooserBlock(required=False)), ('text', wagtail.blocks.CharBlock(max_length=250))])), ('integer', wagtail.blocks.IntegerBlock(required=True)), ('page', wagtail.blocks.PageChooserBlock()), ('stream', wagtail.blocks.StreamBlock([('page', wagtail.blocks.PageChooserBlock())])), ('rich_text', wagtail.blocks.RichTextBlock()), ('list_of_pages', wagtail.blocks.ListBlock(wagtail.blocks.PageChooserBlock())), ('list_of_captioned_pages', wagtail.blocks.ListBlock(wagtail.blocks.StructBlock([('page', wagtail.blocks.PageChooserBlock(required=False)), ('text', wagtail.blocks.CharBlock(max_length=250))])))], blank=True, verbose_name='Page body', use_json_field=True),
         ),
     ]

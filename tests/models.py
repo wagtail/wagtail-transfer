@@ -1,7 +1,6 @@
 from django.db import models
 from modelcluster.fields import ParentalKey, ParentalManyToManyField
 from taggit.managers import TaggableManager
-from wagtail import VERSION as WAGTAIL_VERSION
 from wagtail.fields import RichTextField, StreamField
 from wagtail.models import Orderable, Page
 from wagtail.snippets.models import register_snippet
@@ -60,8 +59,7 @@ class PageWithRichText(Page):
 
 
 class PageWithStreamField(Page):
-    extra_args = {"use_json_field": True} if WAGTAIL_VERSION < (6, 0) else {}
-    body = StreamField(BaseStreamBlock(), verbose_name="Page body", blank=True, **extra_args)
+    body = StreamField(BaseStreamBlock(), verbose_name="Page body", blank=True, use_json_field=True)
 
 
 class PageWithParentalManyToMany(Page):
