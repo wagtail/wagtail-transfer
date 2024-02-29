@@ -300,6 +300,64 @@ class TestPagesApi(TestCase):
             for model, pk, uid in data['mappings']
         ))
 
+    def test_rich_text_field_with_unhandled_link_type(self):
+        """
+        Rich text fields with custom link handlers are handled gracefully.
+
+        If rich text includes custom link/embed types that do not implement
+        `get_model', or that method returns None, the import shouldn't fail.
+        """
+        values = (
+            'Hello <a id="42" linktype="custom-link-notimplemented">world</a>',
+            'Hello <a id="42" linktype="custom-link-none">world</a>',
+        )
+        for value in values:
+            with self.subTest(value=value):
+                page = PageWithRichText(
+                    title="Rich text with unhandled link type",
+                    body=value,
+                )
+
+                parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+                parent_page.add_child(instance=page)
+
+                response = self.get(page.id)
+                data = response.json()
+                self.assertEqual(data["objects"][0]["fields"]["body"], value)
+
+    def test_rich_text_block_with_unhandled_link_type(self):
+        """
+        Rich text blocks with custom link handlers are handled gracefully.
+        """
+        values = (
+            [
+                {
+                    "type": "rich_text",
+                    "value": 'Hello <a id="42" linktype="custom-link-notimplemented">world</a>',
+                },
+            ],
+            [
+                {
+                    "type": "rich_text",
+                    "value": 'Hello <a id="42" linktype="custom-link-none">world</a>',
+                },
+            ],
+        )
+        for value in values:
+            with self.subTest(value=value):
+                page = PageWithStreamField(
+                    title="Rich text with unhandled link type",
+                    body=value,
+                )
+
+                parent_page = Page.objects.get(url_path='/home/existing-child-page/')
+                parent_page.add_child(instance=page)
+
+                response = self.get(page.id)
+                data = response.json()
+                stream_field_data = json.loads(data["objects"][0]["fields"]["body"])
+                self.assertEqual(stream_field_data[0]["value"], value[0]["value"])
+
     def test_streamfield_with_page_links_in_new_listblock_format(self):
         page = PageWithStreamField(title="I have a streamfield",
                                    body=json.dumps([
