@@ -1,9 +1,10 @@
 Changelog
 =========
 
-Unreleased
-~~~~~~~~~~
+0.9.4 (29.02.2024)
+~~~~~~~~~~~~~~~~~~
 
+ * Fix transfer of linktypes with no relevant model (Josh Munn)
  * Apply Wagtail 6.0 upgrade considerations (Katherine Domingo)
  * Apply Django 5.0 upgrade considerations (Katherine Domingo)
 
