@@ -13,7 +13,7 @@ from wagtail.models import Page
 
 from .field_adapters import adapter_registry
 from .locators import get_locator_for_model
-from .models import get_base_model, get_base_model_for_path, get_model_for_path
+from .models import get_base_model, get_base_model_for_path, get_model_for_path, normalize_model_label
 
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 default_update_related_models = ['wagtailimages.image']
 
 UPDATE_RELATED_MODELS = [
-    model_label.lower()
+    normalize_model_label(model_label)
     for model_label in getattr(settings, 'WAGTAILTRANSFER_UPDATE_RELATED_MODELS', default_update_related_models)
 ]
 
@@ -31,7 +31,7 @@ UPDATE_RELATED_MODELS = [
 default_no_follow_models = ['wagtailcore.page', 'contenttypes.contenttype']
 
 NO_FOLLOW_MODELS = [
-    model_label.lower()
+    normalize_model_label(model_label)
     for model_label in getattr(settings, 'WAGTAILTRANSFER_NO_FOLLOW_MODELS', default_no_follow_models)
 ]
 
