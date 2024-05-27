@@ -24,11 +24,13 @@ class PageChooserPagination extends React.Component {
 
       return (
         <li className="prev">
-          <a
-            onClick={onClickPrevious}
-            href="#"
-            className="icon icon-arrow-left navigate-pages"
-          >
+          <a onClick={onClickPrevious} href="#">
+            <svg
+              className="icon icon-arrow-left navigate-pages"
+              aria-hidden="true"
+            >
+              <use href="#icon-arrow-left"></use>
+            </svg>
             Previous
           </a>
         </li>
@@ -50,11 +52,13 @@ class PageChooserPagination extends React.Component {
 
       return (
         <li className="next">
-          <a
-            onClick={onClickNext}
-            href="#"
-            className="icon icon-arrow-right-after navigate-pages"
-          >
+          <a onClick={onClickNext} href="#">
+            <svg
+              className="icon icon-arrow-right navigate-pages"
+              aria-hidden="true"
+            >
+              <use href="#icon-arrow-right"></use>
+            </svg>
             Next
           </a>
         </li>

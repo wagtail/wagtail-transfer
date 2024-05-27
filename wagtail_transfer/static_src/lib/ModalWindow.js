@@ -28,10 +28,12 @@ class ModalWindow extends React.Component {
               <button
                 onClick={onModalClose}
                 type="button"
-                className="transfer button close icon text-replace icon-cross"
                 data-dismiss="modal"
                 aria-hidden={true}
               >
+                <svg className="icon icon-cross" aria-hidden="true">
+                  <use href="#icon-cross"></use>
+                </svg>
                 &times;
               </button>
               <div className="modal-body">{this.renderModalContents()}</div>

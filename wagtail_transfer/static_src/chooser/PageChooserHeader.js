@@ -8,11 +8,14 @@ const propTypes = {
 };
 
 const PageChooserHeader = ({ onSearch, searchEnabled, searchTitle }) => (
-  <header className="nice-padding hasform">
+  <header className="w-header w-header--hasform">
     <div className="row">
       <div className="left">
         <div className="col">
-          <h1 className="icon icon-doc-empty-inverse">
+          <h1 class="w-header__title" id="header-title">
+            <svg className="icon icon-doc-empty-inverse" aria-hidden="true">
+              <use href="#icon-doc-empty-inverse"></use>
+            </svg>
             {!searchTitle ? 'Choose a page' : searchTitle}
           </h1>
         </div>
