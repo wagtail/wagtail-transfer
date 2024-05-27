@@ -22,11 +22,15 @@ class ModelChooserPagination extends React.Component {
 
       return (
         <li className="prev">
-          <a
-            onClick={onClickPrevious}
-            href="#"
-            className="icon icon-arrow-left navigate-pages"
-          >
+          <a onClick={onClickPrevious} href="#">
+            <span className="icon-wrapper">
+              <svg
+                className="icon icon-arrow-left navigate-pages"
+                aria-hidden="true"
+              >
+                <use href="#icon-arrow-left"></use>
+              </svg>
+            </span>
             Previous
           </a>
         </li>
@@ -47,11 +51,15 @@ class ModelChooserPagination extends React.Component {
 
       return (
         <li className="next">
-          <a
-            onClick={onClickNext}
-            href="#"
-            className="icon icon-arrow-right-after navigate-pages"
-          >
+          <a onClick={onClickNext} href="#">
+            <span className="icon-wrapper">
+              <svg
+                className="icon icon-arrow-right navigate-pages"
+                aria-hidden="true"
+              >
+                <use href="#icon-arrow-right"></use>
+              </svg>
+            </span>
             Next
           </a>
         </li>

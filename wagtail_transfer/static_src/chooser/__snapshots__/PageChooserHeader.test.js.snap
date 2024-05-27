@@ -2,7 +2,7 @@
 
 exports[`PageChooserHeader renders 1`] = `
 <header
-  className="nice-padding hasform"
+  className="w-header w-header--hasform"
 >
   <div
     className="row"
@@ -13,11 +13,14 @@ exports[`PageChooserHeader renders 1`] = `
       <div
         className="col"
       >
-        <h1
-          className="icon icon-doc-empty-inverse"
-        >
-          Choose a page
-        </h1>
+        <h1 class="w-header__title" id="header-title">
+            <span className="icon-wrapper">
+              <svg className="icon icon-doc-empty-inverse" aria-hidden="true">
+                  <use href="#icon-doc-empty-inverse"></use>
+              </svg>
+            </span>
+            Choose a page
+          </h1>
       </div>
       <form
         className="col search-form"

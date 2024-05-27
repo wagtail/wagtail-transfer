@@ -35,12 +35,17 @@ class PageChooserBrowseView extends React.Component {
 
         if (ancestorPage.id === 1) {
           return (
-            <li key={ancestorPage.id} className="home">
+            <li key={ancestorPage.id} className="home w-h-full w-flex w-items-center">
               <a
                 href="#"
-                className="navigate-pages icon icon-home text-replace"
                 onClick={onClickNavigate}
+                className="w-text-text-label w-items-center"
               >
+                <span className="icon-wrapper">
+                  <svg className="navigate-pages icon icon-home default w-mr-1" aria-hidden="true">
+                    <use href="#icon-home"></use>
+                  </svg>
+                </span>
                 Home
               </a>
             </li>
@@ -48,8 +53,9 @@ class PageChooserBrowseView extends React.Component {
         }
 
         return (
-          <li key={ancestorPage.id}>
-            <a href="#" className="navigate-pages" onClick={onClickNavigate}>
+          <li key={ancestorPage.id} className="w-h-full w-flex w-items-center">
+            <a href="#" className="navigate-pages w-text-text-label w-items-center" onClick={onClickNavigate}>
+              <svg class="icon icon-arrow-right w-w-4 w-h-4 w-ml-1" aria-hidden="true"><use href="#icon-arrow-right"></use></svg>
               {ancestorPage.title}
             </a>
           </li>
@@ -57,7 +63,7 @@ class PageChooserBrowseView extends React.Component {
       });
     }
 
-    return <ul className="breadcrumb">{breadcrumbItems}</ul>;
+    return <ul className="w-flex w-flex-row w-justify-start w-items-center w-h-full w-pl-0 w-my-0 w-gap-2" aria-label="Breadcrumb">{breadcrumbItems}</ul>;
   }
   render() {
     const {

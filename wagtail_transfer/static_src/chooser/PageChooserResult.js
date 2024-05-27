@@ -116,10 +116,11 @@ class PageChooserResult extends React.Component {
           <a
             href="#"
             onClick={onNavigate}
-            className="icon text-replace icon-arrow-right navigate-pages"
+            className="navigate-pages"
             title={`Explore subpages of ${page.title}`}
+            aria-label="Explore"
           >
-            Explore
+            <svg className="icon icon-arrow-right default" aria-hidden="true"><use href="#icon-arrow-right"></use></svg>
           </a>
         </td>
       );
