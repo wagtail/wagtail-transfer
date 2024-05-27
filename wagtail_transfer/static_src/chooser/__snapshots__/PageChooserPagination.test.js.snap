@@ -13,10 +13,14 @@ exports[`PageChooserPagination has pages 1`] = `
         className="prev"
       >
         <a
-          className="icon icon-arrow-left navigate-pages"
           href="#"
           onClick={[Function]}
         >
+          <span className="icon-wrapper">
+            <svg className="icon icon-arrow-left navigate-pages" aria-hidden="true">
+                <use href="#icon-arrow-left"></use>
+            </svg>
+          </span>
           Previous
         </a>
       </li>
@@ -24,10 +28,14 @@ exports[`PageChooserPagination has pages 1`] = `
         className="next"
       >
         <a
-          className="icon icon-arrow-right-after navigate-pages"
           href="#"
           onClick={[Function]}
         >
+          <span className="icon-wrapper">
+            <svg className="icon icon-arrow-right navigate-pages" aria-hidden="true">
+              <use href="#icon-arrow-right"></use>
+            </svg>
+          </span>
           Next
         </a>
       </li>

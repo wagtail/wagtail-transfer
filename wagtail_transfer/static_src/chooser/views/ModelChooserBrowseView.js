@@ -34,9 +34,13 @@ class ModelChooserBrowseView extends React.Component {
             <li key={ancestorPage.id} className="home">
               <a
                 href="#"
-                className="navigate-pages icon icon-home text-replace"
                 onClick={onClickNavigate}
               >
+                <span className="icon-wrapper">
+                  <svg className="navigate-pages icon icon-home text-replace" aria-hidden="true">
+                    <use href="#icon-home"></use>
+                  </svg>
+                </span>
                 Home
               </a>
             </li>

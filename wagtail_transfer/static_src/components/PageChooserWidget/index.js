@@ -59,9 +59,14 @@ export default function PageChooserWidget({
         <div className="unchosen">
           <button
             type="button"
-            className="transfer bicolor button button-secondary action-choose icon icon-doc-empty-inverse"
+            className="transfer bicolor button button-secondary action-choose button--icon"
             onClick={onClickChoose}
           >
+            <span className="icon-wrapper">
+              <svg className="icon icon-doc-empty-inverse icon" aria-hidden="true">
+                <use href="#icon-doc-empty-inverse"></use>
+              </svg>
+            </span>
             Choose a parent page
           </button>
           <h6 className="transfer subtitle">{unchosenText}</h6>

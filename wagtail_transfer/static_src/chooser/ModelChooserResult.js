@@ -47,10 +47,10 @@ class ModelChooserResult extends React.Component {
         <a
           href="#"
           onClick={onNavigate}
-          className="icon text-replace icon-arrow-right navigate-pages"
+          className="navigate-pages"
           title={`Explore data  ${model.name}`}
         >
-          Explore
+          <svg className="icon icon-arrow-right default" aria-hidden="true"><use href="#icon-arrow-right"></use></svg>
         </a>
       </td>
     );
