@@ -32,7 +32,7 @@ def register_admin_menu_item():
         'Import',
         reverse('wagtail_transfer_admin:choose_page'),
         order=10000,
-        classname="icon icon-doc-empty-inverse",
+        icon_name="doc-empty-inverse"
     )
 
 
