@@ -30,7 +30,13 @@ jobs:
           name: Test
 
   nightly-wagtail-test:
-    executor: python/default
+    parameters:
+      python-version:
+        default: "3.12"
+        type: string
+    executor:
+      name: python/default
+      tag: "<< parameters.python-version >>"
     steps:
       - checkout
       - run: git clone git@github.com:wagtail/wagtail.git
