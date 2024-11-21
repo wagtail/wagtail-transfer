@@ -52,7 +52,7 @@ workflows:
     jobs:
       - build-and-test:
           wagtail-version: "wagtail>=5.2,<5.3"
-          python-version: "3.8"
+          python-version: "3.9"
       - build-and-test:
           wagtail-version: "wagtail>=6.0,<6.1"
           python-version: "3.12"
