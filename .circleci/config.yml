@@ -10,7 +10,7 @@ jobs:
         default: "wagtail"
         type: string
       python-version:
-        default: "3.12"
+        default: "3.13"
         type: string
     executor:
       name: python/default
@@ -32,7 +32,7 @@ jobs:
   nightly-wagtail-test:
     parameters:
       python-version:
-        default: "3.12"
+        default: "3.13"
         type: string
     executor:
       name: python/default
@@ -52,10 +52,10 @@ workflows:
     jobs:
       - build-and-test:
           wagtail-version: "wagtail>=5.2,<5.3"
-          python-version: "3.8"
+          python-version: "3.9"
       - build-and-test:
-          wagtail-version: "wagtail>=6.0,<6.1"
-          python-version: "3.12"
+          wagtail-version: "wagtail>=6.4,<6.5"
+          python-version: "3.13"
   nightly:
     jobs:
       - nightly-wagtail-test
