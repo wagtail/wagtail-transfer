@@ -783,6 +783,101 @@ class TestImport(TestCase):
             ],
         )
 
+    def test_import_page_with_unrecognised_stream_block(self):
+        data = """{
+                "ids_for_import": [
+                    ["wagtailcore.page", 6]
+                ],
+                "mappings": [
+                    ["wagtailcore.page", 6, "0c7a9390-16cb-11ea-8000-0800278dc04d"],
+                    ["wagtailcore.page", 300, "33333333-3333-3333-3333-333333333333"]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.pagewithstreamfield",
+                        "pk": 6,
+                        "fields": {
+                            "title": "I have a streamfield",
+                            "slug": "i-have-a-streamfield",
+                            "live": true,
+                            "seo_title": "",
+                            "show_in_menus": false,
+                            "wagtail_admin_comments": [],
+                            "search_description": "",
+                            "body": "[{\\"type\\": \\"integer\\", \\"value\\": 1, \\"id\\": \\"17b972cb-a952-4940-87e2-e4eb00703997\\"}, {\\"type\\": \\"outeger\\", \\"value\\": 1, \\"id\\": \\"17b972cb-a952-4940-87e2-e4eb00703998\\"}]"
+                        },
+                        "parent_id": 300
+                    }
+                ]
+        }"""
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+        page = PageWithStreamField.objects.get(slug="i-have-a-streamfield")
+
+        imported_streamfield = page.body.stream_block.get_prep_value(page.body)
+
+        # The 'outeger' block should be discarded
+        self.assertEqual(
+            imported_streamfield,
+            [
+                {
+                    'id': '17b972cb-a952-4940-87e2-e4eb00703997',
+                    'type': 'integer',
+                    'value': 1,
+                },
+            ],
+        )
+
+    def test_import_page_with_unrecognised_struct_block_child(self):
+        data = """{
+                "ids_for_import": [
+                    ["wagtailcore.page", 6]
+                ],
+                "mappings": [
+                    ["wagtailcore.page", 6, "0c7a9390-16cb-11ea-8000-0800278dc04d"],
+                    ["wagtailcore.page", 300, "33333333-3333-3333-3333-333333333333"]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.pagewithstreamfield",
+                        "pk": 6,
+                        "fields": {
+                            "title": "I have a streamfield",
+                            "slug": "i-have-a-streamfield",
+                            "live": true,
+                            "seo_title": "",
+                            "show_in_menus": false,
+                            "wagtail_admin_comments": [],
+                            "search_description": "",
+                            "body": "[{\\"type\\": \\"link_block\\", \\"value\\": {\\"page\\": 300, \\"text\\": \\"Some link\\", \\"flavour\\": \\"Raspberry ripple\\"}, \\"id\\": \\"17b972cb-a952-4940-87e2-e4eb00703997\\"}]"
+                        },
+                        "parent_id": 300
+                    }
+                ]
+        }"""
+        importer = ImportPlanner(root_page_source_pk=1, destination_parent_id=None)
+        importer.add_json(data)
+        importer.run()
+        page = PageWithStreamField.objects.get(slug="i-have-a-streamfield")
+
+        imported_streamfield = page.body.stream_block.get_prep_value(page.body)
+
+        # The 'flavour' field should be discarded
+        self.assertEqual(
+            imported_streamfield,
+            [
+                {
+                    'id': '17b972cb-a952-4940-87e2-e4eb00703997',
+                    'type': 'link_block',
+                    'value': {
+                        'page': 3,
+                        'text': 'Some link',
+                    },
+                },
+            ],
+        )
+
     def test_import_page_with_streamfield_page_links_where_linked_pages_not_imported(self):
         data = """{
                 "ids_for_import": [

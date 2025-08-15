@@ -1,7 +1,7 @@
 from functools import partial
 
 from django.core.exceptions import ValidationError
-from wagtail.blocks import (ChooserBlock, ListBlock, RichTextBlock,
+from wagtail.blocks import (Block, ChooserBlock, ListBlock, RichTextBlock,
                             StreamBlock, StructBlock)
 
 from .models import get_base_model
@@ -113,6 +113,9 @@ class StreamBlockHandler(BaseBlockHandler):
         updated_stream = []
         for element in stream:
             new_block = self.block.child_blocks.get(element['type'])
+            if not new_block:
+                # If the block type is not recognised, skip it
+                continue
             new_block_handler = get_block_handler(new_block)
             new_stream = element['value']
             try:
@@ -137,6 +140,9 @@ class StructBlockHandler(BaseBlockHandler):
         updated_stream = {}
         for key in stream:
             new_block = self.block.child_blocks.get(key)
+            if not new_block:
+                # If the block type is not recognised, skip it
+                continue
             new_block_handler = get_block_handler(new_block)
             new_stream = stream[key]
             try:
@@ -173,6 +179,10 @@ class ChooserBlockHandler(BaseBlockHandler):
 
 def get_block_handler(block):
     # find the handler class for the most specific class in the block's inheritance tree
+
+    if not isinstance(block, Block):
+        raise TypeError('Expected a Block instance, got %r' % block)
+
     for block_class in type(block).__mro__:
         if block_class in HANDLERS_BY_BLOCK_CLASS:
             handler_class = HANDLERS_BY_BLOCK_CLASS[block_class]
