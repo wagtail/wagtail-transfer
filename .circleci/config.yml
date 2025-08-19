@@ -9,6 +9,9 @@ jobs:
       wagtail-version:
         default: "wagtail"
         type: string
+      django-version:
+        default: "django"
+        type: string
       python-version:
         default: "3.12"
         type: string
