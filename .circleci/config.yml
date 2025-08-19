@@ -54,27 +54,15 @@ workflows:
   main:
     jobs:
       - build-and-test:
-          wagtail-version: "wagtail>=5.2,<5.3"
-          django-version: "django>=4.2,<5.0"
+          wagtail-version: "wagtail>=6.3,<6.4"
+          django-version: "django>=4.2,<4.3"
           python-version: "3.9"
       - build-and-test:
-          wagtail-version: "wagtail>=6.0,<6.1"
-          django-version: "django>=5.0,<5.1"
+          wagtail-version: "wagtail>=7.0,<7.1"
+          django-version: "django>=5.1,<5.2"
           python-version: "3.12"
       - build-and-test:
-          wagtail-version: "wagtail>=6.1,<6.2"
-          django-version: "django>=5.0,<5.1"
-          python-version: "3.12"
-      - build-and-test:
-          wagtail-version: "wagtail>=6.2,<6.3"
-          django-version: "django>=5.0,<5.1"
-          python-version: "3.12"
-      - build-and-test:
-          wagtail-version: "wagtail>=6.3,<6.4"
-          django-version: "django>=5.2,<5.3"
-          python-version: "3.12"
-      - build-and-test:
-          wagtail-version: "wagtail>=6.4,<6.5"
+          wagtail-version: "wagtail>=7.1,<7.2"
           django-version: "django>=5.2,<5.3"
           python-version: "3.13"
   nightly:
