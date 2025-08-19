@@ -45,3 +45,9 @@ def get_base_model_for_path(model_path):
     (e.g. for 'blog.blog_page', return Page)
     """
     return get_base_model(get_model_for_path(model_path))
+
+
+def normalize_model_label(label):
+    app_label, model_name = label.rsplit('.', 1)
+    return "{}.{}".format(app_label, model_name.lower())
+    

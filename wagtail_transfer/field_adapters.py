@@ -20,7 +20,7 @@ from wagtail.fields import RichTextField, StreamField
 
 from .files import File, FileTransferError, get_file_hash, get_file_size
 from .locators import get_locator_for_model
-from .models import get_base_model, get_base_model_for_path
+from .models import get_base_model, get_base_model_for_path, normalize_model_label
 from .richtext import get_reference_handler
 from .streamfield import get_object_references, update_object_ids
 
@@ -29,10 +29,10 @@ logger = logging.getLogger(__name__)
 
 WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS = getattr(settings, "WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS", [('wagtailimages.image', 'tagged_items', True)])
 FOLLOWED_REVERSE_RELATIONS = {
-    (model_label.lower(), relation.lower()) for model_label, relation, _ in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS
+    (normalize_model_label(model_label), relation.lower()) for model_label, relation, _ in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS
 }
 DELETED_REVERSE_RELATIONS = {
-    (model_label.lower(), relation.lower()) for model_label, relation, track_deletions in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS if track_deletions
+    (normalize_model_label(model_label), relation.lower()) for model_label, relation, track_deletions in WAGTAILTRANSFER_FOLLOWED_REVERSE_RELATIONS if track_deletions
 }
 ADMIN_BASE_URL = getattr(
     settings, "WAGTAILADMIN_BASE_URL",

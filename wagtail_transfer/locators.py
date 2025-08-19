@@ -12,7 +12,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ImproperlyConfigured
 from django.db import IntegrityError
 
-from .models import IDMapping, get_base_model
+from .models import IDMapping, get_base_model, normalize_model_label
 
 
 logger = logging.getLogger(__name__)
@@ -27,7 +27,7 @@ LOOKUP_FIELDS = {
     'contenttypes.contenttype': ['app_label', 'model'],
 }
 for model_label, fields in getattr(settings, 'WAGTAILTRANSFER_LOOKUP_FIELDS', {}).items():
-    LOOKUP_FIELDS[model_label.lower()] = fields
+    LOOKUP_FIELDS[normalize_model_label(model_label)] = fields
 
 
 class IDMappingLocator:
