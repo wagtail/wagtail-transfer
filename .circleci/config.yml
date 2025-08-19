@@ -13,7 +13,7 @@ jobs:
         default: "django"
         type: string
       python-version:
-        default: "3.12"
+        default: "3.13"
         type: string
     executor:
       name: python/default
@@ -35,7 +35,7 @@ jobs:
   nightly-wagtail-test:
     parameters:
       python-version:
-        default: "3.12"
+        default: "3.13"
         type: string
     executor:
       name: python/default
@@ -73,6 +73,10 @@ workflows:
           wagtail-version: "wagtail>=6.3,<6.4"
           django-version: "django>=5.2,<5.3"
           python-version: "3.12"
+      - build-and-test:
+          wagtail-version: "wagtail>=6.4,<6.5"
+          django-version: "django>=5.2,<5.3"
+          python-version: "3.13"
   nightly:
     jobs:
       - nightly-wagtail-test
