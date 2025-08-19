@@ -18,11 +18,11 @@ jobs:
     steps:
       - checkout
       - restore_cache:
-          key: pip-{{ .Branch }}-<< parameters.wagtail-version >>-py<< parameters.python-version >>
-      - run: pip install "<< parameters.wagtail-version >>"
+          key: pip-{{ .Branch }}-<< parameters.wagtail-version >>-<< parameters.django-version >>-py<< parameters.python-version >>
+      - run: pip install "<< parameters.django-version >>" "<< parameters.wagtail-version >>"
       - run: pip install -e .
       - save_cache:
-          key: pip-{{ .Branch }}-<< parameters.wagtail-version >>-py<< parameters.python-version >>
+          key: pip-{{ .Branch }}-<< parameters.wagtail-version >>-<< parameters.django-version >>-py<< parameters.python-version >>
           paths:
             - "~/.cache/pip"
       - run:
@@ -52,18 +52,23 @@ workflows:
     jobs:
       - build-and-test:
           wagtail-version: "wagtail>=5.2,<5.3"
+          django-version: "django>=4.2,<5.0"
           python-version: "3.9"
       - build-and-test:
           wagtail-version: "wagtail>=6.0,<6.1"
+          django-version: "django>=5.0,<5.1"
           python-version: "3.12"
       - build-and-test:
           wagtail-version: "wagtail>=6.1,<6.2"
+          django-version: "django>=5.0,<5.1"
           python-version: "3.12"
       - build-and-test:
           wagtail-version: "wagtail>=6.2,<6.3"
+          django-version: "django>=5.0,<5.1"
           python-version: "3.12"
       - build-and-test:
           wagtail-version: "wagtail>=6.3,<6.4"
+          django-version: "django>=5.2,<5.3"
           python-version: "3.12"
   nightly:
     jobs:
