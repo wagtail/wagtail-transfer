@@ -1,6 +1,16 @@
 Changelog
 =========
 
+0.10 (19.08.2025)
+~~~~~~~~~~~~~~~~~
+
+ * Add support for Wagtail 6.3, 7.0, 7.1; drop support for older versions
+ * Add support for Django 5.1 and 5.2; drop support for Django 5.0 and <4.2
+ * Add support for Python 3.13; drop support for Python 3.8 (Nick Moreton)
+ * Migrate to SVG icons and fix UI styling (Katherine Domingo, Matt Westcott)
+ * Correctly skip unrecognised StreamField block types in data (Matt Westcott)
+
+
 0.9.4 (29.02.2024)
 ~~~~~~~~~~~~~~~~~~
 
