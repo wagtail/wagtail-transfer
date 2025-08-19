@@ -27,7 +27,7 @@ def get_base_model(model):
     e.g. for BlogPage, return Page
     """
     if model._meta.parents:
-        model = model._meta.get_parent_list()[0]
+        model = model._meta.get_parent_list()[-1]
     return model
 
 
