@@ -2255,7 +2255,7 @@ class TestImport(TestCase):
         importer.add_json(data)
         importer.run()
 
-        self.assertEquals(
+        self.assertEqual(
             get.call_args.kwargs['auth'],
             settings.WAGTAILTRANSFER_SOURCES_BASIC_AUTH['staging']['BASIC_AUTH_SECRET']
         )
