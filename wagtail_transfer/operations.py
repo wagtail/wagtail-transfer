@@ -467,8 +467,20 @@ class ImportPlanner:
 
         # arrange operations into an order that satisfies dependencies
         operation_order = []
-        for operation in satisfiable_operations:
-            self._add_to_operation_order(operation, operation_order, [operation])
+        while satisfiable_operations:
+            held_operations = []
+            for operation in satisfiable_operations:
+                try:
+                    self._add_to_operation_order(operation, operation_order, [operation])
+                except CircularDependencyException as e:
+                    # if the exception has propagated to this level it ought to be a soft dependency,
+                    # as otherwise it should have been caught by _check_satisfiable.
+                    # Hold it back to retry adding later
+                    held_operations.append(operation)
+            if len(held_operations) == len(satisfiable_operations):
+                # Not managed to add any of the operations - can't proceed
+                raise CircularDependencyException("Unsatisfiable circular dependency found")
+            satisfiable_operations = held_operations
 
         # run operations in order
         with transaction.atomic():
