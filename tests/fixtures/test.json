@@ -1,5 +1,13 @@
 [
 {
+"model": "wagtailcore.locale",
+"pk": 1,
+"fields": {
+    "language_code": "en"
+}
+},
+
+{
     "pk": 1,
     "model": "wagtailcore.page",
     "fields": {
@@ -13,6 +21,7 @@
             "page"
         ],
         "path": "0001",
+        "locale_id": 1,
         "url_path": "/",
         "slug": "root"
     }
@@ -29,6 +38,7 @@
         "depth": 2,
         "content_type": ["tests", "simplepage"],
         "path": "00010001",
+        "locale_id": 1,
         "url_path": "/home/",
         "slug": "home"
     }
@@ -60,6 +70,7 @@
         "depth": 3,
         "content_type": ["tests", "simplepage"],
         "path": "000100010001",
+        "locale_id": 1,
         "url_path": "/home/existing-child-page/",
         "slug": "existing-child-page"
     }
@@ -98,6 +109,7 @@
         "depth": 3,
         "content_type": ["tests", "simplepage"],
         "path": "000100010002",
+        "locale_id": 1,
         "url_path": "/home/nonexisting-child-page/",
         "slug": "nonexisting-child-page"
     }
@@ -121,6 +133,7 @@
         "depth": 3,
         "content_type": ["tests", "sponsoredpage"],
         "path": "000100010003",
+        "locale_id": 1,
         "url_path": "/home/oil-is-great/",
         "slug": "oil-is-great"
     }
