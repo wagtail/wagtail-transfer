@@ -1,6 +1,14 @@
 Changelog
 =========
 
+0.11 (30.10.2025)
+~~~~~~~~~~~~~~~~~
+
+ * Add Basic Auth support to API requests (Daniel Kirkham)
+ * Fix: Don't convert app labels in config model IDs to lowercase (Alex Sedov)
+ * Fix test fixtures for provisional Wagtail 7.3 support (Matt Westcott)
+ * Update front-end dependencies
+
 0.10 (19.08.2025)
 ~~~~~~~~~~~~~~~~~
 
