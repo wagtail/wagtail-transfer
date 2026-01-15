@@ -2,6 +2,7 @@ import json
 from datetime import date, datetime, timezone
 from unittest import mock
 
+from django.contrib import messages
 from django.contrib.auth.models import AnonymousUser, Group, Permission, User
 from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import redirect
@@ -293,6 +294,82 @@ class TestImportView(TestCase):
         snippet = content['items'][0]
         self.assertEqual(snippet['model_label'], 'tests.category')
         self.assertEqual(snippet['name'], 'Category')
+    
+    def test_slug_validation_create_page(self, get, post):
+        get.return_value.status_code = 200
+        get.return_value.content = b"""{
+            "ids_for_import": [
+                ["wagtailcore.page", 20]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 20, "20202020-2020-2020-2020-202020202020"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.sponsoredpage",
+                    "pk": 20,
+                    "parent_id": 2,
+                    "fields": {
+                        "title": "Same slug new page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "existing-child-page",
+                        "intro": "This new page with slug that already exist at destination",
+                        "wagtail_admin_comments": []
+                    }
+                }
+            ]
+        }"""
+
+        response = self.client.post("/admin/wagtail-transfer/import/", {
+            "source": "staging",
+            "source_page_id": "20",
+            "dest_page_id": "2",
+        })
+        self.assertRedirects(response, "/admin/wagtail-transfer/choose/")
+        messages_list = list(messages.get_messages(response.wsgi_request))
+        self.assertEqual(len(messages_list), 1)
+        self.assertEqual(messages_list[0].message, "The slug 'existing-child-page' is already in use at the selected parent page. Make sure the slug is unique and try again.")
+        self.assertEqual(messages_list[0].level, messages.ERROR)
+
+    def test_slug_validation_update_page(self, get, post):
+        get.return_value.status_code = 200
+        get.return_value.content = b"""{
+            "ids_for_import": [
+                ["wagtailcore.page", 23]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 23, "00017017-5555-5555-5555-555555555555"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.sponsoredpage",
+                    "pk": 23,
+                    "parent_id": 2,
+                    "fields": {
+                        "title": "Same slug page to be updated",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "existing-child-page",
+                        "intro": "This page to be updated with slug that already exist at destination",
+                        "wagtail_admin_comments": []
+                    }
+                }
+            ]
+        }"""
+
+        response = self.client.post("/admin/wagtail-transfer/import/", {
+            "source": "staging",
+            "source_page_id": "23",
+            "dest_page_id": "",
+        })
+        self.assertRedirects(response, "/admin/wagtail-transfer/choose/")
+        messages_list = list(messages.get_messages(response.wsgi_request))
+        self.assertEqual(len(messages_list), 1)
+        self.assertEqual(messages_list[0].message, "The slug 'existing-child-page' is already in use at the selected parent page. Make sure the slug is unique and try again.")
+        self.assertEqual(messages_list[0].level, messages.ERROR)
+        page = SponsoredPage.objects.get(id=5)
+        self.assertEqual(page.slug, "oil-is-great")
 
 
 class ImportPermissionsTests(TestCase):

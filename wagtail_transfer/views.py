@@ -252,6 +252,27 @@ def import_missing_object_data(source, importer: ImportPlanner):
     return importer
 
 
+def is_slug_available(request, json_data):
+    data = json.loads(json_data)
+    source_page_id = int(request.POST["source_page_id"])
+    dest_page_id = request.POST["dest_page_id"] or None
+
+    slug = next((item["fields"].get("slug") for item in data["objects"] if issubclass(get_model_for_path(item["model"]), Page) and item["pk"] == source_page_id), "")
+    error_msg = f"The slug '{slug}' is already in use at the selected parent page. Make sure the slug is unique and try again."
+
+    if dest_page_id:
+        parent_page = Page.objects.filter(id=dest_page_id).first()
+        page = None
+    else:
+        uid = next((item[2] for item in data["mappings"] if item[0] == "wagtailcore.page" and item[1] == source_page_id), "")
+        page = get_locator_for_model(Page).find(uid)
+        parent_page = page.get_parent() if page else None
+    
+    if parent_page and slug:
+        return Page._slug_is_available(slug, parent_page, page), error_msg
+    return True, error_msg
+
+
 def import_page(request):
     source = request.POST['source']
     base_url = settings.WAGTAILTRANSFER_SOURCES[source]['BASE_URL']
@@ -262,6 +283,11 @@ def import_page(request):
         auth=requests_auth(source),
         params={'digest': digest}
     )
+
+    slug_available, slug_error_msg = is_slug_available(request, response.content)
+    if not slug_available:
+        messages.add_message(request, messages.ERROR, slug_error_msg)
+        return redirect("wagtail_transfer_admin:choose_page")
 
     dest_page_id = request.POST['dest_page_id'] or None
     importer = ImportPlanner.for_page(source=request.POST['source_page_id'], destination=dest_page_id, source_site=source)
