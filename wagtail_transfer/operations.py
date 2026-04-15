@@ -35,6 +35,8 @@ NO_FOLLOW_MODELS = [
     for model_label in getattr(settings, 'WAGTAILTRANSFER_NO_FOLLOW_MODELS', default_no_follow_models)
 ]
 
+FIELD_TRANSFORMATION = getattr(settings, 'WAGTAILTRANSFER_FIELD_TRANSFORMATION', {})
+
 
 class CircularDependencyException(Exception):
     pass
@@ -623,6 +625,25 @@ class Operation:
         # the set of objects that must be deleted when we import this object
         return set()
 
+def get_transformed_field_name(model_name, field):
+    """
+    Given a destination model label and a destination field object, return the corresponding
+    source field name to look up in the incoming JSON data.
+
+    The WAGTAILTRANSFER_FIELD_TRANSFORMATION setting maps destination model labels to dicts
+    of {destination_field_name: source_field_name}. If no transformation is configured for
+    the given model/field, the field's own name is returned unchanged.
+    """
+    field_transformation = getattr(settings, 'WAGTAILTRANSFER_FIELD_TRANSFORMATION', {})
+    normalized = normalize_model_label(model_name)
+    normalized_config = {normalize_model_label(k): v for k, v in field_transformation.items()}
+    if normalized not in normalized_config:
+        return field.name
+    field_map = normalized_config[normalized]
+    if field.name in field_map:
+        return field_map[field.name]
+    return field.name
+
 
 class SaveOperationMixin:
     """
@@ -642,8 +663,8 @@ class SaveOperationMixin:
     def _populate_fields(self, context):
         for field in self.model._meta.get_fields():
             try:
-                value = self.object_data['fields'][field.name]
-            except KeyError:
+                value = self.object_data['fields'][get_transformed_field_name(self.model._meta.label_lower, field)]
+            except KeyError as e:
                 continue
 
             adapter = adapter_registry.get_field_adapter(field)
@@ -660,7 +681,7 @@ class SaveOperationMixin:
         for field in self.model._meta.get_fields():
             if isinstance(field, models.ManyToManyField):
                 try:
-                    value = self.object_data['fields'][field.name]
+                    value = self.object_data['fields'][get_transformed_field_name(self.model._meta.label_lower, field)]
                 except KeyError:
                     continue
                 target_model = get_base_model(field.related_model)
@@ -690,7 +711,7 @@ class SaveOperationMixin:
         deps = super().dependencies
 
         for field in self.model._meta.get_fields():
-            val = self.object_data['fields'].get(field.name)
+            val = self.object_data['fields'].get(get_transformed_field_name(self.model._meta.label_lower, field))
             adapter = adapter_registry.get_field_adapter(field)
             if adapter:
                 deps.update(adapter.get_dependencies(val))
@@ -703,7 +724,7 @@ class SaveOperationMixin:
 
         deletions = super().deletions(context)
         for field in self.model._meta.get_fields():
-            val = self.object_data['fields'].get(field.name)
+            val = self.object_data['fields'].get(get_transformed_field_name(self.model._meta.label_lower, field))
             adapter = adapter_registry.get_field_adapter(field)
             if adapter:
                 deletions.update(adapter.get_object_deletions(self.instance, val, context))

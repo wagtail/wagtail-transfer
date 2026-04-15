@@ -18,7 +18,7 @@ from tests.models import (Advert, Author, Avatar, Category, LongAdvert,
                           PageWithStreamField, RedirectPage, SectionedPage,
                           SimplePage, SponsoredPage)
 from wagtail_transfer.models import IDMapping
-from wagtail_transfer.operations import ImportPlanner
+from wagtail_transfer.operations import ImportPlanner, get_transformed_field_name
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason
@@ -2259,3 +2259,529 @@ class TestImport(TestCase):
             get.call_args.kwargs['auth'],
             settings.WAGTAILTRANSFER_SOURCES_BASIC_AUTH['staging']['BASIC_AUTH_SECRET']
         )
+
+class TestFieldTransformation(TestCase):
+    """Tests for the WAGTAILTRANSFER_FIELD_TRANSFORMATION field name remapping extension point."""
+    fixtures = ['test.json']
+
+    @override_settings(WAGTAILTRANSFER_FIELD_TRANSFORMATION={
+        'tests.category': {'name': 'source_name', 'colour': 'source_colour'},
+    })
+    def test_get_transformed_field_name_returns_source_name(self):
+        """When a field transformation is configured, get_transformed_field_name should return
+        the corresponding source field name."""
+        import importlib
+        from wagtail_transfer import operations
+        importlib.reload(operations)
+        try:
+            field = Category._meta.get_field('name')
+            result = operations.get_transformed_field_name('tests.category', field)
+            self.assertEqual(result, 'source_name')
+        finally:
+            importlib.reload(operations)
+
+    @override_settings(WAGTAILTRANSFER_FIELD_TRANSFORMATION={
+        'tests.category': {'name': 'source_name'},
+    })
+    def test_get_transformed_field_name_returns_original_for_unconfigured_field(self):
+        """For fields not in the transformation config, the original field name is returned."""
+        import importlib
+        from wagtail_transfer import operations
+        importlib.reload(operations)
+        try:
+            field = Category._meta.get_field('colour')
+            result = operations.get_transformed_field_name('tests.category', field)
+            self.assertEqual(result, 'colour')
+        finally:
+            importlib.reload(operations)
+
+    @override_settings(WAGTAILTRANSFER_FIELD_TRANSFORMATION={})
+    def test_get_transformed_field_name_returns_original_when_no_config(self):
+        """When WAGTAILTRANSFER_FIELD_TRANSFORMATION is empty, field names are unchanged."""
+        import importlib
+        from wagtail_transfer import operations
+        importlib.reload(operations)
+        try:
+            field = Category._meta.get_field('name')
+            result = operations.get_transformed_field_name('tests.category', field)
+            self.assertEqual(result, 'name')
+        finally:
+            importlib.reload(operations)
+
+    @override_settings(WAGTAILTRANSFER_FIELD_TRANSFORMATION={})
+    def test_get_transformed_field_name_returns_original_for_unconfigured_model(self):
+        """When the model is not present in the config, field names are unchanged."""
+        import importlib
+        from wagtail_transfer import operations
+        importlib.reload(operations)
+        try:
+            field = Author._meta.get_field('name')
+            result = operations.get_transformed_field_name('tests.author', field)
+            self.assertEqual(result, 'name')
+        finally:
+            importlib.reload(operations)
+
+    @override_settings(WAGTAILTRANSFER_FIELD_TRANSFORMATION={
+        'tests.category': {'name': 'source_name', 'colour': 'source_colour'},
+    })
+    def test_import_model_create_with_field_transformation(self):
+        """Creating a snippet via import should remap source field names to destination fields."""
+        import importlib
+        from wagtail_transfer import operations
+        importlib.reload(operations)
+        try:
+            data = """{
+                "ids_for_import": [
+                    ["tests.category", 500]
+                ],
+                "mappings": [
+                    ["tests.category", 500, "ffa00000-0000-0000-0000-000000000001"]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.category",
+                        "pk": 500,
+                        "fields": {
+                            "source_name": "Transformed Category",
+                            "source_colour": "blue"
+                        }
+                    }
+                ]
+            }"""
+            importer = operations.ImportPlanner(model="tests.category", source_site="staging")
+            importer.add_json(data)
+            importer.run()
+
+            cat = Category.objects.get(name="Transformed Category")
+            self.assertEqual(cat.colour, "blue")
+        finally:
+            importlib.reload(operations)
+
+    @override_settings(WAGTAILTRANSFER_FIELD_TRANSFORMATION={
+        'tests.author': {'name': 'author_name', 'bio': 'author_bio'},
+    })
+    def test_import_model_create_author_with_field_transformation(self):
+        """Creating an Author snippet via import should remap source field names."""
+        import importlib
+        from wagtail_transfer import operations
+        importlib.reload(operations)
+        try:
+            data = """{
+                "ids_for_import": [
+                    ["tests.author", 200]
+                ],
+                "mappings": [
+                    ["tests.author", 200, "ffa00000-0000-0000-0000-000000000002"]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.author",
+                        "pk": 200,
+                        "fields": {
+                            "author_name": "Remapped Author",
+                            "author_bio": "A bio from the source using different field names"
+                        }
+                    }
+                ]
+            }"""
+            importer = operations.ImportPlanner(model="tests.author", source_site="staging")
+            importer.add_json(data)
+            importer.run()
+
+            author = Author.objects.get(name="Remapped Author")
+            self.assertEqual(author.bio, "A bio from the source using different field names")
+        finally:
+            importlib.reload(operations)
+
+    @override_settings(WAGTAILTRANSFER_FIELD_TRANSFORMATION={
+        'tests.category': {'name': 'source_name'},
+    })
+    def test_import_model_partial_field_transformation(self):
+        """When only some fields are transformed, untransformed fields should pass through as-is."""
+        import importlib
+        from wagtail_transfer import operations
+        importlib.reload(operations)
+        try:
+            data = """{
+                "ids_for_import": [
+                    ["tests.category", 501]
+                ],
+                "mappings": [
+                    ["tests.category", 501, "ffa00000-0000-0000-0000-000000000003"]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.category",
+                        "pk": 501,
+                        "fields": {
+                            "source_name": "Partially Transformed",
+                            "colour": "green"
+                        }
+                    }
+                ]
+            }"""
+            importer = operations.ImportPlanner(model="tests.category", source_site="staging")
+            importer.add_json(data)
+            importer.run()
+
+            cat = Category.objects.get(name="Partially Transformed")
+            self.assertEqual(cat.colour, "green")
+        finally:
+            importlib.reload(operations)
+
+    def test_import_model_without_field_transformation(self):
+        """With no WAGTAILTRANSFER_FIELD_TRANSFORMATION set, imports work exactly as before."""
+        data = """{
+            "ids_for_import": [
+                ["tests.category", 502]
+            ],
+            "mappings": [
+                ["tests.category", 502, "ffa00000-0000-0000-0000-000000000004"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.category",
+                    "pk": 502,
+                    "fields": {
+                        "name": "Normal Category",
+                        "colour": "yellow"
+                    }
+                }
+            ]
+        }"""
+        importer = ImportPlanner(model="tests.category", source_site="staging")
+        importer.add_json(data)
+        importer.run()
+
+        cat = Category.objects.get(name="Normal Category")
+        self.assertEqual(cat.colour, "yellow")
+
+    @override_settings(WAGTAILTRANSFER_FIELD_TRANSFORMATION={
+        'tests.author': {'bio': 'source_bio'},
+    })
+    def test_import_model_update_with_field_transformation(self):
+        """Updating an existing model via import should remap source field names."""
+        import importlib
+        from wagtail_transfer import operations
+        importlib.reload(operations)
+        try:
+            # Author pk=1 (Jack Kerouac) exists in fixture with UID b00cb00c-1111-1111-1111-111111111111
+            data = """{
+                "ids_for_import": [
+                    ["tests.author", 1]
+                ],
+                "mappings": [
+                    ["tests.author", 1, "b00cb00c-1111-1111-1111-111111111111"]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.author",
+                        "pk": 1,
+                        "fields": {
+                            "name": "Jack Kerouac",
+                            "source_bio": "Updated bio via field transformation"
+                        }
+                    }
+                ]
+            }"""
+            importer = operations.ImportPlanner(model="tests.author", source_site="staging")
+            importer.add_json(data)
+            importer.run()
+
+            author = Author.objects.get(name="Jack Kerouac")
+            self.assertEqual(author.bio, "Updated bio via field transformation")
+        finally:
+            importlib.reload(operations)
+
+    @override_settings(WAGTAILTRANSFER_FIELD_TRANSFORMATION={
+        'tests.sponsoredpage': {'intro': 'source_intro'},
+    })
+    def test_import_page_with_field_transformation(self):
+        """Page imports should respect field transformation when populating page fields."""
+        import importlib
+        from wagtail_transfer import operations
+        importlib.reload(operations)
+        try:
+            data = """{
+                "ids_for_import": [
+                    ["wagtailcore.page", 12],
+                    ["wagtailcore.page", 15]
+                ],
+                "mappings": [
+                    ["wagtailcore.page", 12, "22222222-2222-2222-2222-222222222222"],
+                    ["wagtailcore.page", 15, "00017017-5555-5555-5555-555555555555"],
+                    ["tests.advert", 11, "adadadad-1111-1111-1111-111111111111"]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.simplepage",
+                        "pk": 12,
+                        "parent_id": 1,
+                        "fields": {
+                            "title": "Home",
+                            "show_in_menus": false,
+                            "live": true,
+                            "slug": "home",
+                            "intro": "Updated homepage",
+                            "wagtail_admin_comments": []
+                        }
+                    },
+                    {
+                        "model": "tests.sponsoredpage",
+                        "pk": 15,
+                        "parent_id": 12,
+                        "fields": {
+                            "title": "Transformed page",
+                            "show_in_menus": false,
+                            "live": true,
+                            "slug": "oil-is-still-great",
+                            "advert": 11,
+                            "source_intro": "Intro via field transformation",
+                            "categories": [],
+                            "wagtail_admin_comments": []
+                        }
+                    },
+                    {
+                        "model": "tests.advert",
+                        "pk": 11,
+                        "fields": {
+                            "slogan": "put a leopard in your tank",
+                            "run_until": "2020-12-23T21:05:43Z",
+                            "run_from": null
+                        }
+                    }
+                ]
+            }"""
+
+            importer = operations.ImportPlanner(root_page_source_pk=12, destination_parent_id=None, source_site="staging")
+            importer.add_json(data)
+            importer.run()
+
+            page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
+            self.assertEqual(page.intro, "Intro via field transformation")
+            self.assertEqual(page.advert.slogan, "put a leopard in your tank")
+        finally:
+            importlib.reload(operations)
+
+    @override_settings(WAGTAILTRANSFER_FIELD_TRANSFORMATION={
+        'tests.sponsoredpage': {'categories': 'source_categories'},
+    })
+    def test_import_page_with_m2m_field_transformation(self):
+        """ManyToMany field names should also be remapped by field transformation."""
+        import importlib
+        from wagtail_transfer import operations
+        importlib.reload(operations)
+        try:
+            data = """{
+                "ids_for_import": [
+                    ["wagtailcore.page", 12],
+                    ["wagtailcore.page", 15]
+                ],
+                "mappings": [
+                    ["wagtailcore.page", 12, "22222222-2222-2222-2222-222222222222"],
+                    ["wagtailcore.page", 15, "00017017-5555-5555-5555-555555555555"],
+                ["tests.advert", 11, "adadadad-1111-1111-1111-111111111111"],
+                ["tests.category", 1, ["Cars"]]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.simplepage",
+                        "pk": 12,
+                        "parent_id": 1,
+                        "fields": {
+                            "title": "Home",
+                            "show_in_menus": false,
+                            "live": true,
+                            "slug": "home",
+                            "intro": "Updated homepage",
+                            "wagtail_admin_comments": []
+                        }
+                    },
+                    {
+                        "model": "tests.sponsoredpage",
+                        "pk": 15,
+                        "parent_id": 12,
+                        "fields": {
+                            "title": "Page with M2M transform",
+                            "show_in_menus": false,
+                            "live": true,
+                            "slug": "oil-is-still-great",
+                            "advert": 11,
+                            "intro": "Page with m2m field transformation",
+                            "source_categories": [1],
+                            "wagtail_admin_comments": []
+                        }
+                    },
+                    {
+                        "model": "tests.advert",
+                        "pk": 11,
+                        "fields": {
+                            "slogan": "put a leopard in your tank",
+                            "run_until": "2020-12-23T21:05:43Z",
+                            "run_from": null
+                        }
+                    },
+                    {
+                        "model": "tests.category",
+                        "pk": 1,
+                        "fields": {
+                            "name": "Cars",
+                            "colour": "red"
+                        }
+                    }
+                ]
+            }"""
+
+            importer = operations.ImportPlanner(root_page_source_pk=12, destination_parent_id=None, source_site="staging")
+            importer.add_json(data)
+            importer.run()
+
+            page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
+            self.assertEqual(page.intro, "Page with m2m field transformation")
+            self.assertEqual(list(page.categories.values_list('name', flat=True)), ['Cars'])
+        finally:
+            importlib.reload(operations)
+
+    @override_settings(WAGTAILTRANSFER_FIELD_TRANSFORMATION={
+        'tests.sponsoredpage': {'advert': 'source_advert', 'author': 'source_author'},
+    })
+    def test_import_page_with_fk_field_transformation(self):
+        """FK fields should be correctly resolved when the field name is transformed."""
+        import importlib
+        from wagtail_transfer import operations
+        importlib.reload(operations)
+        try:
+            data = """{
+                "ids_for_import": [
+                    ["wagtailcore.page", 12],
+                    ["wagtailcore.page", 15]
+                ],
+                "mappings": [
+                    ["wagtailcore.page", 12, "22222222-2222-2222-2222-222222222222"],
+                    ["wagtailcore.page", 15, "00017017-5555-5555-5555-555555555555"],
+                    ["tests.advert", 11, "adadadad-1111-1111-1111-111111111111"],
+                    ["tests.author", 100, "b00cb00c-ffff-ffff-ffff-ffffffffffff"]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.simplepage",
+                        "pk": 12,
+                        "parent_id": 1,
+                        "fields": {
+                            "title": "Home",
+                            "show_in_menus": false,
+                            "live": true,
+                            "slug": "home",
+                            "intro": "Updated homepage",
+                            "wagtail_admin_comments": []
+                        }
+                    },
+                    {
+                        "model": "tests.sponsoredpage",
+                        "pk": 15,
+                        "parent_id": 12,
+                        "fields": {
+                            "title": "FK transformed page",
+                            "show_in_menus": false,
+                            "live": true,
+                            "slug": "oil-is-still-great",
+                            "source_advert": 11,
+                            "intro": "FK field transformation",
+                            "source_author": 100,
+                            "categories": [],
+                            "wagtail_admin_comments": []
+                        }
+                    },
+                    {
+                        "model": "tests.advert",
+                        "pk": 11,
+                        "fields": {
+                            "slogan": "transformed FK advert",
+                            "run_until": "2020-12-23T21:05:43Z",
+                            "run_from": null
+                        }
+                    },
+                    {
+                        "model": "tests.author",
+                        "pk": 100,
+                        "fields": {
+                            "name": "Transformed FK Author",
+                            "bio": "Author created via FK field transformation"
+                        }
+                    }
+                ]
+            }"""
+
+            importer = operations.ImportPlanner(root_page_source_pk=12, destination_parent_id=None, source_site="staging")
+            importer.add_json(data)
+            importer.run()
+
+            page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
+            self.assertEqual(page.intro, "FK field transformation")
+            self.assertEqual(page.advert.slogan, "transformed FK advert")
+            self.assertEqual(page.author.name, "Transformed FK Author")
+            self.assertEqual(page.author.bio, "Author created via FK field transformation")
+        finally:
+            importlib.reload(operations)
+
+    @override_settings(WAGTAILTRANSFER_FIELD_TRANSFORMATION={
+        'tests.category': {'name': 'cat_name', 'colour': 'cat_colour'},
+        'tests.author': {'name': 'writer_name', 'bio': 'writer_bio'},
+    })
+    def test_import_multiple_models_with_field_transformation(self):
+        """Multiple models can each have their own field transformations applied simultaneously."""
+        import importlib
+        from wagtail_transfer import operations
+        importlib.reload(operations)
+        try:
+            data = """{
+                "ids_for_import": [
+                    ["tests.category", 600]
+                ],
+                "mappings": [
+                    ["tests.category", 600, "ffa00000-0000-0000-0000-000000000600"]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.category",
+                        "pk": 600,
+                        "fields": {
+                            "cat_name": "Multi-model Category",
+                            "cat_colour": "purple"
+                        }
+                    }
+                ]
+            }"""
+            importer = operations.ImportPlanner(model="tests.category", source_site="staging")
+            importer.add_json(data)
+            importer.run()
+
+            cat = Category.objects.get(name="Multi-model Category")
+            self.assertEqual(cat.colour, "purple")
+
+            data2 = """{
+                "ids_for_import": [
+                    ["tests.author", 601]
+                ],
+                "mappings": [
+                    ["tests.author", 601, "ffa00000-0000-0000-0000-000000000601"]
+                ],
+                "objects": [
+                    {
+                        "model": "tests.author",
+                        "pk": 601,
+                        "fields": {
+                            "writer_name": "Multi-model Author",
+                            "writer_bio": "Bio from the other environment"
+                        }
+                    }
+                ]
+            }"""
+            importer2 = operations.ImportPlanner(model="tests.author", source_site="staging")
+            importer2.add_json(data2)
+            importer2.run()
+
+            author = Author.objects.get(name="Multi-model Author")
+            self.assertEqual(author.bio, "Bio from the other environment")
+        finally:
+            importlib.reload(operations)
