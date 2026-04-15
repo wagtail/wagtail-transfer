@@ -100,6 +100,12 @@ Note that these settings do not accept models that are defined as subclasses thr
 
   By default, each API call made to browse the page tree on the source server has a timeout limit of 5 seconds. If you find this threshold is too low, you can increase it. This may be of particular use if you are running two local runservers to test or extend Wagtail Transfer.
 
+* `WAGTAILTRANSFER_MODEL_TRANSFORMATION = {'wagtailcore.page': 'myapp.MyPage'}`
+
+  Specifies a model transformation that defines which target model should receive data from a source model during import. Defaults to `{}`.
+
+  By default, Wagtail Transfer will import models to the same model on the destination site. If you want to import a model to a different model on the destination site, you can specify a transformation in `WAGTAILTRANSFER_MODEL_TRANSFORMATION`. This is useful if you have a custom page model that you want to import to, or if you want to import a model to a different app.
+
 ## Management commands
 
     ./manage.py preseed_transfer_table [--range=MIN-MAX] model_or_app [model_or_app ...]

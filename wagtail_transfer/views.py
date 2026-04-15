@@ -236,7 +236,10 @@ def import_missing_object_data(source, importer: ImportPlanner):
             missing_object_data_by_type[model_class].append(source_id)
 
         request_data = json.dumps({
-            model_class._meta.label_lower: ids
+            # Use the original source model labels (tracked by the importer) to convert
+            # destination model classes back to the source's own labels, so the source
+            # site can resolve them correctly
+            importer.source_model_labels.get(model_class, model_class._meta.label_lower): ids
             for model_class, ids in missing_object_data_by_type.items()
         })
         digest = digest_for_source(source, request_data)

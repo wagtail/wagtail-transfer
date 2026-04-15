@@ -13,7 +13,7 @@ from wagtail.models import Page
 
 from .field_adapters import adapter_registry
 from .locators import get_locator_for_model
-from .models import get_base_model, get_base_model_for_path, get_model_for_path, normalize_model_label
+from .models import get_base_model, get_base_model_for_path, get_model_for_path, transform_model, normalize_model_label
 
 
 logger = logging.getLogger(__name__)
@@ -165,6 +165,12 @@ class ImportPlanner:
         # source too
         self.really_missing_object_data = set()
 
+        # Mapping from base model class to the original source model path (label) as received
+        # from the source site's JSON data. This is used when requesting missing object data
+        # from the source, so we send back the source's own model labels rather than the
+        # destination's (which may differ due to model transformation).
+        self.source_model_labels = {}
+
         # set of operations to be performed in this import.
         # An operation is an object with a `run` method which accomplishes the task.
         # It also has a list of dependencies - source IDs of objects that must exist at the
@@ -231,12 +237,22 @@ class ImportPlanner:
             uid = get_locator_for_model(model).uid_from_json(jsonish_uid)
             self.context.uids_by_source[(model, source_id)] = uid
 
+            # Track the original source model path for each base model class, so we can
+            # send the source's own labels when requesting missing objects.
+            if model not in self.source_model_labels:
+                self.source_model_labels[model] = model_path
+
             base_import = (model, source_id) in self.base_import_ids
 
-            if base_import or model_path not in NO_FOLLOW_MODELS:
+            # Use the resolved (transformed) model label for NO_FOLLOW_MODELS / UPDATE_RELATED_MODELS
+            # comparison, so that transformed source labels are correctly matched against destination
+            # settings.
+            resolved_label = normalize_model_label(transform_model(model_path))
+
+            if base_import or resolved_label not in NO_FOLLOW_MODELS:
                 objective = Objective(
                     model, source_id, self.context,
-                    must_update=(base_import or model_path in UPDATE_RELATED_MODELS)
+                    must_update=(base_import or resolved_label in UPDATE_RELATED_MODELS)
                 )
 
                 # add to the set of objectives that need handling

@@ -159,6 +159,130 @@ class TestImportView(TestCase):
         self.assertEqual(created_page.advert.run_until, datetime(2020, 1, 23, 1, 23, 45, tzinfo=timezone.utc))
         self.assertEqual(created_page.advert.run_from, None)
 
+    def test_run_with_mapping_models(self, get, post):
+        get.return_value.status_code = 200
+        get.return_value.content = b"""{
+            "ids_for_import": [
+                ["another_wagtailcore.another_page", 12],
+                ["another_wagtailcore.another_page", 15],
+                ["another_wagtailcore.another_page", 16]
+            ],
+            "mappings": [
+                ["another_wagtailcore.another_page", 12, "22222222-2222-2222-2222-222222222222"],
+                ["another_wagtailcore.another_page", 15, "00017017-5555-5555-5555-555555555555"],
+                ["another_wagtailcore.another_page", 16, "00e99e99-6666-6666-6666-666666666666"],
+                ["another_tests.another_advert", 11, "adadadad-1111-1111-1111-111111111111"],
+                ["another_tests.another_advert", 8, "adadadad-8888-8888-8888-888888888888"]
+            ],
+            "objects": [
+                {
+                    "model": "another_tests.another_simplepage",
+                    "pk": 12,
+                    "parent_id": 1,
+                    "fields": {
+                        "title": "Home",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "home",
+                        "intro": "This is the updated homepage",
+                        "wagtail_admin_comments": []
+                    }
+                },
+                {
+                    "model": "tests.sponsoredpage",
+                    "pk": 15,
+                    "parent_id": 12,
+                    "fields": {
+                        "title": "Oil is still great",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "oil-is-still-great",
+                        "advert": 11,
+                        "intro": "yay fossil fuels and climate change with mapping",
+                        "categories": [],
+                        "wagtail_admin_comments": []
+                    }
+                },
+                {
+                    "model": "tests.sponsoredpage",
+                    "pk": 16,
+                    "parent_id": 12,
+                    "fields": {
+                        "title": "Eggs are great too",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "eggs-are-great-too",
+                        "advert": 8,
+                        "intro": "you can make cakes with them with mapping",
+                        "categories": [],
+                        "wagtail_admin_comments": []
+                    }
+                }
+            ]
+        }"""
+
+        post.return_value.status_code = 200
+        post.return_value.content = """{
+            "ids_for_import": [
+            ],
+            "mappings": [
+                ["another_tests.another_advert", 11, "adadadad-1111-1111-1111-111111111111"],
+                ["another_tests.another_advert", 8, "adadadad-8888-8888-8888-888888888888"]
+            ],
+            "objects": [
+                {
+                    "model": "another_tests.another_advert",
+                    "pk": 11,
+                    "fields": {
+                        "slogan": "put a leopard in your tank with mapping",
+                        "run_until": "2020-12-23T01:23:45Z",
+                        "run_from": "2020-01-21"
+                    }
+                },
+                {
+                    "model": "another_tests.another_advert",
+                    "pk": 8,
+                    "fields": {
+                        "slogan": "go to work on an egg with mapping",
+                        "run_until": "2020-01-23T01:23:45Z",
+                        "run_from": null
+                    }
+                }
+            ]
+        }"""
+
+        response = self.client.post('/admin/wagtail-transfer/import/', {
+            'source': 'staging',
+            'source_page_id': '12',
+            'dest_page_id': '2',
+        })
+        self.assertRedirects(response, '/admin/pages/2/')
+
+        # Pages API should be called once, with 12 as the root page
+        get.assert_called_once()
+        args, kwargs = get.call_args
+        self.assertEqual(args[0], 'https://www.example.com/wagtail-transfer/api/pages/12/')
+        self.assertIn('digest', kwargs['params'])
+
+        # then the Objects API should be called, requesting adverts with ID 11 and 8
+        post.assert_called_once()
+        args, kwargs = post.call_args
+        self.assertEqual(args[0], 'https://www.example.com/wagtail-transfer/api/objects/')
+        self.assertIn('digest', kwargs['params'])
+
+        # Check import results
+        updated_page = SponsoredPage.objects.get(url_path='/home/oil-is-still-great/')
+        self.assertEqual(updated_page.intro, "yay fossil fuels and climate change with mapping")
+        self.assertEqual(updated_page.advert.slogan, "put a leopard in your tank with mapping")
+        self.assertEqual(updated_page.advert.run_until, datetime(2020, 12, 23, 1, 23, 45, tzinfo=timezone.utc))
+        self.assertEqual(updated_page.advert.run_from, date(2020, 1, 21))
+
+        created_page = SponsoredPage.objects.get(url_path='/home/eggs-are-great-too/')
+        self.assertEqual(created_page.intro, "you can make cakes with them with mapping")
+        self.assertEqual(created_page.advert.slogan, "go to work on an egg with mapping")
+        self.assertEqual(created_page.advert.run_until, datetime(2020, 1, 23, 1, 23, 45, tzinfo=timezone.utc))
+        self.assertEqual(created_page.advert.run_from, None)
+
     def test_missing_related_object(self, get, post):
         # If an imported object contains references to an object which does not exist at the source
         # (which in practice cannot happen for a ForeignKey, but could happen in rich text or
