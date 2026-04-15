@@ -20,7 +20,7 @@ from wagtail.fields import RichTextField, StreamField
 
 from .files import File, FileTransferError, get_file_hash, get_file_size
 from .locators import get_locator_for_model
-from .models import get_base_model, get_base_model_for_path, normalize_model_label
+from .models import get_base_model, get_base_model_for_path, normalize_model_label, transform_model
 from .richtext import get_reference_handler
 from .streamfield import get_object_references, update_object_ids
 
@@ -184,6 +184,7 @@ class GenericForeignKeyAdapter(FieldAdapter):
     def update_object_references(self, value, destination_ids_by_source):
         if value:
             model_path, model_id = value
+            model_path = transform_model(model_path)
             base_model = get_base_model_for_path(model_path)
             return (model_path, destination_ids_by_source.get((base_model, model_id)))
 

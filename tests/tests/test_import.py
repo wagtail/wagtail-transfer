@@ -18,6 +18,7 @@ from tests.models import (Advert, Author, Avatar, Category, LongAdvert,
                           PageWithStreamField, RedirectPage, SectionedPage,
                           SimplePage, SponsoredPage)
 from wagtail_transfer.models import IDMapping
+from wagtail_transfer.models import transform_model, reverse_transform_model
 from wagtail_transfer.operations import ImportPlanner
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
@@ -64,6 +65,36 @@ class TestImport(TestCase):
         cats = Category.objects.all()
         self.assertEqual(cats.count(), 2)
 
+    def test_import_model_with_model_transformation(self):
+        # Import Another Category with a transformation
+        data = """{
+            "ids_for_import": [
+                ["another_tests.another_category", -1]
+            ],
+            "mappings": [
+                ["another_tests.another_category", -1, "21111111-1111-1111-1111-111111111111"]
+            ],
+            "objects": [
+                {
+                    "model": "another_tests.another_category",
+                    "pk": -1,
+                    "fields": {
+                        "name": "Category Model Mapping Test Import",
+                        "colour": "red..ish?"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(model="another_tests.another_category")
+        importer.add_json(data)
+        importer.run()
+
+        cats = Category.objects.all()
+        self.assertEqual(cats.count(), 2)
+        self.assertEqual(cats.filter(name="Category Model Mapping Test Import").exists(), True)
+
+
 
     def test_import_pages(self):
         # make a draft edit to the homepage
@@ -109,6 +140,72 @@ class TestImport(TestCase):
                 }
             ]
         }"""
+
+        importer = ImportPlanner(root_page_source_pk=12, destination_parent_id=None, source_site="staging")
+        importer.add_json(data)
+        importer.run()
+
+        updated_page = SimplePage.objects.get(url_path='/home/')
+        self.assertEqual(updated_page.intro, "This is the updated homepage")
+        self.assertEqual(updated_page.title, "New home")
+        self.assertEqual(updated_page.draft_title, "New home")
+
+        # get_latest_revision (as used in the edit-page view) should also reflect the imported content
+        updated_page_revision = updated_page.get_latest_revision_as_object()
+        self.assertEqual(updated_page_revision.intro, "This is the updated homepage")
+        self.assertEqual(updated_page_revision.title, "New home")
+
+        created_page = SimplePage.objects.get(url_path='/home/imported-child-page/')
+        self.assertEqual(created_page.intro, "This page is imported from the source site")
+        # An initial page revision should also be created
+        self.assertTrue(created_page.get_latest_revision())
+        created_page_revision = created_page.get_latest_revision_as_object()
+        self.assertEqual(created_page_revision.intro, "This page is imported from the source site")
+
+    def test_import_pages_with_model_transformation(self):
+        # make a draft edit to the homepage
+        home = SimplePage.objects.get(slug='home')
+        home.title = "Draft home"
+        home.save_revision()
+
+        data = """{
+                "ids_for_import": [
+                    ["another_wagtailcore.another_page", 12],
+                    ["another_wagtailcore.another_page", 15]
+                ],
+                "mappings": [
+                    ["another_wagtailcore.another_page", 12, "22222222-2222-2222-2222-222222222222"],
+                    ["another_wagtailcore.another_page", 15, "55555555-5555-5555-5555-555555555555"]
+                ],
+                "objects": [
+                    {
+                        "model": "another_tests.another_simplepage",
+                        "pk": 15,
+                        "parent_id": 12,
+                        "fields": {
+                            "title": "Imported child page",
+                            "show_in_menus": false,
+                            "live": true,
+                            "slug": "imported-child-page",
+                            "intro": "This page is imported from the source site",
+                            "wagtail_admin_comments": []
+                        }
+                    },
+                    {
+                        "model": "another_tests.another_simplepage",
+                        "pk": 12,
+                        "parent_id": 1,
+                        "fields": {
+                            "title": "New home",
+                            "show_in_menus": false,
+                            "live": true,
+                            "slug": "home",
+                            "intro": "This is the updated homepage",
+                            "wagtail_admin_comments": []
+                        }
+                    }
+                ]
+            }"""
 
         importer = ImportPlanner(root_page_source_pk=12, destination_parent_id=None, source_site="staging")
         importer.add_json(data)
@@ -2258,4 +2355,187 @@ class TestImport(TestCase):
         self.assertEqual(
             get.call_args.kwargs['auth'],
             settings.WAGTAILTRANSFER_SOURCES_BASIC_AUTH['staging']['BASIC_AUTH_SECRET']
+        )
+
+
+class TestModelTransformation(TestCase):
+    """Tests for the WAGTAILTRANSFER_MODEL_TRANSFORMATION model transformation extension point."""
+    fixtures = ['test.json']
+
+    def test_transform_model_returns_transformed_path(self):
+        """transform_model should return the destination model path for a configured source model."""
+        self.assertEqual(transform_model('another_tests.another_category'), 'tests.category')
+
+    def test_transform_model_returns_original_when_not_configured(self):
+        """transform_model should return the original path when no transformation is configured."""
+        self.assertEqual(transform_model('tests.category'), 'tests.category')
+
+    def test_transform_model_case_insensitive(self):
+        """transform_model should handle case-insensitive model names."""
+        self.assertEqual(transform_model('another_tests.Another_Category'), 'tests.category')
+
+    def test_reverse_transform_model_returns_source_path(self):
+        """reverse_transform_model should return the source model path for a transformed destination."""
+        self.assertEqual(reverse_transform_model('tests.category'), 'another_tests.another_category')
+
+    def test_reverse_transform_model_returns_original_when_not_transformed(self):
+        """reverse_transform_model should return the original path when not a transformation destination."""
+        self.assertEqual(reverse_transform_model('tests.author'), 'tests.author')
+
+    def test_reverse_transform_model_case_insensitive(self):
+        """reverse_transform_model should handle case-insensitive model names."""
+        self.assertEqual(reverse_transform_model('tests.Category'), 'another_tests.another_category')
+
+    @override_settings(WAGTAILTRANSFER_MODEL_TRANSFORMATION={
+        'source_a.model': 'dest.model',
+        'source_b.model': 'dest.model',
+    })
+    def test_reverse_transform_model_raises_on_many_to_one(self):
+        """reverse_transform_model should raise ImproperlyConfigured for many-to-one transformations."""
+        from django.core.exceptions import ImproperlyConfigured
+        with self.assertRaises(ImproperlyConfigured):
+            reverse_transform_model('dest.model')
+
+    def test_import_model_with_transformed_source_label(self):
+        """Importing data with a transformed source model label should create the correct destination model."""
+        data = """{
+            "ids_for_import": [
+                ["another_tests.another_category", 100]
+            ],
+            "mappings": [
+                ["another_tests.another_category", 100, "aa111111-1111-1111-1111-111111111111"]
+            ],
+            "objects": [
+                {
+                    "model": "another_tests.another_category",
+                    "pk": 100,
+                    "fields": {
+                        "name": "Mapped Category Import",
+                        "colour": "blue"
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(model="another_tests.another_category", source_site="staging")
+        importer.add_json(data)
+        importer.run()
+
+        self.assertTrue(Category.objects.filter(name="Mapped Category Import").exists())
+
+    def test_import_pages_with_transformed_fk_and_update_related(self):
+        """
+        When a FK reference uses a transformed source label (another_tests.another_advert ->
+        tests.advert), and tests.advert is in UPDATE_RELATED_MODELS, the advert should
+        be force-updated during import.
+        """
+        data = """{
+            "ids_for_import": [
+                ["another_wagtailcore.another_page", 12],
+                ["another_wagtailcore.another_page", 15]
+            ],
+            "mappings": [
+                ["another_wagtailcore.another_page", 12, "22222222-2222-2222-2222-222222222222"],
+                ["another_wagtailcore.another_page", 15, "00017017-5555-5555-5555-555555555555"],
+                ["another_tests.another_advert", 11, "adadadad-1111-1111-1111-111111111111"]
+            ],
+            "objects": [
+                {
+                    "model": "another_tests.another_simplepage",
+                    "pk": 12,
+                    "parent_id": 1,
+                    "fields": {
+                        "title": "Home",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "home",
+                        "intro": "Updated homepage via mapping",
+                        "wagtail_admin_comments": []
+                    }
+                },
+                {
+                    "model": "tests.sponsoredpage",
+                    "pk": 15,
+                    "parent_id": 12,
+                    "fields": {
+                        "title": "Mapped FK page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "transformed-fk-page",
+                        "advert": 11,
+                        "intro": "Page with transformed FK",
+                        "categories": [],
+                        "wagtail_admin_comments": []
+                    }
+                },
+                {
+                    "model": "another_tests.another_advert",
+                    "pk": 11,
+                    "fields": {
+                        "slogan": "transformed advert slogan",
+                        "run_until": "2025-12-23T21:05:43Z",
+                        "run_from": null
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=12, destination_parent_id=None, source_site="staging")
+        importer.add_json(data)
+        importer.run()
+
+        # Advert should exist with the imported slogan (UPDATE_RELATED_MODELS applies)
+        advert = Advert.objects.get(slogan="transformed advert slogan")
+        self.assertIsNotNone(advert)
+
+        created_page = SponsoredPage.objects.get(url_path='/home/transformed-fk-page/')
+        self.assertEqual(created_page.intro, "Page with transformed FK")
+        self.assertEqual(created_page.advert.slogan, "transformed advert slogan")
+
+    def test_transformed_no_follow_models_prevents_creation(self):
+        """
+        When a transformed source label resolves to a model in NO_FOLLOW_MODELS (e.g.
+        another_wagtailcore.another_page -> wagtailcore.page), referenced objects that
+        are not in the base import set should NOT be followed/created.
+        """
+        # wagtailcore.page is in the default NO_FOLLOW_MODELS.
+        # Import a page that references another page (not in the import set) via a transformed label.
+        # The referenced page should not be followed.
+        data = """{
+            "ids_for_import": [
+                ["another_wagtailcore.another_page", 12]
+            ],
+            "mappings": [
+                ["another_wagtailcore.another_page", 12, "22222222-2222-2222-2222-222222222222"],
+                ["another_wagtailcore.another_page", 999, "99999999-9999-9999-9999-999999999999"]
+            ],
+            "objects": [
+                {
+                    "model": "another_tests.another_simplepage",
+                    "pk": 12,
+                    "parent_id": 1,
+                    "fields": {
+                        "title": "Home updated",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "home",
+                        "intro": "Updated with no-follow reference",
+                        "wagtail_admin_comments": []
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=12, destination_parent_id=None, source_site="staging")
+        importer.add_json(data)
+        importer.run()
+
+        # Page 12 should be updated (it's in the base import set)
+        updated_page = SimplePage.objects.get(url_path='/home/')
+        self.assertEqual(updated_page.intro, "Updated with no-follow reference")
+
+        # Page 999 should NOT have been created (NO_FOLLOW_MODELS blocks it)
+        self.assertFalse(
+            IDMapping.objects.filter(uid="99999999-9999-9999-9999-999999999999").exists()
+            and Page.objects.filter(pk=IDMapping.objects.get(uid="99999999-9999-9999-9999-999999999999").local_id).exists()
         )

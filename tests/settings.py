@@ -149,3 +149,10 @@ WAGTAILTRANSFER_LOOKUP_FIELDS = {
 }
 
 WAGTAILADMIN_BASE_URL = 'http://example.com'
+
+WAGTAILTRANSFER_MODEL_TRANSFORMATION = {
+    'another_tests.another_category': 'tests.category',
+    'another_tests.another_simplepage': 'tests.simplepage',
+    'another_wagtailcore.another_page': 'wagtailcore.page',
+    'another_tests.another_advert': 'tests.advert',
+}
