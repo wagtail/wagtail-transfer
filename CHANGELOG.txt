@@ -1,6 +1,18 @@
 Changelog
 =========
 
+Unreleased
+~~~~~~~~~~
+
+ * Add support for Wagtail 7.2, 7.3, and 7.4 (LTS)
+ * Add support for Django 6.0
+ * Add support for Python 3.14
+ * Drop support for Wagtail 6.x (out of the previous-LTS-to-latest-LTS support window)
+ * Drop support for Python 3.9 (end of life)
+ * Remove unused ``WAGTAIL_VERSION`` imports
+ * Update docs extras to mkdocs >=1.6 and mkdocs-material >=9.5
+ * Upgrade node/npm packages, minor and patch versions
+
 0.11 (30.10.2025)
 ~~~~~~~~~~~~~~~~~
 

@@ -9,13 +9,13 @@ const propTypes = {
   onChoose: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
   page: PropTypes.object.isRequired,
-  pageTypes: PropTypes.object
+  pageTypes: PropTypes.object,
 };
 
 const defaultProps = {
   pageTypes: {},
   isNavigable: false,
-  isParent: false
+  isParent: false,
 };
 
 // Capitalizes first letter without making any other letters lowercase
@@ -120,7 +120,9 @@ class PageChooserResult extends React.Component {
             title={`Explore subpages of ${page.title}`}
             aria-label="Explore"
           >
-            <svg className="icon icon-arrow-right default" aria-hidden="true"><use href="#icon-arrow-right"></use></svg>
+            <svg className="icon icon-arrow-right default" aria-hidden="true">
+              <use href="#icon-arrow-right"></use>
+            </svg>
           </a>
         </td>
       );

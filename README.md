@@ -9,6 +9,13 @@ RFC: https://github.com/wagtail/rfcs/pull/42
 Developed by [Torchbox](https://torchbox.com/) and sponsored by [The Motley Fool](https://www.fool.com/).
 
 
+## Compatibility
+
+* Wagtail 7.0 (LTS), 7.1, 7.2, 7.3, 7.4 (LTS)
+* Django 4.2 (LTS), 5.1, 5.2 (LTS), 6.0
+* Python 3.10, 3.11, 3.12, 3.13, 3.14
+
+
 ## Installation
 
 * Install the package with `pip install wagtail-transfer`

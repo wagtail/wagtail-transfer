@@ -1,7 +1,6 @@
 from collections import OrderedDict
 
 from rest_framework.authentication import SessionAuthentication
-from wagtail import VERSION as WAGTAIL_VERSION
 from wagtail.models import Page
 
 from wagtail.permission_policies.pages import PagePermissionPolicy

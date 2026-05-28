@@ -11,8 +11,8 @@ describe('PageChooserResultSet', () => {
           onNavigate={() => {}}
           onChangePage={() => {}}
           totalPages={0}
-        />
-      )
+        />,
+      ),
     ).toMatchSnapshot();
   });
 });

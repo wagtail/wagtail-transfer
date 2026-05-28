@@ -6,11 +6,11 @@ const propTypes = {
   isParent: PropTypes.bool,
   onChoose: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
-  model: PropTypes.object.isRequired
+  model: PropTypes.object.isRequired,
 };
 
 const defaultProps = {
-  isParent: false
+  isParent: false,
 };
 
 // Capitalizes first letter without making any other letters lowercase
@@ -50,7 +50,9 @@ class ModelChooserResult extends React.Component {
           className="navigate-pages"
           title={`Explore data  ${model.name}`}
         >
-          <svg className="icon icon-arrow-right default" aria-hidden="true"><use href="#icon-arrow-right"></use></svg>
+          <svg className="icon icon-arrow-right default" aria-hidden="true">
+            <use href="#icon-arrow-right"></use>
+          </svg>
         </a>
       </td>
     );

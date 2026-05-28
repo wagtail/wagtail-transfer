@@ -4,11 +4,11 @@ import PropTypes from 'prop-types';
 const propTypes = {
   totalPages: PropTypes.number.isRequired,
   pageNumber: PropTypes.number,
-  onChangePage: PropTypes.func.isRequired
+  onChangePage: PropTypes.func.isRequired,
 };
 
 const defaultProps = {
-  pageNumber: 0
+  pageNumber: 0,
 };
 
 class PageChooserPagination extends React.Component {
@@ -17,7 +17,7 @@ class PageChooserPagination extends React.Component {
     const hasPrev = pageNumber !== 1;
 
     if (hasPrev) {
-      const onClickPrevious = e => {
+      const onClickPrevious = (e) => {
         onChangePage(pageNumber - 1);
         e.preventDefault();
       };
@@ -47,7 +47,7 @@ class PageChooserPagination extends React.Component {
     const hasNext = pageNumber < totalPages;
 
     if (hasNext) {
-      const onClickNext = e => {
+      const onClickNext = (e) => {
         onChangePage(pageNumber + 1);
         e.preventDefault();
       };

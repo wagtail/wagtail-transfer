@@ -5,13 +5,13 @@ import PageChooserPagination from './PageChooserPagination';
 describe('PageChooserPagination', () => {
   it('renders', () => {
     expect(
-      shallow(<PageChooserPagination totalPages={0} onChangePage={() => {}} />)
+      shallow(<PageChooserPagination totalPages={0} onChangePage={() => {}} />),
     ).toMatchSnapshot();
   });
 
   it('has pages', () => {
     expect(
-      shallow(<PageChooserPagination totalPages={2} onChangePage={() => {}} />)
+      shallow(<PageChooserPagination totalPages={2} onChangePage={() => {}} />),
     ).toMatchSnapshot();
   });
 });

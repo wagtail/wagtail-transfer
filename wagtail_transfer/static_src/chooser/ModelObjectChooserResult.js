@@ -6,11 +6,11 @@ const propTypes = {
   isParent: PropTypes.bool,
   onChoose: PropTypes.func.isRequired,
   onNavigate: PropTypes.func.isRequired,
-  model: PropTypes.object.isRequired
+  model: PropTypes.object.isRequired,
 };
 
 const defaultProps = {
-  isParent: false
+  isParent: false,
 };
 
 class ModelChooserResult extends React.Component {

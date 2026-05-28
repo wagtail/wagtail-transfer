@@ -5,13 +5,13 @@ import PageChooserSpinner from './PageChooserSpinner';
 describe('PageChooserSpinner', () => {
   it('renders', () => {
     expect(
-      shallow(<PageChooserSpinner>Test</PageChooserSpinner>)
+      shallow(<PageChooserSpinner>Test</PageChooserSpinner>),
     ).toMatchSnapshot();
   });
 
   it('#isActive', () => {
     expect(
-      shallow(<PageChooserSpinner isActive={true}>Test</PageChooserSpinner>)
+      shallow(<PageChooserSpinner isActive={true}>Test</PageChooserSpinner>),
     ).toMatchSnapshot();
   });
 });

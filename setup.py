@@ -12,15 +12,15 @@ setup(
     packages=find_packages(exclude=('tests',)),
     include_package_data=True,
     install_requires=[
-        'wagtail>=5.2'
+        'wagtail>=7.0,<7.5'
     ],
     extras_require={
         'docs': [
-            'mkdocs>=1.0,<1.1',
-            'mkdocs-material>=4.6,<4.7',
+            'mkdocs>=1.6,<2.0',
+            'mkdocs-material>=9.5,<10.0',
         ],
     },
-    python_requires=">=3.9",
+    python_requires=">=3.10",
     license='BSD',
     long_description="An extension for Wagtail allowing content to be transferred between multiple instances of a Wagtail project",
     classifiers=[
@@ -31,17 +31,17 @@ setup(
         'Operating System :: OS Independent',
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',
         'Programming Language :: Python :: 3.11',
         'Programming Language :: Python :: 3.12',
         'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
         'Framework :: Django',
         'Framework :: Django :: 4.2',
         'Framework :: Django :: 5.1',
         'Framework :: Django :: 5.2',
+        'Framework :: Django :: 6.0',
         'Framework :: Wagtail',
-        'Framework :: Wagtail :: 6',
         'Framework :: Wagtail :: 7',
     ],
 )

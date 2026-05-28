@@ -15,13 +15,13 @@ export function createReactPageChooser(
   apiBaseUrl,
   restrictPageTypes,
   initialParentPageId,
-  onPageChosen
+  onPageChosen,
 ) {
   // A few hacks to get restrictPageTypes into the correct format
   // eslint-disable-next-line no-param-reassign
   restrictPageTypes = restrictPageTypes
-    .map(pageType => pageType.toLowerCase())
-    .filter(pageType => pageType !== 'wagtailcore.page');
+    .map((pageType) => pageType.toLowerCase())
+    .filter((pageType) => pageType !== 'wagtailcore.page');
 
   if (restrictPageTypes.length === 0) {
     // eslint-disable-next-line no-param-reassign
@@ -39,8 +39,8 @@ export function createReactPageChooser(
     compose(
       applyMiddleware(...middleware),
       // Expose store to Redux DevTools extension.
-      window.devToolsExtension ? window.devToolsExtension() : f => f
-    )
+      window.devToolsExtension ? window.devToolsExtension() : (f) => f,
+    ),
   );
 
   store.dispatch(setApi(new PagesAPI(apiBaseUrl)));
@@ -53,7 +53,7 @@ export function createReactPageChooser(
     <Provider store={store}>
       <PageChooser
         onModalClose={onModalClose}
-        onPageChosen={page => {
+        onPageChosen={(page) => {
           onPageChosen(page);
           onModalClose();
         }}
@@ -61,7 +61,7 @@ export function createReactPageChooser(
         restrictPageTypes={restrictPageTypes || null}
       />
     </Provider>,
-    modalPlacement
+    modalPlacement,
   );
 }
 
@@ -78,8 +78,8 @@ export function createReactModelChooser(apiBaseUrl, onObjectChosen) {
     compose(
       applyMiddleware(...middleware),
       // Expose store to Redux DevTools extension.
-      window.devToolsExtension ? window.devToolsExtension() : f => f
-    )
+      window.devToolsExtension ? window.devToolsExtension() : (f) => f,
+    ),
   );
 
   store.dispatch(setApi(new ModelsAPI(apiBaseUrl)));
@@ -92,13 +92,13 @@ export function createReactModelChooser(apiBaseUrl, onObjectChosen) {
     <Provider store={store}>
       <ModelChooser
         onModalClose={onModalClose}
-        onObjectChosen={object => {
+        onObjectChosen={(object) => {
           onObjectChosen(object);
           onModalClose();
         }}
       />
     </Provider>,
-    modalPlacement
+    modalPlacement,
   );
 }
 

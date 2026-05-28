@@ -14,7 +14,7 @@ const propTypes = {
   parentPage: PropTypes.any,
   pageNumber: PropTypes.number.isRequired,
   totalPages: PropTypes.number.isRequired,
-  onChangePage: PropTypes.func.isRequired
+  onChangePage: PropTypes.func.isRequired,
 };
 
 const defaultProps = {
@@ -22,7 +22,7 @@ const defaultProps = {
   restrictPageTypes: [],
   items: [],
   pageTypes: {},
-  parentPage: null
+  parentPage: null,
 };
 
 class PageChooserResultSet extends React.Component {
@@ -53,16 +53,16 @@ class PageChooserResultSet extends React.Component {
       parentPage,
       pageNumber,
       totalPages,
-      onChangePage
+      onChangePage,
     } = this.props;
 
     const results = items.map((page, i) => {
-      const onChoose = e => {
+      const onChoose = (e) => {
         onPageChosen(page);
         e.preventDefault();
       };
 
-      const handleNavigate = e => {
+      const handleNavigate = (e) => {
         onNavigate(page);
         e.preventDefault();
       };
@@ -84,12 +84,12 @@ class PageChooserResultSet extends React.Component {
     let parent = null;
 
     if (parentPage) {
-      const onChoose = e => {
+      const onChoose = (e) => {
         onPageChosen(parentPage);
         e.preventDefault();
       };
 
-      const handleNavigate = e => {
+      const handleNavigate = (e) => {
         onNavigate(parentPage);
         e.preventDefault();
       };

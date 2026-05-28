@@ -12,11 +12,11 @@ describe('PageChooserResult', () => {
           onNavigate={() => {}}
           page={{
             meta: {
-              status: {}
-            }
+              status: {},
+            },
           }}
-        />
-      )
+        />,
+      ),
     ).toMatchSnapshot();
   });
 });

@@ -16,11 +16,11 @@ const getTotalPages = (totalItems, itemsPerPage) =>
 
 const propTypes = {
   initialParentPageId: PropTypes.any,
-  browse: PropTypes.func.isRequired
+  browse: PropTypes.func.isRequired,
 };
 
 const defaultProps = {
-  initialParentPageId: null
+  initialParentPageId: null,
 };
 
 class PageChooser extends ModalWindow {
@@ -43,10 +43,10 @@ class PageChooser extends ModalWindow {
       search,
       totalItems,
       viewName,
-      viewOptions
+      viewOptions,
     } = this.props;
     // Event handlers
-    const onSearch = queryString => {
+    const onSearch = (queryString) => {
       if (queryString) {
         search(queryString, restrictPageTypes, 1);
       } else {
@@ -55,11 +55,11 @@ class PageChooser extends ModalWindow {
       }
     };
 
-    const onNavigate = page => {
+    const onNavigate = (page) => {
       browse(page.id, 1);
     };
 
-    const onChangePage = newPageNumber => {
+    const onChangePage = (newPageNumber) => {
       switch (viewName) {
         case 'browse':
           browse(viewOptions.parentPageID, newPageNumber);
@@ -126,7 +126,7 @@ class PageChooser extends ModalWindow {
 PageChooser.propTypes = propTypes;
 PageChooser.defaultProps = defaultProps;
 
-const mapStateToProps = state => ({
+const mapStateToProps = (state) => ({
   viewName: state.viewName,
   viewOptions: state.viewOptions,
   parent: state.parent,
@@ -134,14 +134,14 @@ const mapStateToProps = state => ({
   totalItems: state.totalItems,
   pageTypes: state.pageTypes,
   isFetching: state.isFetching,
-  error: state.error
+  error: state.error,
 });
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch) => ({
   browse: (parentPageID, pageNumber) =>
     dispatch(actions.browse(parentPageID, pageNumber)),
   search: (queryString, restrictPageTypes, pageNumber) =>
-    dispatch(actions.search(queryString, restrictPageTypes, pageNumber))
+    dispatch(actions.search(queryString, restrictPageTypes, pageNumber)),
 });
 
 export default connect(mapStateToProps, mapDispatchToProps)(PageChooser);

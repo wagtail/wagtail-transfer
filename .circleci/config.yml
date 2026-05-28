@@ -35,7 +35,7 @@ jobs:
   nightly-wagtail-test:
     parameters:
       python-version:
-        default: "3.13"
+        default: "3.14"
         type: string
     executor:
       name: python/default
@@ -54,17 +54,29 @@ workflows:
   main:
     jobs:
       - build-and-test:
-          wagtail-version: "wagtail>=6.3,<6.4"
-          django-version: "django>=4.2,<4.3"
-          python-version: "3.9"
+          wagtail-version: "wagtail>=7.0,<7.1"
+          django-version: "django>=5.2,<5.3"
+          python-version: "3.10"
       - build-and-test:
           wagtail-version: "wagtail>=7.0,<7.1"
-          django-version: "django>=5.1,<5.2"
-          python-version: "3.12"
-      - build-and-test:
-          wagtail-version: "wagtail>=7.1,<7.2"
           django-version: "django>=5.2,<5.3"
           python-version: "3.13"
+      - build-and-test:
+          wagtail-version: "wagtail>=7.3,<7.4"
+          django-version: "django>=5.2,<5.3"
+          python-version: "3.11"
+      - build-and-test:
+          wagtail-version: "wagtail>=7.3,<7.4"
+          django-version: "django>=6.0,<6.1"
+          python-version: "3.12"
+      - build-and-test:
+          wagtail-version: "wagtail>=7.4,<7.5"
+          django-version: "django>=5.2,<5.3"
+          python-version: "3.13"
+      - build-and-test:
+          wagtail-version: "wagtail>=7.4,<7.5"
+          django-version: "django>=6.0,<6.1"
+          python-version: "3.14"
   nightly:
     jobs:
       - nightly-wagtail-test

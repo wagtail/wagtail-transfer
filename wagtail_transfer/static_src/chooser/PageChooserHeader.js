@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 const propTypes = {
   onSearch: PropTypes.func.isRequired,
   searchEnabled: PropTypes.bool.isRequired,
-  searchTitle: PropTypes.string
+  searchTitle: PropTypes.string,
 };
 
 const PageChooserHeader = ({ onSearch, searchEnabled, searchTitle }) => (
@@ -14,7 +14,10 @@ const PageChooserHeader = ({ onSearch, searchEnabled, searchTitle }) => (
         <div className="col">
           <h1 className="w-header__title" id="header-title">
             <span className="icon-wrapper">
-              <svg className="icon icon-doc-empty-inverse w-header__glyph" aria-hidden="true">
+              <svg
+                className="icon icon-doc-empty-inverse w-header__glyph"
+                aria-hidden="true"
+              >
                 <use href="#icon-doc-empty-inverse"></use>
               </svg>
             </span>
@@ -29,7 +32,7 @@ const PageChooserHeader = ({ onSearch, searchEnabled, searchTitle }) => (
                 <div className="field-content">
                   <div>
                     <input
-                      onChange={e => onSearch(e.target.value)}
+                      onChange={(e) => onSearch(e.target.value)}
                       placeholder="Search"
                       type="text"
                       disabled={!searchEnabled}

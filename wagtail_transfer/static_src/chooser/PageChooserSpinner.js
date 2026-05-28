@@ -3,12 +3,12 @@ import PropTypes from 'prop-types';
 
 const propTypes = {
   isActive: PropTypes.bool,
-  children: PropTypes.node
+  children: PropTypes.node,
 };
 
 const defaultProps = {
   isActive: false,
-  children: null
+  children: null,
 };
 
 const PageChooserSpinner = ({ isActive, children }) => (

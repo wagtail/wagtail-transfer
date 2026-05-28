@@ -2,12 +2,12 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const propTypes = {
-  onChangePage: PropTypes.func.isRequired
+  onChangePage: PropTypes.func.isRequired,
 };
 
 const defaultProps = {
   nextPage: null,
-  previousPage: null
+  previousPage: null,
 };
 
 class ModelChooserPagination extends React.Component {
@@ -15,7 +15,7 @@ class ModelChooserPagination extends React.Component {
     const { previousPage, onChangePage } = this.props;
 
     if (previousPage) {
-      const onClickPrevious = e => {
+      const onClickPrevious = (e) => {
         onChangePage(previousPage);
         e.preventDefault();
       };
@@ -44,7 +44,7 @@ class ModelChooserPagination extends React.Component {
     const { nextPage, onChangePage } = this.props;
 
     if (nextPage) {
-      const onClickNext = e => {
+      const onClickNext = (e) => {
         onChangePage(nextPage);
         e.preventDefault();
       };
