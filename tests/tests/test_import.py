@@ -27,6 +27,19 @@ FIXTURES_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'fixture
 
 CUSTOM_LINK_TYPE_IDENTIFIERS = ("custom-link-notimplemented", "custom-link-none")
 
+
+class FakeOperation:
+    instance = object()
+
+    def __init__(self, name, dependencies, run_order):
+        self.name = name
+        self.dependencies = dependencies
+        self.run_order = run_order
+
+    def run(self, context):
+        self.run_order.append(self.name)
+
+
 class TestImport(TestCase):
     fixtures = ['test.json']
 
@@ -1989,6 +2002,108 @@ class TestImport(TestCase):
         # link from homepage has to be broken
         page = PageWithRichText.objects.get(slug="level-1-page")
         self.assertEqual(page.body, '<p>link to level 3</p>')
+
+    def test_retries_held_operations_for_satisfiable_soft_cycle(self):
+        run_order = []
+        dependency_model = object()
+        operation_a = FakeOperation("A", [(dependency_model, "B", True)], run_order)
+        operation_b = FakeOperation("B", [(dependency_model, "C", True)], run_order)
+        operation_c = FakeOperation("C", [(dependency_model, "A", False)], run_order)
+
+        importer = ImportPlanner(model="tests.category", source_site="staging")
+        importer.operations = [operation_a, operation_b, operation_c]
+        importer.resolutions = {
+            (dependency_model, "A"): operation_a,
+            (dependency_model, "B"): operation_b,
+            (dependency_model, "C"): operation_c,
+        }
+
+        importer.run()
+
+        self.assertEqual(run_order, ["C", "B", "A"])
+
+    def test_soft_dependency_on_unsatisfiable_operation_is_abandoned(self):
+        # A softly depends on B (e.g. a rich text/streamfield link); B hard-depends
+        # on C, which can never be resolved (simulating a NO_FOLLOW_MODELS target
+        # that's missing at the destination). B was only ever reachable via A's
+        # soft link, so the top-level satisfiability sweep never discovers that B
+        # is broken. B should be silently dropped rather than crashing, and A
+        # should still be created.
+        run_order = []
+        dependency_model = object()
+        operation_a = FakeOperation("A", [(dependency_model, "B", False)], run_order)
+        operation_b = FakeOperation("B", [(dependency_model, "C", True)], run_order)
+
+        importer = ImportPlanner(model="tests.category", source_site="staging")
+        importer.operations = [operation_a, operation_b]
+        importer.resolutions = {
+            (dependency_model, "A"): operation_a,
+            (dependency_model, "B"): operation_b,
+            # no resolution recorded for C - it was never created
+        }
+        importer.failed_creations = {(dependency_model, "C")}
+
+        importer.run()
+
+        self.assertEqual(run_order, ["A"])
+
+    def test_soft_rich_text_link_to_page_with_unsatisfiable_hard_dependency(self):
+        # Real-world shape this was found in: a page with a rich text link (soft
+        # dependency) to a RedirectPage, whose non-nullable `redirect_to` FK (hard
+        # dependency) points at a page outside the imported subtree that's also
+        # missing at the destination. The rich-text-linking page must still be
+        # importable, with the broken redirect silently dropped, rather than the
+        # whole import raising KeyError/AssertionError.
+        data = """{
+            "ids_for_import": [
+                ["wagtailcore.page", 10],
+                ["wagtailcore.page", 11]
+            ],
+            "mappings": [
+                ["wagtailcore.page", 10, "10101010-0000-0000-0000-000000000000"],
+                ["wagtailcore.page", 11, "11111111-0000-0000-0000-000000000000"],
+                ["wagtailcore.page", 31, "31313131-3131-3131-3131-313131313131"]
+            ],
+            "objects": [
+                {
+                    "model": "tests.pagewithrichtext",
+                    "pk": 10,
+                    "parent_id": 2,
+                    "fields": {
+                        "title": "page with soft link to broken redirect",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "soft-link-to-broken-redirect",
+                        "body": "<p>link to <a id=\\"11\\" linktype=\\"page\\">redirect</a></p>",
+                        "wagtail_admin_comments": []
+                    }
+                },
+                {
+                    "model": "tests.redirectpage",
+                    "pk": 11,
+                    "parent_id": 10,
+                    "fields": {
+                        "title": "redirect to unimported page",
+                        "show_in_menus": false,
+                        "live": true,
+                        "slug": "redirect-to-missing-page",
+                        "redirect_to": 31,
+                        "wagtail_admin_comments": []
+                    }
+                }
+            ]
+        }"""
+
+        importer = ImportPlanner(root_page_source_pk=10, destination_parent_id=2, source_site="staging")
+        importer.add_json(data)
+        # force a deterministic worst-case ordering, as in test_import_with_soft_dependency_on_grandchild
+        importer.operations = list(importer.operations)
+        importer.operations.sort(key=lambda op: op.object_data['fields']['title'])
+
+        importer.run()  # must not raise
+
+        self.assertTrue(PageWithRichText.objects.filter(slug="soft-link-to-broken-redirect").exists())
+        self.assertFalse(RedirectPage.objects.filter(slug="redirect-to-missing-page").exists())
 
     @mock.patch('requests.get')
     def test_import_custom_file_field(self, get):

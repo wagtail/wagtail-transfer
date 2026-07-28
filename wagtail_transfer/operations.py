@@ -470,8 +470,20 @@ class ImportPlanner:
 
         # arrange operations into an order that satisfies dependencies
         operation_order = []
-        for operation in satisfiable_operations:
-            self._add_to_operation_order(operation, operation_order, [operation])
+        while satisfiable_operations:
+            held_operations = []
+            for operation in satisfiable_operations:
+                try:
+                    self._add_to_operation_order(operation, operation_order, [operation], statuses)
+                except CircularDependencyException as e:
+                    # if the exception has propagated to this level it ought to be a soft dependency,
+                    # as otherwise it should have been caught by _check_satisfiable.
+                    # Hold it back to retry adding later
+                    held_operations.append(operation)
+            if len(held_operations) == len(satisfiable_operations):
+                # Not managed to add any of the operations - can't proceed
+                raise CircularDependencyException("Unsatisfiable circular dependency found")
+            satisfiable_operations = held_operations
 
         # run operations in order
         with transaction.atomic():
@@ -536,7 +548,7 @@ class ImportPlanner:
         # We've got through all the dependencies without anything failing. Yay!
         return True
 
-    def _add_to_operation_order(self, operation, operation_order, path):
+    def _add_to_operation_order(self, operation, operation_order, path, statuses):
         # path is the sequence of dependencies we've followed so far, starting from the top-level
         # operation picked from satisfiable_operations in `run`, to find one we can add
 
@@ -580,9 +592,18 @@ class ImportPlanner:
                 # unsatisfied.
                 raise CircularDependencyException()
             else:
+                if not dep_is_hard and not self._check_satisfiable(resolution, statuses):
+                    # This dependency's target would need to be created, but it has its own
+                    # unsatisfiable hard dependency that the top-level satisfiability sweep
+                    # never discovered (it was only reachable via this soft link - e.g. a rich
+                    # text or streamfield reference). Since our link to it is soft, we can (and
+                    # must) abandon it rather than trying to order/create it.
+                    logger.debug(f"Abandoning soft dependency on unsatisfiable operation: {dep_model, dep_source_id}")
+                    continue
+
                 try:
                     # recursively add the operation that we're depending on here
-                    self._add_to_operation_order(resolution, operation_order, path + [resolution])
+                    self._add_to_operation_order(resolution, operation_order, path + [resolution], statuses)
                 except CircularDependencyException:
                     if dep_is_hard:
                         # we can't resolve the circular dependency by breaking the chain here,
