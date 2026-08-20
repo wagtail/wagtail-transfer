@@ -20,6 +20,9 @@ from tests.models import (Advert, Avatar, Category, LongAdvert,
                           SponsoredPage)
 from wagtail_transfer.auth import digest_for_source
 from wagtail_transfer.models import IDMapping
+from wagtail_transfer.vendor.wagtail_api_v2.router import WagtailAPIRouter
+from wagtail_transfer.vendor.wagtail_api_v2.views import ModelsAPIViewSet
+from wagtail_transfer.views import PageChooserAPIViewSet
 
 # We could use settings.MEDIA_ROOT here, but this way we avoid clobbering a real media folder if we
 # ever run these tests with non-test settings for any reason
@@ -40,6 +43,26 @@ class TestPageChooserApi(TestCase):
             f'/wagtail-transfer/api/chooser/pages/?child_of=root&fields=parent%2Cchildren&limit=20&offset=0&digest={digest}'
         )
         self.assertEqual(response.status_code, 200)
+
+
+class TestWagtailAPIRouter(TestCase):
+    def test_get_model_endpoint_skips_endpoints_without_model(self):
+        """
+        Regression test for issue https://github.com/wagtail/wagtail-transfer/issues/202
+        ModelsAPIViewSet has no `model` attribute. get_model_endpoint must skip
+        it rather than raising AttributeError, and still match later endpoints.
+        """
+        router = WagtailAPIRouter('test')
+        router.register_endpoint('models', ModelsAPIViewSet)
+        router.register_endpoint('pages', PageChooserAPIViewSet)
+
+        # Look up a non-page model : returns None and doesn't crash.
+        self.assertIsNone(router.get_model_endpoint(Advert))
+
+        # Look up a page model : returns the pages endpoint.
+        name, endpoint_class = router.get_model_endpoint(Page)
+        self.assertEqual(name, 'pages')
+        self.assertEqual(endpoint_class, PageChooserAPIViewSet)
 
 
 class TestModelsApi(TestCase):
