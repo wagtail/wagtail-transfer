@@ -24,7 +24,7 @@ class WagtailAPIRouter:
         endpoint is not found.
         """
         for name, class_ in self._endpoints.items():
-            if issubclass(model, class_.model):
+            if hasattr(class_, 'model') and issubclass(model, class_.model):
                 return name, class_
 
     def get_model_listing_urlpath(self, model):
