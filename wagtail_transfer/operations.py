@@ -463,15 +463,18 @@ class ImportPlanner:
 
         # filter out unsatisfiable operations
         statuses = {}
+        # kept as a list so we visit operations in the order of self.operations (tests rely on
+        # this to force a worst-case ordering), with a set alongside for cheap membership checks
         satisfiable_operations = [
             op for op in self.operations
             if self._check_satisfiable(op, statuses)
         ]
+        satisfiable_set = set(satisfiable_operations)
 
         # arrange operations into an order that satisfies dependencies
         operation_order = []
         for operation in satisfiable_operations:
-            self._add_to_operation_order(operation, operation_order, [operation])
+            self._add_to_operation_order(operation, operation_order, [operation], satisfiable_set)
 
         # run operations in order
         with transaction.atomic():
@@ -536,7 +539,7 @@ class ImportPlanner:
         # We've got through all the dependencies without anything failing. Yay!
         return True
 
-    def _add_to_operation_order(self, operation, operation_order, path):
+    def _add_to_operation_order(self, operation, operation_order, path, satisfiable_operations):
         # path is the sequence of dependencies we've followed so far, starting from the top-level
         # operation picked from satisfiable_operations in `run`, to find one we can add
 
@@ -545,53 +548,32 @@ class ImportPlanner:
             return
 
         for dep_model, dep_source_id, dep_is_hard in operation.dependencies:
-            # look up the resolution for this dependency (= an Operation or None)
-            try:
+            if dep_is_hard:
+                # operation is satisfiable, so all of its hard dependencies are too
                 resolution = self.resolutions[(dep_model, dep_source_id)]
-            except KeyError:
-                # There is no resolution for this dependency - for example, it's a rich text link
-                # to a page outside of the subtree being imported (and NO_FOLLOW_MODELS tells us
-                # not to recursively import it).
-
-                # If everything is working properly, this should be a case we already encountered
-                # during task / objective solving and logged in failed_creations.
-                logger.debug(f"KeyError, no resolution for dependency found: {dep_model, dep_source_id, dep_is_hard}")
-                assert (dep_model, dep_source_id) in self.failed_creations, f"{dep_model, dep_source_id} not in failed_creations"
-
-                # Also, it should be a soft dependency, since we've eliminated unsatisfiable hard
-                # hard dependencies during _check_satisfiable.
-                assert not dep_is_hard, "dependency is hard"
-
-                # Since this is a soft dependency, we can (and must!) leave it unsatisfied.
-                # Abandon this dependency and move on to the next in the list
-                logger.debug(f"Abandoning dependency: {dep_model, dep_source_id, dep_is_hard}")
-                continue
-
-            if resolution is None:
-                # dependency is already satisfied with no further action
-                continue
-            elif resolution in path:
-                # The resolution for this dependency is an operation that's currently under
-                # consideration, so we have a circular dependency. This will be one that we can
-                # resolve by breaking a soft dependency - a circular dependency consisting of
-                # only hard dependencies would have been caught by _check_satisfiable. So, raise
-                # an exception to be propagated back up the chain until we're back to a caller that
-                # can handle it gracefully - namely, a soft dependency that can be left
-                # unsatisfied.
-                raise CircularDependencyException()
+                if resolution is None:
+                    # dependency is already satisfied with no further action
+                    continue
+                if resolution in path:
+                    # a loop that can only be broken at a soft dependency further up the path
+                    # (an all-hard loop would have been rejected by _check_satisfiable)
+                    raise CircularDependencyException()
+                self._add_to_operation_order(resolution, operation_order, path + [resolution], satisfiable_operations)
             else:
+                # a missing resolution should be one we already logged in failed_creations
+                # (e.g. a link to an object that NO_FOLLOW_MODELS stopped us importing)
+                assert (dep_model, dep_source_id) in self.resolutions or (dep_model, dep_source_id) in self.failed_creations, \
+                    f"{dep_model, dep_source_id} not in failed_creations"
+                resolution = self.resolutions.get((dep_model, dep_source_id))
+                if resolution not in satisfiable_operations or resolution in path:
+                    # the target already exists, can't be created, or would close a loop - since
+                    # this is a soft dependency, we can leave it unsatisfied
+                    continue
                 try:
-                    # recursively add the operation that we're depending on here
-                    self._add_to_operation_order(resolution, operation_order, path + [resolution])
+                    self._add_to_operation_order(resolution, operation_order, path + [resolution], satisfiable_operations)
                 except CircularDependencyException:
-                    if dep_is_hard:
-                        # we can't resolve the circular dependency by breaking the chain here,
-                        # so propagate it to the next level up
-                        raise
-                    else:
-                        # this is a soft dependency, and we can break the chain by leaving this
-                        # unsatisfied. Abandon this dependency and move on to the next in the list
-                        continue
+                    # a hard dependency further down loops back above this point; break it here
+                    continue
 
         operation_order.append(operation)
 
