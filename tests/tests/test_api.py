@@ -42,6 +42,22 @@ class TestPageChooserApi(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class TestPageChooserListingApi(TestCase):
+    fixtures = ['test.json']
+
+    @mock.patch.object(SponsoredPage, 'page_type_display_name', new_callable=mock.PropertyMock, return_value='Sponsored post')
+    def test_listing_includes_page_type_display_name(self, _):
+        # Sources can relabel a page's type via Wagtail's own hook; the chooser shows it.
+        query = 'child_of=2&limit=20&offset=0'
+        digest = digest_for_source('local', query)
+        response = self.client.get(f'/wagtail-transfer/api/chooser/pages/?{query}&digest={digest}')
+        self.assertEqual(response.status_code, 200)
+
+        types = {item['title']: item['meta']['page_type_display_name'] for item in json.loads(response.content)['items']}
+        self.assertEqual(types['oil is great'], 'Sponsored post')
+        self.assertEqual(types['Existing child page'], 'Simple page')
+
+
 class TestModelsApi(TestCase):
     fixtures = ['test.json']
 

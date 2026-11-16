@@ -40,7 +40,7 @@ class PageChooserResult extends React.Component {
               data-url={page.meta.html_url}
               data-edit-url="/admin/pages/{page.id}/edit/"
             >
-              {page.title}
+              {page.admin_display_title || page.title}
             </a>
           </h2>
         </td>
@@ -49,7 +49,7 @@ class PageChooserResult extends React.Component {
 
     return (
       <td className="title u-vertical-align-top" data-listing-page-title="">
-        <h2>{page.title}</h2>
+        <h2>{page.admin_display_title || page.title}</h2>
       </td>
     );
   }
@@ -77,11 +77,10 @@ class PageChooserResult extends React.Component {
 
   renderType() {
     const { page, pageTypes } = this.props;
-    let pageType = page.meta.type;
-
-    if (pageTypes[pageType]) {
-      pageType = pageTypes[pageType].verbose_name;
-    }
+    const { type } = page.meta;
+    // Sources can relabel the type through Wagtail's page_type_display_name.
+    const pageType = page.meta.page_type_display_name
+      || (pageTypes[type] ? pageTypes[type].verbose_name : type);
 
     return (
       <td className="type u-vertical-align-top">
