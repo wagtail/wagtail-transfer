@@ -168,15 +168,16 @@ class UIDField(ReadOnlyField):
 
 class TransferPageChooserSerializer(AdminPageSerializer):
     uid = UIDField(read_only=True)
+    page_type_display_name = ReadOnlyField()
 
 
 class PageChooserAPIViewSet(PagesAdminAPIViewSet):
     base_serializer_class = TransferPageChooserSerializer
     meta_fields = PagesAdminAPIViewSet.meta_fields + [
-        'uid'
+        'uid', 'page_type_display_name'
     ]
     listing_default_fields = PagesAdminAPIViewSet.listing_default_fields + [
-        'uid'
+        'uid', 'page_type_display_name'
     ]
 
 
